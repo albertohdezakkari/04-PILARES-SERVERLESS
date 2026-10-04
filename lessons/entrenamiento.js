@@ -1,0 +1,27 @@
+window.lessonTraining={id:"training",navTitle:"ENTRENAMIENTO · Evaluable",evaluable:true,hero:{eyebrow:"ENTRENAMIENTO NO ASISTIDO · ÚNICA PARTE EVALUABLE",title:"Venue Control · ahora decides tú",description:"Transfiere lo aprendido a un producto diferente. No hay código solución, comandos para copiar ni diagnóstico guiado. Dispones del contrato, requisitos, evidencias y rúbrica.",chips:["EVALUABLE","Individual","Transferencia","Serverless Framework","React Native","AWS"]},sections:[
+{type:"warning",title:"Cambio de modo",text:"Hasta aquí el cuaderno te ha acompañado. En este entrenamiento puedes consultar los bloques 00–09 y documentación, pero esta sección no te dará procedimientos paso a paso ni archivos solución. Se evalúa que puedas transferir lo aprendido."},
+{type:"concept",title:"El nuevo producto · Venue Control",text:"Construye una aplicación móvil interna para gestionar los espacios de un gran festival. Ya no gestionas actuaciones: gestionas zonas/espacios operativos del recinto."},
+{type:"code",label:"CONTRATO DE DATOS",title:"Un espacio debe poder representarse así",filename:"Ejemplo conceptual · NO es código solución",text:"Puedes organizar internamente tu código como consideres, pero tu API debe intercambiar como mínimo estos datos.",code:"{\n  \"id\": \"ZONE-07\",\n  \"name\": \"Garden Stage\",\n  \"capacity\": 2500,\n  \"status\": \"OPEN\"\n}"},
+{type:"code",label:"CONTRATO API OBLIGATORIO",title:"Tu backend debe ofrecer estas operaciones",filename:"HTTP API",text:"Los nombres de handlers/archivos los decides tú. Las rutas y métodos forman el contrato que debe poder probar el profesor.",code:"GET     /zones\nGET     /zones/{id}\nPOST    /zones\nPUT     /zones/{id}\nPATCH   /zones/{id}\nDELETE  /zones/{id}"},
+{type:"tabs",label:"REQUISITOS",title:"Qué debe demostrar tu solución",tabs:[
+{title:"Backend",text:"Node.js + Serverless Framework. Debe funcionar primero con serverless-offline y mantener una organización de archivos comprensible."},
+{title:"HTTP",text:"Las seis operaciones del contrato deben devolver respuestas coherentes. Debes explicar pathParameters, body, JSON.parse, statusCode y la diferencia PUT/PATCH."},
+{title:"Pruebas",text:"Debes demostrar la API local con Thunder Client y también utilizar curl en una selección representativa de operaciones."},
+{title:"React Native",text:"Crea una app Expo/React Native con identidad visual profesional propia para Venue Control. Debe listar zonas y disparar operaciones POST/PUT/PATCH/DELETE."},
+{title:"AWS",text:"Despliega mediante Serverless Framework en AWS Academy. Valida primero con Thunder/curl y después conecta React Native al endpoint cloud."},
+{title:"Diagnóstico",text:"Debes ser capaz de utilizar logs, Thunder y separación de capas para localizar un fallo sin modificar elementos al azar."}
+]},
+{type:"flow",title:"Arquitectura objetivo · tú decides cómo llegar",items:["React Native","HTTP","API Gateway","Lambda Node.js","Respuesta JSON","Logs"]},
+{type:"checklist",title:"Evidencias obligatorias de entrega",items:["Repositorio con backend/ y mobile/ claramente separados.","serverless.yml legible y coherente.","Captura/evidencia de serverless-offline con rutas.","Thunder Client: GET, POST, PUT, PATCH y DELETE demostrables.","Al menos tres operaciones reproducidas con curl.","App React Native funcional contra backend local.","Endpoint AWS obtenido del despliegue Serverless.","Thunder/curl funcionando contra AWS.","React Native consumiendo AWS.","Logs de al menos una invocación cloud provocada desde la app.","README con arquitectura, ejecución local, despliegue y decisiones.","Ninguna Access Key, Secret Key ni Session Token en el repositorio."]},
+{type:"tabs",label:"RÚBRICA · 100 PUNTOS",title:"Sabes desde el principio qué se evalúa",tabs:[
+{title:"Backend · 20",text:"Estructura, handlers Node.js, serverless.yml y funcionamiento local coherentes."},
+{title:"HTTP · 20",text:"Contrato completo, uso correcto de métodos/rutas/body/pathParameters/status y comprensión PUT vs PATCH."},
+{title:"Pruebas · 15",text:"Thunder Client, curl y logs utilizados como evidencias y herramientas de diagnóstico."},
+{title:"React Native · 20",text:"Interfaz funcional, consumo de API y separación razonable entre UI y capa HTTP."},
+{title:"AWS · 15",text:"Deploy con Serverless Framework, endpoint real, Lambda/API Gateway y prueba cloud."},
+{title:"Defensa · 10",text:"Explica una petición de extremo a extremo y diagnostica un supuesto sin depender de una receta."}
+]},
+{type:"warning",title:"No se evalúa sólo que «salga»",text:"Una aplicación que funciona pero cuyo autor no puede explicar event, handler, rutas, body, Serverless Offline, API Gateway o la transición local/cloud no demuestra los resultados de aprendizaje completos."},
+{type:"checklist",title:"STOP · Autoauditoría antes de entregar",items:["Puedo dibujar la arquitectura sin mirar el cuaderno.","Puedo explicar cómo una URL {id} llega a pathParameters.","Puedo explicar cómo JSON llega a event.body.","Sé qué crea serverless deploy.","Sé por qué pruebo Thunder antes que React Native.","Puedo cambiar local/cloud de forma controlada.","Puedo demostrar cada requisito con una evidencia concreta.","He revisado que no existen credenciales AWS en Git."]},
+{type:"success",title:"Entrenamiento terminado",text:"La entrega está completa cuando puedes demostrar el producto y defender técnicamente cómo viaja una petición desde React Native hasta la función Serverless y vuelve como respuesta."}
+]};
