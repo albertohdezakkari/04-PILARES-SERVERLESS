@@ -1,1 +1,1 @@
-window.lessons=[window.lesson00,window.lesson01,window.lesson02,window.lesson03,window.lesson04,window.lesson05,window.lesson06,window.lesson07,{id:"aws",navTitle:"08 · Deploy AWS",locked:true},{id:"cloud",navTitle:"09 · Cloud Launch",locked:true},{id:"training",navTitle:"ENTRENAMIENTO · Evaluable",locked:true,evaluable:true}].filter(Boolean);
+window.lessons=[window.lesson00,window.lesson01,window.lesson02,window.lesson03,window.lesson04,window.lesson05,window.lesson06,window.lesson07,window.lesson08,window.lesson09,window.lessonTraining].filter(Boolean);
