@@ -12,3 +12,60 @@ body{background:#F4F7FB;color:#172033}
 .code-shell{background:#0B1220}
 .tabs button.active{background:#DBEAFE;border-color:#93C5FD;color:#1D4ED8}
 .step-actions .primary{background:#2563EB;border-color:#2563EB;color:#fff}
+
+/* RECORRIDO: stepper horizontal compacto, no tarjetas verticales */
+.flow{
+  display:flex!important;
+  flex-direction:row!important;
+  align-items:center!important;
+  gap:0!important;
+  overflow-x:auto!important;
+  padding:4px 2px 10px!important;
+  background:transparent!important;
+  border:0!important;
+  border-radius:0!important;
+  text-align:left!important;
+  scrollbar-width:thin;
+}
+.flow div{
+  position:relative;
+  display:flex!important;
+  align-items:center!important;
+  gap:7px!important;
+  flex:0 0 auto!important;
+  min-width:0!important;
+  padding:7px 24px 7px 0!important;
+  margin-right:8px;
+  background:transparent!important;
+  border:0!important;
+  border-radius:0!important;
+}
+.flow div:not(:last-child)::after{
+  content:"→";
+  position:absolute;
+  right:5px;
+  color:#94A3B8;
+  font-weight:900;
+}
+.flow b{
+  display:grid!important;
+  place-items:center;
+  width:24px;
+  height:24px;
+  margin:0!important;
+  border-radius:50%;
+  background:#DBEAFE;
+  color:#1D4ED8!important;
+  font-size:10px!important;
+  flex:0 0 24px;
+}
+.flow span{
+  font-size:12px!important;
+  font-weight:800!important;
+  color:#334155;
+  white-space:nowrap;
+}
+@media(max-width:800px){
+  .flow{flex-direction:row!important}
+  .flow div{min-width:0!important}
+}
