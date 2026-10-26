@@ -1,46 +1,394 @@
-window.lesson01={id:"primer-serverless",navTitle:"01 · Primer Serverless",hero:{eyebrow:"BLOQUE 01 · BACKEND LOCAL",title:"Tu primera función Serverless",description:"Creamos el backend desde cero en VS Code, entendemos serverless.yml y levantamos una API local antes de tocar AWS o React Native.",chips:["Node.js","Serverless Framework","serverless-offline","Lambda","handler","event","Thunder Client","curl"]},sections:[
-{type:"flow",title:"Recorrido del bloque",items:["Crea backend","npm init","Instala Serverless","serverless.yml","Primera función","serverless-offline","Thunder Client","curl","logs"]},{type:"code",label:"ANTES DE EMPEZAR · MIRA EL DESTINO",title:"Así quedará tu proyecto al terminar el Bloque 01",filename:"D:\\DEVOPS\\04-PILARES-SERVERLESS",text:"Antes de crear nada, observa el resultado final. Durante el bloque iremos construyendo esta estructura de arriba abajo. Así sabrás siempre qué archivo estás creando, dónde debe estar y qué herramienta lo genera.",code:"D:\\DEVOPS\\04-PILARES-SERVERLESS\\\n└── backend\\\n    ├── node_modules\\          ← lo generará npm\n    │\n    ├── src\\                    ← nuestro código fuente\n    │   └── hello.js             ← primera función Serverless\n    │\n    ├── package.json             ← lo creará npm init\n    ├── package-lock.json        ← lo generará npm install\n    └── serverless.yml           ← configuración del servicio",after:{title:"DOS TIPOS DE ARCHIVOS",text:"Nosotros crearemos backend/, src/, hello.js y serverless.yml. npm generará package.json, package-lock.json y node_modules durante los pasos correspondientes."}},
-{type:"tabs",label:"FUNDAMENTOS",title:"Entiende antes de escribir",tabs:[
-{title:"Serverless",text:"Serverless no significa que no existan servidores. Significa que nuestra aplicación se centra en funciones, eventos y configuración mientras la plataforma gestiona gran parte de la infraestructura de ejecución."},
-{title:"Function / Lambda",text:"Una Function es una unidad pequeña de lógica. En AWS esa función se ejecutará como Lambda. Hoy la ejecutaremos localmente."},
-{title:"handler",text:"handler es el punto de entrada que Serverless/Lambda ejecuta cuando llega una invocación."},
-{title:"event",text:"event es el objeto que contiene los datos de ESA invocación. Durante el curso observaremos continuamente su contenido."},
-{title:"serverless.yml",text:"Es la declaración de nuestro servicio: runtime, funciones y eventos que las activan. No debe convertirse en magia; leeremos cada línea."},
-{title:"serverless-offline",text:"Plugin que nos permite levantar localmente endpoints y funciones con un flujo parecido a API Gateway + Lambda. Nos permite iterar antes de desplegar en AWS."}
-]},
-{type:"wizard",label:"CONSTRUYE DESDE CERO",title:"Crea backend y dependencias",steps:[
-{shortTitle:"backend",title:"Crea la carpeta backend",learn:"Separamos backend y futuro cliente móvil desde el primer día.",text:"Desde el workspace:",code:"# Sitúate en la raíz del proyecto\ncd /d/DEVOPS/04-PILARES-SERVERLESS\n\n# Crea el backend y entra\nmkdir -p backend/src\ncd backend\npwd",expected:"pwd termina en /04-PILARES-SERVERLESS/backend.",help:[["Ya existe","Entra y revisa antes de borrar nada."],["Estoy en otra ruta","Vuelve al workspace fijo."]],check:"backend será el único foco hasta superar el checkpoint local."},
-{shortTitle:"npm",title:"Inicializa Node.js",learn:"package.json describe nuestro proyecto Node y registra scripts/dependencias.",text:"Inicializa npm.",code:"# Crea package.json con valores por defecto\nnpm init -y\n\n# Comprueba que existe\nls",expected:"Ves package.json.",help:[["npm no responde","Vuelve al Bloque 00."],["¿Qué es -y?","Acepta los valores iniciales por defecto para no detenernos en metadatos."]],check:"package.json existe antes de instalar dependencias."},
-{shortTitle:"dependencias",title:"Instala Serverless + serverless-offline LOCALMENTE",learn:"Los instalamos como dependencias de desarrollo del proyecto. Así la versión viaja con package.json y no dependemos de una instalación global distinta en cada equipo.",text:"Ejecuta:",code:"# Framework de infraestructura/aplicaciones Serverless\nnpm install --save-dev serverless\n\n# Emula API Gateway + Lambda en local\nnpm install --save-dev serverless-offline\n\n# Comprueba la versión LOCAL mediante npx\nnpx serverless --version",expected:"npm termina sin error y npx serverless muestra versión.",help:[["npm ERR","Lee el error antes de repetir. Comprueba red, Node/npm y permisos."],["¿Por qué npx?","npx ejecuta la versión instalada dentro del proyecto."],["serverless global era distinto","Precisamente por eso preferimos la dependencia local."]],check:"package.json debe registrar serverless y serverless-offline."}
-]},
-{type:"concept",label:"ANTES DEL YAML",title:"¿Qué vamos a describir en serverless.yml?",text:"Serverless Framework necesita un archivo que le diga cómo se llama nuestro servicio, en qué plataforma/runtime se ejecutará, qué funciones existen y qué evento HTTP debe activar cada función. Ese archivo es serverless.yml. YAML no es JavaScript: es un formato de configuración basado en claves, valores e indentación."},
-{type:"tabs",label:"ANATOMÍA DEL YAML",title:"Aprende a leer serverless.yml antes de copiarlo",tabs:[
-{title:"service",text:"service da nombre al proyecto Serverless completo. No es una función. Nuestro servicio se llamará festival-control-api y dentro podrá contener muchas funciones."},
-{title:"provider + runtime",text:"provider indica la plataforma objetivo. name: aws significa que posteriormente desplegaremos en AWS. runtime: nodejs22.x indica el entorno que ejecutará nuestro JavaScript cuando se despliegue."},
-{title:"plugins",text:"plugins amplía Serverless Framework. serverless-offline añade el comportamiento que necesitamos ahora: levantar endpoints y ejecutar nuestras funciones localmente para probar sin desplegar en AWS."},
-{title:"functions",text:"functions contiene las funciones del servicio. hello es el nombre lógico que damos a nuestra primera función. Más adelante aparecerán getEvent, createEvent, updateEvent, etc."},
-{title:"handler",text:"handler: src/hello.handler tiene DOS partes: src/hello señala el archivo src/hello.js y .handler señala la función exportada llamada handler dentro de ese archivo.",code:"handler: src/hello.handler\n          └───────┘ └─────┘\n           archivo   función\n\nbackend/src/hello.js\n              ↓\nexport const handler = async (...) => { ... }"},
-{title:"events → http",text:"events describe qué provoca la ejecución. http indica una petición HTTP; path: hello define /hello y method: get define GET. Serverless Offline utilizará esta declaración para construir el endpoint local.",code:"events:\n  - http:\n      path: hello\n      method: get"}
-]},
-{type:"concept",label:"RELACIÓN ENTRE ARCHIVOS",title:"Del GET al código que se ejecuta",text:"Cuando llegue GET /hello, serverless-offline buscará la función hello declarada en serverless.yml; su handler apunta a src/hello.handler; por tanto cargará src/hello.js y ejecutará la función exportada handler. Ésta es la relación fundamental que debes entender antes de arrancar el servidor."},
-{type:"code",label:"AHORA CONSTRUIMOS ESTA PIEZA",title:"serverless.yml va en la raíz de backend",filename:"Ubicación del archivo",text:"No lo crees dentro de src. serverless.yml describe TODO el servicio y vive en la raíz del proyecto backend, al mismo nivel que package.json.",code:"D:\\DEVOPS\\04-PILARES-SERVERLESS\\\n└── backend\\\n    ├── node_modules\\\n    ├── src\\\n    ├── package-lock.json\n    ├── package.json\n    └── serverless.yml         ← CREA ESTE ARCHIVO AQUÍ"},
-{type:"code",label:"CONFIGURACIÓN",title:"serverless.yml · lee cada responsabilidad",filename:"serverless.yml",text:"Crea este archivo en backend/. Los comentarios explican la configuración; no copies sin leer.",code:"service: festival-control-api\n\nprovider:\n  # Más adelante este provider será AWS.\n  name: aws\n\n  # Nuestras funciones estarán escritas en Node.js.\n  runtime: nodejs22.x\n\nplugins:\n  # Levanta localmente nuestros endpoints/funciones.\n  - serverless-offline\n\nfunctions:\n  hello:\n    # Archivo src/hello.js + función exportada handler.\n    handler: src/hello.handler\n\n    events:\n      - http:\n          # Endpoint que utilizaremos en local.\n          path: hello\n          method: get",after:{title:"LEE ANTES DE SEGUIR",text:"Debes poder localizar service, provider/runtime, plugin, nombre de función, handler, path y method."}},
-{type:"code",label:"AHORA CONSTRUIMOS ESTA PIEZA",title:"hello.js va dentro de src",filename:"Ubicación del archivo",text:"src contiene nuestro código fuente. El handler src/hello.handler de serverless.yml apunta precisamente a este archivo.",code:"D:\\DEVOPS\\04-PILARES-SERVERLESS\\\n└── backend\\\n    ├── node_modules\\\n    ├── src\\\n    │   └── hello.js           ← CREA ESTE ARCHIVO AQUÍ\n    ├── package-lock.json\n    ├── package.json\n    └── serverless.yml"},
-{type:"tabs",label:"ANTES DEL JAVASCRIPT",title:"¿Qué significa lo que vas a escribir en hello.js?",tabs:[
-{title:"export",text:"export hace accesible la función desde fuera del módulo. Serverless necesita poder encontrar la función handler que hemos indicado en serverless.yml."},
-{title:"handler",text:"handler es simplemente el nombre de nuestra función de entrada. Podríamos organizar código auxiliar alrededor, pero Serverless invocará exactamente la función indicada después del punto en src/hello.handler."},
-{title:"async",text:"async permite que el handler trabaje con operaciones asíncronas y use await. En esta primera función todavía no esperamos servicios externos, pero más adelante será esencial."},
-{title:"event",text:"event es el parámetro donde la plataforma entrega los datos de la invocación. Por eso hacemos console.log(event): queremos aprender observando qué contiene realmente."},
-{title:"console.log",text:"console.log deja una evidencia de ejecución. Con serverless-offline aparecerá en la terminal de VS Code/Git Bash. Cuando despleguemos en AWS, esos logs terminarán en CloudWatch."},
-{title:"return HTTP",text:"La función devuelve un objeto con statusCode y body. statusCode 200 significa éxito. body contiene el contenido de la respuesta y JSON.stringify convierte nuestro objeto JavaScript en texto JSON."}
-]},
-{type:"code",label:"PRIMERA FUNCIÓN",title:"src/hello.js · archivo completo",filename:"src/hello.js",text:"Esta función no hace negocio todavía. Queremos observar una invocación y devolver una respuesta reconocible.",code:"export const handler = async (event) => {\n  // CONTROL: observamos exactamente qué recibe la función.\n  console.log('EVENT RECIBIDO:', event);\n\n  // Una Lambda HTTP devuelve statusCode + body.\n  return {\n    statusCode: 200,\n    body: JSON.stringify({\n      message: 'Festival Control API online'\n    })\n  };\n};",after:{title:"PREDICE",text:"Antes de ejecutar: ¿qué esperas ver en la terminal y qué esperas recibir como respuesta HTTP?"}},
-{type:"code",label:"STOP · COMPARA CON EL MAPA INICIAL",title:"¿Has llegado a la estructura que viste al comenzar?",filename:"backend/",text:"Vuelve mentalmente al mapa que viste al principio. Ya hemos construido todas sus piezas. Comprueba ahora que tu Explorador de VS Code coincide antes de ejecutar serverless-offline.",code:"D:\\DEVOPS\\04-PILARES-SERVERLESS\\\n└── backend\\\n    ├── node_modules\\        ← dependencias instaladas\n    ├── src\\\n    │   └── hello.js           ← código de nuestra primera función\n    ├── package-lock.json      ← versiones exactas instaladas\n    ├── package.json           ← proyecto + dependencias\n    └── serverless.yml         ← servicio + función + endpoint"},
-{type:"wizard",label:"PRUEBA Y OBSERVA",title:"Levanta el backend y pruébalo de dos formas",steps:[
-{shortTitle:"offline",title:"Arranca serverless-offline",learn:"El proceso debe permanecer ejecutándose mientras probamos la API. Esta terminal se convierte en nuestra consola del backend.",text:"Desde backend/:",code:"# Levanta la API local usando la configuración serverless.yml\nnpx serverless offline",expected:"Serverless Offline muestra endpoints locales y una ruta GET /hello, normalmente en localhost:3000.",help:[["Plugin not found","Comprueba npm install --save-dev serverless-offline y plugins en serverless.yml."],["Puerto ocupado","Identifica qué proceso usa el puerto antes de cambiar configuración al azar."],["Error YAML","Revisa indentación: YAML depende de los espacios."]],check:"No cierres esta terminal. Debe quedar escuchando peticiones."},
-{shortTitle:"Thunder",title:"Prueba desde Thunder Client",learn:"Thunder Client será nuestro cliente HTTP visual de referencia.",text:"VS Code → Thunder Client → New Request → método GET → utiliza la URL local /hello mostrada por serverless-offline → Send.",code:"# Ejemplo habitual (usa la URL que muestre TU terminal)\nGET http://localhost:3000/dev/hello",expected:"Status 200 y JSON con message = Festival Control API online. La terminal del backend muestra EVENT RECIBIDO.",help:[["404","Compara exactamente endpoint, stage/path y método con lo mostrado por serverless-offline."],["ECONNREFUSED","serverless-offline no está ejecutándose o utilizas puerto incorrecto."],["500","Mira la terminal: ahí aparece el error del handler."]],check:"Debes observar simultáneamente Request/Response en Thunder y event/log en terminal."},
-{shortTitle:"curl",title:"Repite la MISMA petición desde Git Bash",learn:"Thunder y curl son dos clientes diferentes. El backend no cambia.",text:"Abre otra terminal Git Bash y ejecuta:",code:"# -i muestra también status y cabeceras HTTP\ncurl -i http://localhost:3000/dev/hello",expected:"HTTP 200 y el mismo JSON que Thunder Client.",help:[["Connection refused","Comprueba la terminal donde corre serverless-offline."],["404","Utiliza exactamente la URL mostrada por Offline."]],check:"Debes poder explicar por qué Thunder y curl reciben la misma respuesta."}
-]},
-{type:"checklist",title:"CHECKPOINT · Primer backend local",items:["Tengo backend/package.json.","Serverless y serverless-offline están instalados localmente.","Entiendo qué declara serverless.yml.","Puedo localizar src/hello.handler.","serverless-offline está levantado.","GET /hello funciona en Thunder Client.","GET /hello funciona con curl.","Veo console.log(event) en la terminal.","Puedo explicar cliente → HTTP → handler → event → response."]},
-{type:"success",title:"Backend local encendido",text:"Todavía no hemos utilizado React Native ni desplegado en AWS. En el Bloque 02 utilizaremos una URL con {id} para descubrir cómo llegan los parámetros de ruta al event."}
-]};
+window.lesson01={
+  "id": "primer-serverless",
+  "navTitle": "01 · Primer Serverless",
+  "hero": {
+    "eyebrow": "BLOQUE 01 · BACKEND LOCAL",
+    "title": "Tu primera función Serverless",
+    "description": "Creamos el backend desde cero en VS Code, entendemos serverless.yml y levantamos una API local antes de tocar AWS o React Native.",
+    "chips": [
+      "Node.js",
+      "Serverless Framework",
+      "serverless-offline",
+      "Lambda",
+      "handler",
+      "event",
+      "Thunder Client",
+      "curl"
+    ]
+  },
+  "sections": [
+    {
+      "type": "flow",
+      "title": "Recorrido del bloque",
+      "items": [
+        "Crea backend",
+        "npm init",
+        "Instala Serverless",
+        "serverless.yml",
+        "Primera función",
+        "serverless-offline",
+        "Thunder Client",
+        "curl",
+        "logs"
+      ]
+    },
+    {
+      "type": "code",
+      "label": "ANTES DE EMPEZAR · MIRA EL DESTINO",
+      "title": "Así quedará tu proyecto al terminar el Bloque 01",
+      "filename": "D:\\DEVOPS\\04-PILARES-SERVERLESS",
+      "text": "Antes de crear nada, observa el resultado final. Durante el bloque iremos construyendo esta estructura de arriba abajo. Así sabrás siempre qué archivo estás creando, dónde debe estar y qué herramienta lo genera.",
+      "code": "D:\\DEVOPS\\04-PILARES-SERVERLESS\\\n└── backend\\\n    ├── node_modules\\          ← lo generará npm\n    │\n    ├── src\\                    ← nuestro código fuente\n    │   └── hello.js             ← primera función Serverless\n    │\n    ├── package.json             ← lo creará npm init\n    ├── package-lock.json        ← lo generará npm install\n    └── serverless.yml           ← configuración del servicio",
+      "after": {
+        "title": "DOS TIPOS DE ARCHIVOS",
+        "text": "Nosotros crearemos backend/, src/, hello.js y serverless.yml. npm generará package.json, package-lock.json y node_modules durante los pasos correspondientes."
+      }
+    },
+    {
+      "type": "tabs",
+      "label": "FUNDAMENTOS",
+      "title": "Entiende antes de escribir",
+      "tabs": [
+        {
+          "title": "Serverless",
+          "text": "Serverless no significa que no existan servidores. Significa que nuestra aplicación se centra en funciones, eventos y configuración mientras la plataforma gestiona gran parte de la infraestructura de ejecución."
+        },
+        {
+          "title": "Function / Lambda",
+          "text": "Una Function es una unidad pequeña de lógica. En AWS esa función se ejecutará como Lambda. Hoy la ejecutaremos localmente."
+        },
+        {
+          "title": "handler",
+          "text": "handler es el punto de entrada que Serverless/Lambda ejecuta cuando llega una invocación."
+        },
+        {
+          "title": "event",
+          "text": "event es el objeto que contiene los datos de ESA invocación. Durante el curso observaremos continuamente su contenido."
+        },
+        {
+          "title": "serverless.yml",
+          "text": "Es la declaración de nuestro servicio: runtime, funciones y eventos que las activan. No debe convertirse en magia; leeremos cada línea."
+        },
+        {
+          "title": "serverless-offline",
+          "text": "Plugin que nos permite levantar localmente endpoints y funciones con un flujo parecido a API Gateway + Lambda. Nos permite iterar antes de desplegar en AWS."
+        }
+      ]
+    },
+    {
+      "type": "wizard",
+      "label": "CONSTRUYE DESDE CERO",
+      "title": "Crea backend y dependencias",
+      "steps": [
+        {
+          "shortTitle": "backend",
+          "title": "Crea la carpeta backend",
+          "learn": "Separamos backend y futuro cliente móvil desde el primer día.",
+          "text": "Desde el workspace:",
+          "code": "# Sitúate en la raíz del proyecto\ncd /d/DEVOPS/04-PILARES-SERVERLESS\n\n# Crea el backend y entra\nmkdir -p backend/src\ncd backend\npwd",
+          "expected": "pwd termina en /04-PILARES-SERVERLESS/backend.",
+          "help": [
+            [
+              "Ya existe",
+              "Entra y revisa antes de borrar nada."
+            ],
+            [
+              "Estoy en otra ruta",
+              "Vuelve al workspace fijo."
+            ]
+          ],
+          "check": "backend será el único foco hasta superar el checkpoint local."
+        },
+        {
+          "shortTitle": "npm",
+          "title": "Inicializa Node.js",
+          "learn": "package.json describe el proyecto Node. La propiedad type: module indica que nuestros .js utilizarán import/export, como el handler que escribiremos después.",
+          "text": "Inicializa npm.",
+          "code": "# Desde D:/DEVOPS/04-PILARES-SERVERLESS/backend\n# Crea package.json con valores por defecto\nnpm init -y\n\n# Nuestros archivos .js utilizarán import/export (módulos ESM)\nnpm pkg set type=module\n\n# Comprueba el archivo generado\ncat package.json",
+          "expected": "Ves package.json con la propiedad \"type\": \"module\".",
+          "help": [
+            [
+              "npm no responde",
+              "Vuelve al Bloque 00."
+            ],
+            [
+              "¿Qué es -y?",
+              "Acepta los valores iniciales por defecto para no detenernos en metadatos."
+            ]
+          ],
+          "check": "CHECKPOINT: package.json existe y declara type: module. SIGUIENTE: instala las dependencias locales."
+        },
+        {
+          "shortTitle": "dependencias",
+          "title": "Instala Serverless Framework y Offline con versiones concretas",
+          "learn": "npm install descarga paquetes dentro de backend/node_modules. --save-dev los registra como herramientas de desarrollo; --save-exact escribe versiones concretas. npx ejecuta la herramienta local. Serverless Framework configura el servicio y Offline lo emula en el ordenador.",
+          "text": "Estás en backend, donde acabas de crear package.json. Ejecuta cada comando y espera a que termine antes de pasar al siguiente. No utilices npm install -g ni ejecutes serverless sin un subcomando: seguirás la construcción manual del cuaderno.",
+          "code": "# Desde backend/: instala las dos herramientas compatibles\nnpm install --save-dev --save-exact serverless@4.45.0 serverless-offline@14.8.4\n\n# Comprueba las versiones registradas en ESTE proyecto\nnpm ls serverless serverless-offline\n\n# Ejecuta el Framework local\nnpx serverless --version",
+          "expected": "npm ls muestra serverless@4.45.0 y serverless-offline@14.8.4. npx muestra la versión del Framework. Aparecen node_modules/ y package-lock.json. La primera ejecución puede descargar componentes adicionales por Internet.",
+          "help": [
+            [
+              "npm no responde",
+              "Vuelve al bloque 00 y verifica Node 22 y npm en la terminal integrada Git Bash."
+            ],
+            [
+              "Error de red o descarga del Framework",
+              "Comprueba Internet y la red del centro. El Framework también descarga desde install.serverless.com; si está bloqueado, solicita revisión al profesor. No desactives la comprobación TLS."
+            ],
+            [
+              "¿Por qué npx?",
+              "Ejecuta la dependencia local en backend; no dependemos de una instalación global diferente en cada ordenador."
+            ],
+            [
+              "¿Qué hago con package-lock.json?",
+              "Consérvalo con el proyecto. En otra máquina, con package.json y el lockfile existentes, npm ci recupera ese árbol sin repetir npm init."
+            ]
+          ],
+          "check": "CHECKPOINT: las dependencias locales están instaladas. SIGUIENTE: resuelve la autenticación de Serverless v4 antes de arrancar Offline."
+        },
+        {
+          "shortTitle": "Acceso Framework",
+          "title": "Prepara la autenticación de Serverless Framework v4",
+          "learn": "El acceso del Framework es independiente de las credenciales AWS. Una instalación npm correcta no garantiza que sus comandos puedan ejecutarse sin iniciar sesión.",
+          "text": "<ol><li>Desde backend ejecuta el comando inferior.</li><li>Completa el acceso o registro en la página oficial que abra el navegador con la cuenta acordada para la clase.</li><li>Vuelve a la terminal y comprueba que confirma la sesión.</li><li>Si tu centro utiliza una licencia gestionada, sigue las indicaciones del profesor. Si aparece una exigencia de licencia que tu cuenta no cumple, detente y consulta al profesor.</li><li>No conectes AWS ni ejecutes deploy ahora: estamos preparando una API local.</li></ol>",
+          "code": "# Autenticación del Framework, no de AWS Academy\nnpx serverless login",
+          "expected": "El Framework confirma la autenticación, o has identificado con el profesor la licencia gestionada que utilizará el aula. Todavía no has desplegado recursos AWS.",
+          "help": [
+            [
+              "El navegador no se abre",
+              "Utiliza el enlace de acceso que indique la terminal y vuelve a ella después de completar el proceso."
+            ],
+            [
+              "Login o licencia pendiente al arrancar Offline",
+              "Completa el acceso del Framework; no se resuelve con aws configure ni con credenciales Academy."
+            ],
+            [
+              "¿Necesito incluir org o app en serverless.yml?",
+              "Esta práctica local no utiliza funciones del Dashboard; conserva el YAML del cuaderno sin añadirlas por tu cuenta."
+            ]
+          ],
+          "check": "CHECKPOINT: acceso del Framework resuelto. SIGUIENTE: entiende y crea serverless.yml."
+        }
+      ]
+    },
+    {
+      "type": "concept",
+      "label": "ANTES DEL YAML",
+      "title": "¿Qué vamos a describir en serverless.yml?",
+      "text": "Serverless Framework necesita un archivo que le diga cómo se llama nuestro servicio, en qué plataforma/runtime se ejecutará, qué funciones existen y qué evento HTTP debe activar cada función. Ese archivo es serverless.yml. YAML no es JavaScript: es un formato de configuración basado en claves, valores e indentación."
+    },
+    {
+      "type": "tabs",
+      "label": "ANATOMÍA DEL YAML",
+      "title": "Aprende a leer serverless.yml antes de copiarlo",
+      "tabs": [
+        {
+          "title": "service",
+          "text": "service da nombre al proyecto Serverless completo. No es una función. Nuestro servicio se llamará festival-control-api y dentro podrá contener muchas funciones."
+        },
+        {
+          "title": "provider + runtime",
+          "text": "provider indica la plataforma objetivo. name: aws significa que posteriormente desplegaremos en AWS. runtime: nodejs22.x indica el entorno que ejecutará nuestro JavaScript cuando se despliegue."
+        },
+        {
+          "title": "plugins",
+          "text": "plugins amplía Serverless Framework. serverless-offline añade el comportamiento que necesitamos ahora: levantar endpoints y ejecutar nuestras funciones localmente para probar sin desplegar en AWS."
+        },
+        {
+          "title": "functions",
+          "text": "functions contiene las funciones del servicio. hello es el nombre lógico que damos a nuestra primera función. Más adelante aparecerán getEvent, createEvent, updateEvent, etc."
+        },
+        {
+          "title": "handler",
+          "text": "handler: src/hello.handler tiene DOS partes: src/hello señala el archivo src/hello.js y .handler señala la función exportada llamada handler dentro de ese archivo.",
+          "code": "handler: src/hello.handler\n          └───────┘ └─────┘\n           archivo   función\n\nbackend/src/hello.js\n              ↓\nexport const handler = async (...) => { ... }"
+        },
+        {
+          "title": "events → http",
+          "text": "events describe qué provoca la ejecución. http indica una petición HTTP; path: hello define /hello y method: get define GET. Serverless Offline utilizará esta declaración para construir el endpoint local.",
+          "code": "events:\n  - http:\n      path: hello\n      method: get"
+        }
+      ]
+    },
+    {
+      "type": "concept",
+      "label": "RELACIÓN ENTRE ARCHIVOS",
+      "title": "Del GET al código que se ejecuta",
+      "text": "Cuando llegue GET /hello, serverless-offline buscará la función hello declarada en serverless.yml; su handler apunta a src/hello.handler; por tanto cargará src/hello.js y ejecutará la función exportada handler. Ésta es la relación fundamental que debes entender antes de arrancar el servidor."
+    },
+    {
+      "type": "code",
+      "label": "AHORA CONSTRUIMOS ESTA PIEZA",
+      "title": "serverless.yml va en la raíz de backend",
+      "filename": "Ubicación del archivo",
+      "text": "No lo crees dentro de src. serverless.yml describe TODO el servicio y vive en la raíz del proyecto backend, al mismo nivel que package.json.",
+      "code": "D:\\DEVOPS\\04-PILARES-SERVERLESS\\\n└── backend\\\n    ├── node_modules\\\n    ├── src\\\n    ├── package-lock.json\n    ├── package.json\n    └── serverless.yml         ← CREA ESTE ARCHIVO AQUÍ"
+    },
+    {
+      "type": "code",
+      "label": "CONFIGURACIÓN",
+      "title": "serverless.yml · lee cada responsabilidad",
+      "filename": "serverless.yml",
+      "text": "Crea este archivo en backend/. Los comentarios explican la configuración; no copies sin leer.",
+      "code": "service: festival-control-api\n\n# Mantén el Framework en la línea de la práctica.\nframeworkVersion: ~4.45.0\n\nprovider:\n  # Más adelante este provider será AWS.\n  name: aws\n\n  # Nuestras funciones estarán escritas en Node.js.\n  runtime: nodejs22.x\n\nplugins:\n  # Levanta localmente nuestros endpoints/funciones.\n  - serverless-offline\n\nfunctions:\n  hello:\n    # Archivo src/hello.js + función exportada handler.\n    handler: src/hello.handler\n\n    events:\n      - http:\n          # Endpoint que utilizaremos en local.\n          path: hello\n          method: get",
+      "after": {
+        "title": "LEE ANTES DE SEGUIR",
+        "text": "Debes poder localizar service, provider/runtime, plugin, nombre de función, handler, path y method."
+      }
+    },
+    {
+      "type": "code",
+      "label": "AHORA CONSTRUIMOS ESTA PIEZA",
+      "title": "hello.js va dentro de src",
+      "filename": "Ubicación del archivo",
+      "text": "src contiene nuestro código fuente. El handler src/hello.handler de serverless.yml apunta precisamente a este archivo.",
+      "code": "D:\\DEVOPS\\04-PILARES-SERVERLESS\\\n└── backend\\\n    ├── node_modules\\\n    ├── src\\\n    │   └── hello.js           ← CREA ESTE ARCHIVO AQUÍ\n    ├── package-lock.json\n    ├── package.json\n    └── serverless.yml"
+    },
+    {
+      "type": "tabs",
+      "label": "ANTES DEL JAVASCRIPT",
+      "title": "¿Qué significa lo que vas a escribir en hello.js?",
+      "tabs": [
+        {
+          "title": "export",
+          "text": "export hace accesible la función desde fuera del módulo. Serverless necesita poder encontrar la función handler que hemos indicado en serverless.yml."
+        },
+        {
+          "title": "handler",
+          "text": "handler es simplemente el nombre de nuestra función de entrada. Podríamos organizar código auxiliar alrededor, pero Serverless invocará exactamente la función indicada después del punto en src/hello.handler."
+        },
+        {
+          "title": "async",
+          "text": "async permite que el handler trabaje con operaciones asíncronas y use await. En esta primera función todavía no esperamos servicios externos, pero más adelante será esencial."
+        },
+        {
+          "title": "event",
+          "text": "event es el parámetro donde la plataforma entrega los datos de la invocación. Por eso hacemos console.log(event): queremos aprender observando qué contiene realmente."
+        },
+        {
+          "title": "console.log",
+          "text": "console.log deja una evidencia de ejecución. Con serverless-offline aparecerá en la terminal de VS Code/Git Bash. Cuando despleguemos en AWS, esos logs terminarán en CloudWatch."
+        },
+        {
+          "title": "return HTTP",
+          "text": "La función devuelve un objeto con statusCode y body. statusCode 200 significa éxito. body contiene el contenido de la respuesta y JSON.stringify convierte nuestro objeto JavaScript en texto JSON."
+        }
+      ]
+    },
+    {
+      "type": "code",
+      "label": "PRIMERA FUNCIÓN",
+      "title": "src/hello.js · archivo completo",
+      "filename": "src/hello.js",
+      "text": "Esta función no hace negocio todavía. Queremos observar una invocación y devolver una respuesta reconocible.",
+      "code": "export const handler = async (event) => {\n  // CONTROL: observamos exactamente qué recibe la función.\n  console.log('EVENT RECIBIDO:', event);\n\n  // Una Lambda HTTP devuelve statusCode + body.\n  return {\n    statusCode: 200,\n    body: JSON.stringify({\n      message: 'Festival Control API online'\n    })\n  };\n};",
+      "after": {
+        "title": "PREDICE",
+        "text": "Antes de ejecutar: ¿qué esperas ver en la terminal y qué esperas recibir como respuesta HTTP?"
+      }
+    },
+    {
+      "type": "code",
+      "label": "STOP · COMPARA CON EL MAPA INICIAL",
+      "title": "¿Has llegado a la estructura que viste al comenzar?",
+      "filename": "backend/",
+      "text": "Vuelve mentalmente al mapa que viste al principio. Ya hemos construido todas sus piezas. Comprueba ahora que tu Explorador de VS Code coincide antes de ejecutar serverless-offline.",
+      "code": "D:\\DEVOPS\\04-PILARES-SERVERLESS\\\n└── backend\\\n    ├── node_modules\\        ← dependencias instaladas\n    ├── src\\\n    │   └── hello.js           ← código de nuestra primera función\n    ├── package-lock.json      ← versiones exactas instaladas\n    ├── package.json           ← proyecto + dependencias\n    └── serverless.yml         ← servicio + función + endpoint"
+    },
+    {
+      "type": "wizard",
+      "label": "PRUEBA Y OBSERVA",
+      "title": "Levanta el backend y pruébalo de dos formas",
+      "steps": [
+        {
+          "shortTitle": "offline",
+          "title": "Arranca serverless-offline",
+          "learn": "El proceso debe permanecer ejecutándose mientras probamos la API. Esta terminal se convierte en nuestra consola del backend.",
+          "text": "Desde backend/:",
+          "code": "# Levanta la API local usando la configuración serverless.yml\nnpx serverless offline",
+          "expected": "Serverless Offline muestra endpoints locales y una ruta GET /hello, normalmente en localhost:3000.",
+          "help": [
+            [
+              "Plugin not found",
+              "Comprueba npm install --save-dev serverless-offline y plugins en serverless.yml."
+            ],
+            [
+              "Puerto ocupado",
+              "Identifica qué proceso usa el puerto antes de cambiar configuración al azar."
+            ],
+            [
+              "Error YAML",
+              "Revisa indentación: YAML depende de los espacios."
+            ],
+            [
+              "Autenticación requerida",
+              "Vuelve al paso Acceso Framework. Serverless v4 y AWS Academy tienen sesiones distintas."
+            ]
+          ],
+          "check": "No cierres esta terminal. Debe quedar escuchando peticiones."
+        },
+        {
+          "shortTitle": "Thunder",
+          "title": "Prueba desde Thunder Client",
+          "learn": "Thunder Client será nuestro cliente HTTP visual de referencia.",
+          "text": "VS Code → Thunder Client → New Request → método GET → utiliza la URL local /hello mostrada por serverless-offline → Send.",
+          "code": "# Ejemplo habitual (usa la URL que muestre TU terminal)\nGET http://localhost:3000/dev/hello",
+          "expected": "Status 200 y JSON con message = Festival Control API online. La terminal del backend muestra EVENT RECIBIDO.",
+          "help": [
+            [
+              "404",
+              "Compara exactamente endpoint, stage/path y método con lo mostrado por serverless-offline."
+            ],
+            [
+              "ECONNREFUSED",
+              "serverless-offline no está ejecutándose o utilizas puerto incorrecto."
+            ],
+            [
+              "500",
+              "Mira la terminal: ahí aparece el error del handler."
+            ]
+          ],
+          "check": "Debes observar simultáneamente Request/Response en Thunder y event/log en terminal."
+        },
+        {
+          "shortTitle": "curl",
+          "title": "Repite la MISMA petición desde Git Bash",
+          "learn": "Thunder y curl son dos clientes diferentes. El backend no cambia.",
+          "text": "Abre otra terminal Git Bash y ejecuta:",
+          "code": "# -i muestra también status y cabeceras HTTP\ncurl -i http://localhost:3000/dev/hello",
+          "expected": "HTTP 200 y el mismo JSON que Thunder Client.",
+          "help": [
+            [
+              "Connection refused",
+              "Comprueba la terminal donde corre serverless-offline."
+            ],
+            [
+              "404",
+              "Utiliza exactamente la URL mostrada por Offline."
+            ]
+          ],
+          "check": "Debes poder explicar por qué Thunder y curl reciben la misma respuesta."
+        }
+      ]
+    },
+    {
+      "type": "checklist",
+      "title": "CHECKPOINT · Primer backend local",
+      "items": [
+        "Tengo backend/package.json.",
+        "Serverless y serverless-offline están instalados localmente.",
+        "Entiendo qué declara serverless.yml.",
+        "Puedo localizar src/hello.handler.",
+        "serverless-offline está levantado.",
+        "GET /hello funciona en Thunder Client.",
+        "GET /hello funciona con curl.",
+        "Veo console.log(event) en la terminal.",
+        "Puedo explicar cliente → HTTP → handler → event → response."
+      ]
+    },
+    {
+      "type": "success",
+      "title": "Backend local encendido",
+      "text": "Todavía no hemos utilizado React Native ni desplegado en AWS. En el Bloque 02 utilizaremos una URL con {id} para descubrir cómo llegan los parámetros de ruta al event."
+    }
+  ]
+};
