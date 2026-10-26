@@ -9,22 +9,24 @@ test('ruta directa, archivos copiables y modo maximizado', async ({ page, contex
   await page.locator('[data-phase="construye"]').click();
   const panel = page.locator('.file-lab');
   await panel.locator('[data-max]').click();
-  await panel.getByRole('tab', { name: '2 · hello.js' }).click();
+  await panel.getByRole('tab', { name: '3 · hello.ts' }).click();
   await expect(panel).toHaveClass(/maximized/);
-  await expect(panel.locator('.file-location')).toContainText('backend/src/hello.js');
+  await expect(panel.locator('.file-location')).toContainText('backend/src/hello.ts');
   await panel.getByRole('button', { name: 'Copiar archivo', exact: true }).click();
   await expect(panel.getByRole('button', { name: '✓ Copiado' })).toBeVisible();
   expect(await page.evaluate(() => navigator.clipboard.readText())).toContain('export const handler');
-  await panel.getByRole('tab', { name: '2 · hello.js' }).focus();
+  await panel.getByRole('tab', { name: '3 · hello.ts' }).focus();
   await page.keyboard.press('Home');
-  await expect(panel.getByRole('tab', { name: '1 · serverless.yml' })).toHaveAttribute('aria-selected', 'true');
+  await expect(panel.getByRole('tab', { name: '1 · tsconfig.json' })).toHaveAttribute('aria-selected', 'true');
   await page.keyboard.press('ArrowRight');
-  await expect(panel.getByRole('tab', { name: '2 · hello.js' })).toHaveAttribute('aria-selected', 'true');
+  await expect(panel.getByRole('tab', { name: '2 · serverless.yml' })).toHaveAttribute('aria-selected', 'true');
+  await page.keyboard.press('End');
+  await expect(panel.getByRole('tab', { name: '3 · hello.ts' })).toHaveAttribute('aria-selected', 'true');
   await page.keyboard.press('Escape');
   await expect(panel).not.toHaveClass(/maximized/);
   await page.screenshot({ path: `test-results/archivos-${info.project.name}.png`, fullPage: true });
   await page.reload();
-  await expect(panel.getByRole('tab', { name: '2 · hello.js' })).toHaveAttribute('aria-selected', 'true');
+  await expect(panel.getByRole('tab', { name: '3 · hello.ts' })).toHaveAttribute('aria-selected', 'true');
   expect(page.url()).toContain('#primer-serverless/construye');
 });
 
@@ -152,4 +154,19 @@ test('el reinicio exige confirmación y un estado dañado no deja la pantalla va
   await page.locator('#reset-progress').click();
   await expect(page).toHaveURL(/#primer-serverless\/destino$/);
   expect(await page.evaluate(() => Object.keys(state.quizzes).length)).toBe(0);
+});
+
+
+test('la revisión TypeScript requiere comprobar sus fases y conserva los registros antiguos', async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem('fcState', JSON.stringify({
+      lesson: 'primer-serverless', completedLessons: { 'primer-serverless': true },
+      phaseDone: Object.fromEntries(['destino','prepara','construye','prueba','entiende','modifica','comprueba','cierra'].map(id=>['primer-serverless/'+id,true])),
+      checks: { 'primer-serverless/archivos-listos/0': true }
+    }));
+  });
+  await page.goto('/#primer-serverless/destino');
+  await expect(page.locator('#progress-text')).toHaveText('0/10 bloques');
+  await expect(page.locator('.lesson-meta')).toContainText('0 / 8 fases completadas');
+  expect(await page.evaluate(()=>state.checks['primer-serverless/archivos-listos/0'])).toBe(true);
 });

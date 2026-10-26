@@ -1,16 +1,16 @@
 window.lesson01 = {
   "id": "primer-serverless",
   "navTitle": "01 · Primer Serverless",
-  "revision": 2,
+  "revision": 3,
   "hero": {
     "eyebrow": "BLOQUE 01 · BACKEND LOCAL · APRENDIZAJE ASISTIDO",
     "title": "Tu primera función Serverless",
-    "description": "Construye una función, invócala por HTTP y demuestra el recorrido de la petición.",
+    "description": "Construye un handler TypeScript tipado, compílalo e invócalo por HTTP.",
     "chips": [
+      "TypeScript",
       "Node 22",
       "Serverless Framework",
-      "HTTP",
-      "Sin despliegue AWS"
+      "HTTP"
     ]
   },
   "phases": [
@@ -24,8 +24,8 @@ window.lesson01 = {
           "type": "orientation",
           "id": "lee",
           "objective": "Recibir GET /dev/hello en tu ordenador y devolver un mensaje JSON con estado 200.",
-          "prior": "Node 22, npm, VS Code y Git Bash preparados en el <a href=\"#preparacion\">bloque 00 · Preparación</a>.",
-          "new": "Un servicio describe una ruta HTTP; un handler recibe la petición y devuelve la respuesta.",
+          "prior": "TypeScript ya trabajado en clase. Node 22, npm, VS Code y Git Bash preparados en el <a href=\"#preparacion\">bloque 00 · Preparación</a>.",
+          "new": "La entrada y salida de una Lambda HTTP, su compilación y la relación entre ruta, evento y handler.",
           "boundary": "Hoy ejecutas en local. Todavía no creas recursos en AWS ni una aplicación móvil.",
           "request": "GET http://localhost:3000/dev/hello",
           "response": "HTTP/1.1 200 OK\n\n{\n  \"message\": \"Festival Control API online\"\n}",
@@ -45,12 +45,20 @@ window.lesson01 = {
               "Declara la plataforma, el runtime, la función y la petición que la activa. Es configuración YAML."
             ],
             [
-              "src/hello.js",
-              "Contiene el handler: la función JavaScript que recibe event y prepara la respuesta."
+              "src/hello.ts",
+              "Escribes el handler en TypeScript. APIGatewayProxyEvent tipa la entrada y APIGatewayProxyResult la respuesta."
             ],
             [
               "serverless-offline",
               "Emula localmente la entrada HTTP y la ejecución. No crea una Lambda real."
+            ],
+            [
+              "tsconfig.json y tsc",
+              "Recuperamos el compilador que ya conoces: strict comprueba los tipos y outDir envía el código ejecutable a dist."
+            ],
+            [
+              "Código fuente y ejecución",
+              "Node ejecuta el JavaScript generado. Tú mantienes hello.ts; dist/hello.js se regenera con npm run build."
             ]
           ]
         },
@@ -62,10 +70,10 @@ window.lesson01 = {
             "Thunder o curl",
             "GET /dev/hello",
             "Offline + serverless.yml",
-            "src/hello.handler",
+            "dist/hello.handler",
             "200 + JSON"
           ],
-          "text": "Cliente → petición HTTP → función → respuesta. Cuando se ejecute, el console.log del handler aparecerá en la terminal del backend."
+          "text": "Antes de arrancar: src/hello.ts → tsc → dist/hello.js. Después: cliente → petición HTTP → handler compilado → respuesta. El console.log aparece en la terminal del backend."
         },
         {
           "type": "note",
@@ -87,7 +95,7 @@ window.lesson01 = {
           "label": "PREPARA EL EJERCICIO",
           "title": "Carpeta, proyecto y dependencias",
           "sideTitle": "La estructura que estamos construyendo",
-          "sideCode": "04-PILARES-SERVERLESS/\n└── backend/\n    ├── src/\n    │   └── hello.js       ← tu función\n    ├── package.json      ← proyecto Node y dependencias\n    ├── package-lock.json ← árbol de versiones de npm\n    ├── node_modules/     ← dependencias descargadas\n    └── serverless.yml    ← función y ruta HTTP",
+          "sideCode": "04-PILARES-SERVERLESS/\n└── backend/\n    ├── src/\n    │   └── hello.ts        ← código que escribes\n    ├── dist/              ← lo generará npm run build\n    │   ├── hello.js        ← JavaScript compilado; no lo edites\n    │   └── hello.js.map    ← mapa para depurar\n    ├── tsconfig.json      ← reglas del compilador\n    ├── package.json       ← dependencias y scripts\n    ├── package-lock.json  ← versiones npm\n    ├── node_modules/      ← paquetes descargados\n    └── serverless.yml     ← apunta a dist/hello.handler",
           "steps": [
             {
               "id": "carpeta",
@@ -112,11 +120,11 @@ window.lesson01 = {
             {
               "id": "npm",
               "shortTitle": "Node",
-              "title": "Crea package.json y activa módulos ESM",
-              "learn": "npm init registra el proyecto. type: module permite escribir import y export en archivos .js. npm no crea nuestro handler ni el YAML.",
+              "title": "Inicializa el proyecto y configura sus scripts",
+              "learn": "Recuperamos npm y los módulos ESM. package.json describe las herramientas del backend; los scripts separan comprobar tipos, compilar y arrancar.",
               "text": "Ejecuta desde backend. Este paso es para un proyecto nuevo; si package.json ya existe, léelo antes de reinicializarlo.",
-              "code": "npm init -y\nnpm pkg set type=module\ncat package.json",
-              "expected": "package.json existe y contiene \"type\": \"module\".",
+              "code": "npm init -y\nnpm pkg set type=module\nnpm pkg set \"scripts.typecheck=tsc --noEmit\"\nnpm pkg set \"scripts.build=tsc\"\nnpm pkg set \"scripts.start=npm run build && serverless offline\"\ncat package.json",
+              "expected": "package.json contiene type: module y los scripts typecheck, build y start. Todavía no los ejecutes: faltan tsconfig.json y hello.ts, que crearás en Construye.",
               "help": [
                 [
                   "npm no responde",
@@ -133,10 +141,10 @@ window.lesson01 = {
               "id": "dependencias",
               "shortTitle": "Dependencias",
               "title": "Instala las herramientas dentro del proyecto",
-              "learn": "--save-dev registra herramientas de desarrollo. --save-exact fija la versión npm. node_modules contiene los paquetes y package-lock.json registra su árbol. npx utiliza el ejecutable del proyecto.",
+              "learn": "Instalamos el Framework y Offline con el compilador TypeScript y los tipos de Node y Lambda. @types/aws-lambda sólo aporta declaraciones; no es un AWS SDK ni realiza peticiones.",
               "text": "No necesitas instalar Serverless globalmente. Desde backend:",
-              "code": "npm install --save-dev --save-exact serverless@4.45.0 serverless-offline@14.8.4\nnpm ls serverless serverless-offline\nnpx serverless --version",
-              "expected": "npm ls muestra serverless@4.45.0 y serverless-offline@14.8.4. El comando de versión responde. La primera ejecución puede descargar componentes adicionales.",
+              "code": "npm install --save-dev --save-exact serverless@4.45.0 serverless-offline@14.8.4 typescript@5.9.3 @types/aws-lambda@8.10.164 @types/node@22.20.5\nnpm ls serverless serverless-offline typescript @types/aws-lambda @types/node\nnpx tsc --version\nnpx serverless --version",
+              "expected": "npm ls muestra las versiones indicadas, tsc responde con 5.9.3 y el Framework muestra su versión. La primera ejecución puede descargar componentes adicionales.",
               "help": [
                 [
                   "Falla una descarga",
@@ -175,7 +183,7 @@ window.lesson01 = {
                   "No las añadimos al YAML de esta práctica; no utilizaremos las funciones del Dashboard."
                 ]
               ],
-              "check": "Entorno y acceso listos. La siguiente fase crea los dos archivos de nuestra función."
+              "check": "Entorno y acceso listos. La siguiente fase crea la configuración del compilador, el YAML y el handler TypeScript."
             }
           ]
         },
@@ -185,7 +193,7 @@ window.lesson01 = {
           "title": "STOP · antes de construir",
           "items": [
             "Estoy dentro de backend y puedo localizar src/.",
-            "package.json contiene type: module.",
+            "package.json contiene type: module y los scripts typecheck, build y start.",
             "Las dos dependencias aparecen con npm ls y el acceso del Framework está resuelto."
           ]
         }
@@ -194,18 +202,45 @@ window.lesson01 = {
     {
       "id": "construye",
       "navTitle": "Construye",
-      "title": "Crea dos archivos y relaciona sus responsabilidades",
-      "description": "Empieza por la configuración. Después crea la función a la que apunta. Cada pestaña contiene un archivo completo.",
+      "title": "Conecta configuración, TypeScript y código ejecutable",
+      "description": "Crea tsconfig.json, declara la ruta del handler compilado y escribe el código TypeScript. Cada pestaña contiene un archivo completo.",
       "sections": [
         {
           "type": "fileLab",
           "id": "archivos",
           "label": "CONSTRUYE · ARCHIVOS COMPLETOS",
-          "title": "Configuración y código, uno junto al otro",
+          "title": "Tres archivos con responsabilidades distintas",
           "intro": "Lee primero las instrucciones y la sintaxis de cada archivo. Créalo en la ruta indicada y copia su contenido completo. El modo maximizado se mantiene al cambiar de archivo.",
           "tabs": [
             {
-              "title": "1 · serverless.yml",
+              "title": "1 · tsconfig.json",
+              "filename": "tsconfig.json",
+              "path": "backend/tsconfig.json",
+              "responsibility": "Comprueba TypeScript en modo estricto y genera JavaScript ejecutable en dist.",
+              "instruction": "Recuperamos la configuración TypeScript. Crea tsconfig.json en backend, al nivel de package.json. Configuramos el proyecto; no estamos empezando otro curso de tipos.",
+              "learn": [
+                [
+                  "strict: true",
+                  "Activa comprobaciones estrictas, incluyendo los tipos de los parámetros."
+                ],
+                [
+                  "module / moduleResolution: NodeNext",
+                  "Alinea importaciones y salida con los módulos de Node y type: module."
+                ],
+                [
+                  "rootDir: src / outDir: dist",
+                  "Separa código fuente TypeScript y artefactos generados. No edites dist a mano."
+                ],
+                [
+                  "include",
+                  "Compila los .ts de src. typecheck utiliza la misma configuración sin emitir archivos."
+                ]
+              ],
+              "code": "{\n  \"compilerOptions\": {\n    \"target\": \"ES2022\",\n    \"module\": \"NodeNext\",\n    \"moduleResolution\": \"NodeNext\",\n    \"strict\": true,\n    \"rootDir\": \"src\",\n    \"outDir\": \"dist\",\n    \"types\": [\n      \"node\"\n    ],\n    \"sourceMap\": true\n  },\n  \"include\": [\n    \"src/**/*.ts\"\n  ]\n}",
+              "stop": "Después crea serverless.yml, que apuntará al handler generado en dist."
+            },
+            {
+              "title": "2 · serverless.yml",
               "filename": "serverless.yml",
               "path": "backend/serverless.yml",
               "responsibility": "Relaciona una ruta HTTP con la función que se ejecutará.",
@@ -228,47 +263,51 @@ window.lesson01 = {
                   "hello es el nombre lógico de esta función."
                 ],
                 [
-                  "handler: src/hello.handler",
-                  "src/hello identifica el archivo .js; lo que va detrás del punto identifica la función exportada."
+                  "handler: dist/hello.handler",
+                  "dist/hello identifica el archivo generado dist/hello.js; después del punto está la exportación handler. El código fuente que mantienes está en src/hello.ts."
                 ],
                 [
                   "events / http / path / method",
                   "GET /hello activa la función. Offline añadirá normalmente el stage /dev."
                 ]
               ],
-              "code": "service: festival-control-api\n\n# Conservamos la línea del Framework preparada para la práctica.\nframeworkVersion: ~4.45.0\n\nprovider:\n  name: aws\n  runtime: nodejs22.x\n\nplugins:\n  - serverless-offline\n\nfunctions:\n  hello:\n    # Archivo src/hello.js y función exportada handler.\n    handler: src/hello.handler\n    events:\n      - http:\n          path: hello\n          method: get",
-              "stop": "Comprueba los espacios de indentación. YAML utiliza espacios, no tabulaciones. Después crea hello.js en la siguiente pestaña."
+              "code": "service: festival-control-api\n\n# Conservamos la línea del Framework preparada para la práctica.\nframeworkVersion: ~4.45.0\n\nprovider:\n  name: aws\n  runtime: nodejs22.x\n\nplugins:\n  - serverless-offline\n\nfunctions:\n  hello:\n    # Ejecuta dist/hello.js, generado desde src/hello.ts.\n    handler: dist/hello.handler\n    events:\n      - http:\n          path: hello\n          method: get",
+              "stop": "Comprueba los espacios de indentación. YAML utiliza espacios, no tabulaciones. Después crea hello.ts en la siguiente pestaña."
             },
             {
-              "title": "2 · hello.js",
-              "filename": "hello.js",
-              "path": "backend/src/hello.js",
+              "title": "3 · hello.ts",
+              "filename": "hello.ts",
+              "path": "backend/src/hello.ts",
               "responsibility": "Recibe el evento de la petición, deja un log y devuelve estado HTTP y contenido JSON.",
-              "instruction": "En el Explorador, selecciona backend/src → Nuevo archivo → hello.js. Guarda con Ctrl+S después de copiar. No lo crees junto a package.json.",
+              "instruction": "En el Explorador, selecciona backend/src → Nuevo archivo → hello.ts. Guarda con Ctrl+S después de copiar. No lo crees junto a package.json.",
               "learn": [
                 [
-                  "export const handler",
-                  "Exporta la función con el nombre que espera el YAML."
+                  "import type",
+                  "Recuperamos una importación sólo de tipos: no genera un import en el JavaScript compilado."
                 ],
                 [
-                  "async (event) =>",
-                  "La función puede trabajar de forma asíncrona. event reúne los datos de esta invocación."
+                  "APIGatewayProxyEvent",
+                  "Tipo del evento recibido por una integración Lambda proxy REST de API Gateway. Corresponde al evento http que declaramos en el YAML."
+                ],
+                [
+                  "Promise<APIGatewayProxyResult>",
+                  "La función asíncrona promete devolver una respuesta con statusCode y body. El compilador revisa ese contrato."
+                ],
+                [
+                  "export const handler",
+                  "Exporta la función que cargará Offline desde dist/hello.js tras compilar."
                 ],
                 [
                   "console.log",
-                  "Deja evidencia en la terminal; no es el cuerpo de la respuesta HTTP."
-                ],
-                [
-                  "statusCode: 200",
-                  "Indica al cliente que la operación fue correcta."
+                  "Deja evidencia en la terminal del backend. No es la respuesta HTTP."
                 ],
                 [
                   "JSON.stringify(...)",
-                  "Convierte nuestro objeto JavaScript en el texto JSON que viajará en body."
+                  "Convierte el objeto de respuesta en texto JSON para body."
                 ]
               ],
-              "code": "export const handler = async (event) => {\n  // Evidencia: esta petición llegó a nuestra función.\n  console.log('EVENT RECIBIDO:', event);\n\n  return {\n    statusCode: 200,\n    body: JSON.stringify({\n      message: 'Festival Control API online'\n    })\n  };\n};",
-              "stop": "Guarda ambos archivos. Antes de arrancar, compara tus carpetas con el árbol de la fase Prepara."
+              "code": "import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';\n\nexport const handler = async (\n  event: APIGatewayProxyEvent\n): Promise<APIGatewayProxyResult> => {\n  // Evidencia: esta petición llegó a nuestra función.\n  console.log('EVENT RECIBIDO:', event);\n\n  return {\n    statusCode: 200,\n    body: JSON.stringify({\n      message: 'Festival Control API online'\n    })\n  };\n};",
+              "stop": "Guarda los tres archivos. La siguiente fase ejecuta typecheck y build antes de arrancar el servidor."
             }
           ]
         },
@@ -277,9 +316,9 @@ window.lesson01 = {
           "id": "archivos-listos",
           "title": "STOP · antes de ejecutar",
           "items": [
-            "serverless.yml está en backend, al nivel de package.json.",
-            "hello.js está dentro de backend/src y exporta handler.",
-            "El handler del YAML es src/hello.handler y ambos archivos están guardados."
+            "tsconfig.json y serverless.yml están en backend, al nivel de package.json.",
+            "src/hello.ts exporta handler y tipa su entrada y respuesta.",
+            "El YAML apunta a dist/hello.handler; no he creado ni editado dist a mano."
           ]
         }
       ]
@@ -288,7 +327,7 @@ window.lesson01 = {
       "id": "prueba",
       "navTitle": "Prueba",
       "title": "Demuestra el backend con dos clientes",
-      "description": "Una terminal mantiene el servidor. La otra permite probarlo. Comprueba tanto la respuesta como el log.",
+      "description": "Comprueba los tipos, compila y deja el servidor en una terminal. La otra permite probarlo.",
       "sections": [
         {
           "type": "wizard",
@@ -299,12 +338,20 @@ window.lesson01 = {
             {
               "id": "offline",
               "shortTitle": "1 · Servidor",
-              "title": "Arranca Offline en la terminal del backend",
-              "learn": "El servidor debe seguir ejecutándose mientras haces peticiones. Esta terminal será la consola de la función.",
+              "title": "Comprueba, compila y arranca Offline",
+              "learn": "npm run typecheck comprueba los tipos sin emitir. npm start ejecuta build primero y sólo arranca Offline si compilar termina bien. dist/hello.js es un artefacto, no el código fuente del alumno.",
               "text": "En VS Code abre una terminal Git Bash y ejecuta:",
-              "code": "cd /d/DEVOPS/04-PILARES-SERVERLESS/backend\nnpx serverless offline",
-              "expected": "La terminal muestra una ruta GET, normalmente http://localhost:3000/dev/hello. Conserva la URL exacta que anuncie TU proceso.",
+              "code": "cd /d/DEVOPS/04-PILARES-SERVERLESS/backend\nnpm run typecheck\nnpm start",
+              "expected": "TypeScript termina sin errores, aparece dist/hello.js y Offline anuncia GET, normalmente en http://localhost:3000/dev/hello. Conserva la URL exacta del proceso.",
               "help": [
+                [
+                  "Error de TypeScript",
+                  "Lee la línea indicada en src/hello.ts y corrige el contrato antes de arrancar. Comprueba que existe tsconfig.json y que instalaste los tipos."
+                ],
+                [
+                  "No encuentra dist/hello",
+                  "Ejecuta npm run build desde backend y comprueba que genera dist/hello.js. El YAML apunta al archivo compilado, no al .ts."
+                ],
                 [
                   "No encuentra el plugin",
                   "Revisa npm ls serverless-offline y plugins en el YAML."
@@ -407,12 +454,16 @@ window.lesson01 = {
               "La configuración asocia esa petición con functions.hello."
             ],
             [
-              "handler: src/hello.handler",
-              "Offline carga src/hello.js y busca su exportación handler."
+              "npm run typecheck / npm run build",
+              "El primer comando comprueba el contrato; el segundo emite dist/hello.js. Los tipos ayudan durante el desarrollo, pero no viajan como validación automática del JSON."
             ],
             [
-              "event",
-              "Es la entrada de esta invocación. Puedes inspeccionarla en EVENT RECIBIDO; no es una variable compartida por todas las peticiones."
+              "handler: dist/hello.handler",
+              "Offline carga dist/hello.js, generado desde src/hello.ts, y busca la exportación handler."
+            ],
+            [
+              "event: APIGatewayProxyEvent",
+              "Tipa los datos de esta invocación REST. El tipo aporta comprobación estática; más adelante validaremos los valores que llegan por HTTP."
             ],
             [
               "console.log(...)",
@@ -424,7 +475,7 @@ window.lesson01 = {
             ],
             [
               "JSON.stringify({ message: ... })",
-              "El objeto JavaScript se transforma en texto JSON; Thunder o curl muestran ese contenido."
+              "El objeto se transforma en texto JSON; Thunder o curl muestran ese contenido."
             ]
           ]
         },
@@ -454,10 +505,10 @@ window.lesson01 = {
           "id": "cambio-message",
           "title": "Identifica tu servicio en la respuesta",
           "steps": [
-            "Abre backend/src/hello.js.",
+            "Abre backend/src/hello.ts.",
             "Cambia message por Festival Control · equipo preparado y añade service: hello dentro del objeto de JSON.stringify.",
-            "Conserva export const handler, el log y statusCode: 200. No cambies serverless.yml.",
-            "Guarda. Detén Offline con Ctrl+C y vuelve a ejecutar npx serverless offline para cargar el cambio de forma explícita.",
+            "Conserva los tipos APIGatewayProxyEvent y APIGatewayProxyResult, el log y statusCode: 200. No cambies serverless.yml.",
+            "Guarda src/hello.ts. Detén Offline con Ctrl+C y ejecuta npm run typecheck y npm start: este último recompila antes de arrancar. No edites dist/hello.js.",
             "Repite la MISMA URL en Thunder y curl. Observa un log nuevo y el nuevo JSON."
           ],
           "expected": "HTTP 200\n\n{\n  \"message\": \"Festival Control · equipo preparado\",\n  \"service\": \"hello\"\n}",
@@ -467,22 +518,26 @@ window.lesson01 = {
           "type": "fileLab",
           "id": "solucion-guiada",
           "label": "CONTRASTA TU MODIFICACIÓN",
-          "title": "hello.js completo después del cambio",
+          "title": "hello.ts completo después del cambio",
           "intro": "Haz primero la modificación en tu editor. Utiliza este archivo completo para contrastar el resultado o recuperarte si aparece un error.",
           "tabs": [
             {
-              "title": "hello.js modificado",
-              "filename": "hello.js",
-              "path": "backend/src/hello.js",
+              "title": "hello.ts modificado",
+              "filename": "hello.ts",
+              "path": "backend/src/hello.ts",
               "responsibility": "Devuelve la identificación del servicio conservando el contrato de la función.",
-              "instruction": "Este archivo sustituye al hello.js inicial. El YAML se conserva. Puedes mantener este cambio al pasar al bloque 02.",
+              "instruction": "Este archivo sustituye al hello.ts inicial. El YAML se conserva. Puedes mantener este cambio al pasar al bloque 02.",
               "learn": [
                 [
-                  "message y service",
-                  "Son propiedades del objeto que se convierte en JSON. No definen rutas ni funciones nuevas."
+                  "Contrato tipado",
+                  "Se mantienen el tipo de evento y el resultado HTTP. Cambias el objeto que se convierte en body."
+                ],
+                [
+                  "Compilar de nuevo",
+                  "npm start vuelve a generar dist. Sin recompilar, podrías seguir ejecutando la respuesta anterior."
                 ]
               ],
-              "code": "export const handler = async (event) => {\n  // Evidencia: esta petición llegó a nuestra función.\n  console.log('EVENT RECIBIDO:', event);\n\n  return {\n    statusCode: 200,\n    body: JSON.stringify({\n      message: 'Festival Control · equipo preparado',\n      service: 'hello'\n    })\n  };\n};",
+              "code": "import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';\n\nexport const handler = async (\n  event: APIGatewayProxyEvent\n): Promise<APIGatewayProxyResult> => {\n  // Evidencia: esta petición llegó a nuestra función.\n  console.log('EVENT RECIBIDO:', event);\n\n  return {\n    statusCode: 200,\n    body: JSON.stringify({\n      message: 'Festival Control · equipo preparado',\n      service: 'hello'\n    })\n  };\n};",
               "stop": "Comprueba una respuesta 200 con ambos campos. Si ves el texto anterior, confirma que guardaste el archivo y reiniciaste el proceso correcto."
             }
           ]
@@ -508,15 +563,15 @@ window.lesson01 = {
         {
           "type": "quiz",
           "id": "pregunta-handler",
-          "question": "El YAML contiene handler: src/hello.handler. ¿Qué debe existir?",
+          "question": "El YAML contiene handler: dist/hello.handler. ¿Qué debe existir al arrancar Offline?",
           "options": [
             "Un archivo llamado handler dentro de src/hello/.",
-            "El archivo src/hello.js que exporta una función llamada handler.",
+            "dist/hello.js generado desde src/hello.ts, con una exportación llamada handler.",
             "Una función llamada hello dentro de serverless.yml.",
             "Un recurso Lambda ya desplegado en AWS."
           ],
           "correct": 1,
-          "explanation": "Antes del punto está el módulo src/hello; después está la exportación handler. El archivo y el nombre de la función deben coincidir con esa declaración."
+          "explanation": "Mantienes src/hello.ts. npm start ejecuta tsc y genera dist/hello.js; Offline carga ese módulo y su exportación handler. El YAML referencia el código ejecutable."
         },
         {
           "type": "quiz",
@@ -557,7 +612,7 @@ window.lesson01 = {
           "id": "cierre-listo",
           "title": "He aprendido y puedo demostrarlo",
           "items": [
-            "Localizo la relación entre serverless.yml y src/hello.js.",
+            "Localizo el recorrido src/hello.ts → tsc → dist/hello.js → handler.",
             "Puedo repetir GET con Thunder y curl y relacionarlo con un log nuevo.",
             "He comprobado la modificación sin cambiar la ruta.",
             "He guardado el proyecto, una evidencia y he verificado el commit en mi repositorio GitHub."
@@ -582,7 +637,7 @@ window.lesson01 = {
                   "Guarda una captura o salida de la petición y el log que permita relacionar ambas cosas."
                 ]
               ],
-              "code": "# Festival Control · Bloque 01\n\n## Qué he construido\n[Describe la función y la ruta local que has probado.]\n\n## Qué he comprendido\n[Explica src/hello.handler y dónde aparece EVENT RECIBIDO.]\n\n## Qué he modificado\n[Explica qué cambió en el JSON y por qué no cambió la URL.]\n\n## Cómo lo he comprobado\n[Indica resultado de Thunder, curl y log. Adjunta una evidencia propia.]",
+              "code": "# Festival Control · Bloque 01\n\n## Qué he construido\n[Describe la función y la ruta local que has probado.]\n\n## Qué he comprendido\n[Explica los tipos del handler, la compilación y dónde aparece EVENT RECIBIDO.]\n\n## Qué he modificado\n[Explica qué cambió en el JSON y por qué no cambió la URL.]\n\n## Cómo lo he comprobado\n[Indica resultado de Thunder, curl y log. Adjunta una evidencia propia.]",
               "stop": "El README cuenta lo que tú has comprobado; no copies resultados como si ya los hubieras obtenido."
             },
             {
@@ -599,9 +654,13 @@ window.lesson01 = {
                 [
                   "package-lock.json",
                   "Sí se conserva: describe las versiones instaladas."
+                ],
+                [
+                  "dist",
+                  "Se regenera con npm run build; conserva el .ts y tsconfig.json, no el JavaScript generado."
                 ]
               ],
-              "code": "backend/node_modules/\nbackend/.serverless/\nbackend/.env\nbackend/.env.*\n.aws/\n.DS_Store",
+              "code": "backend/node_modules/\nbackend/dist/\nbackend/.serverless/\nbackend/.env\nbackend/.env.*\n.aws/\n.DS_Store",
               "stop": "Comprueba git status antes de crear el commit. Las credenciales no deben estar dentro del proyecto."
             }
           ]
@@ -639,7 +698,7 @@ window.lesson01 = {
               "learn": "Un commit es un punto recuperable del proyecto. La identidad se configura aquí sólo para este repositorio, no para otros alumnos del equipo.",
               "text": "Ejecuta desde la raíz del alumno. Cambia los textos de nombre y correo por tu identidad de autor de GitHub. git init conserva un repositorio existente; si git status muestra trabajo ajeno a esta práctica, detente y revisa la carpeta.",
               "code": "cd /d/DEVOPS/04-PILARES-SERVERLESS\ngit init\ngit config user.name \"TU NOMBRE Y APELLIDOS\"\ngit config user.email \"TU CORREO DE AUTOR EN GITHUB\"\ngit status\n\n# Revisa que .gitignore existe antes de añadir archivos\ngit add .gitignore README.md backend/\ngit diff --cached --stat\ngit commit -m \"Bloque 01 - Primera funcion Serverless local\"",
-              "expected": "El commit incluye código, configuración, package.json, package-lock.json y README; no incluye node_modules, .serverless ni secretos.",
+              "expected": "El commit incluye hello.ts, tsconfig.json, serverless.yml, package.json, package-lock.json y README; no incluye dist, node_modules, .serverless ni secretos.",
               "help": [
                 [
                   "Aparece node_modules en el resumen",
@@ -682,7 +741,7 @@ window.lesson01 = {
           "type": "note",
           "id": "siguiente",
           "title": "Siguiente · 02 · GET + parámetros",
-          "text": "Conservarás backend, package.json, las dependencias y el handler hello. En el bloque 02 añadirás otra función para observar cómo un id de la URL llega a event.pathParameters. Puedes mantener el hello.js modificado: su ruta sigue siendo /hello."
+          "text": "Conserva backend, sus scripts, tsconfig.json y el handler TypeScript. En la revisión del bloque 02 continuaremos con este entorno para observar cómo un id de la URL llega al evento. Puedes mantener hello.ts modificado: su ruta sigue siendo /hello."
         }
       ]
     }

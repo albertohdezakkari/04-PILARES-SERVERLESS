@@ -14,7 +14,7 @@ La web docente se publica mediante GitHub Pages. El proyecto que construye el al
 
 El bloque **00 · Preparación** guía la descarga e instalación de Git/Git Bash, Node 22, VS Code, la carpeta del alumno, el perfil Git Bash de la terminal integrada, Thunder Client y AWS CLI v2. Cada paso incluye resultado esperado, diagnóstico y checkpoint. Requiere Windows ya instalado, Internet y los permisos del aula; si falta D: se acuerda la ruta con el profesor.
 
-El bloque **01 · Primer Serverless** instala `serverless@4.45.0` y `serverless-offline@14.8.4` localmente, configura módulos ESM y explica la autenticación del Framework, independiente de AWS Academy. Las credenciales de Academy se preparan al trabajar el despliegue.
+El bloque **01 · Primer Serverless** instala `serverless@4.45.0` y `serverless-offline@14.8.4` localmente, configura TypeScript estricto, compilación y módulos ESM, y explica la autenticación del Framework, independiente de AWS Academy. Las credenciales de Academy se preparan al trabajar el despliegue.
 
 Verificación del 26/10/2026: sintaxis JavaScript, recorrido de los nueve pasos, diagnósticos, pestañas maximizadas, navegación y vista móvil comprobados en Chromium. Paquetes instalados y versión de Serverless comprobados con Node 22 en macOS. Los asistentes de instalación de Windows y el inicio de sesión del alumno requieren validación en el ordenador del aula.
 
@@ -22,7 +22,7 @@ Verificación del 26/10/2026: sintaxis JavaScript, recorrido de los nueve pasos,
 
 [Empezar el bloque 01](https://albertohdezakkari.github.io/04-PILARES-SERVERLESS/#primer-serverless/destino).
 
-El bloque se organiza en **Destino → Prepara → Construye → Prueba → Entiende → Modifica → Comprueba → Cierra**. Cada fase tiene enlace propio y navegación inferior. Los archivos completos muestran ruta, responsabilidad y explicación, con copia y modo maximizado. Incluye modificación guiada del handler, tres preguntas formativas, README, gitignore y punto de recuperación en GitHub.
+El bloque se organiza en **Destino → Prepara → Construye → Prueba → Entiende → Modifica → Comprueba → Cierra**. Cada fase tiene enlace propio y navegación inferior. Los archivos completos muestran ruta, responsabilidad y explicación, con copia y modo maximizado. Incluye modificación guiada del handler TypeScript, tres preguntas formativas, README, gitignore y punto de recuperación en GitHub.
 
 El navegador conserva fase actual, pasos comprobados, casillas y respuestas. El progreso global cuenta **bloques asistidos completados de los diez existentes**; los pasos internos del 01 se muestran aparte. La evaluación sigue siendo únicamente Venue Control. Las comprobaciones son declaraciones del alumno: la web docente no ejecuta su proyecto ni valida automáticamente Windows, sus cuentas o su backend.
 
@@ -44,4 +44,12 @@ npm run preview
 
 La previsualización abre un servidor local en `http://127.0.0.1:4184`. Las pruebas usan otro puerto, 4185. La web publicada sigue siendo HTML/CSS/JS estáticos; GitHub Pages no necesita instalar estas herramientas.
 
-Las comprobaciones incluyen sintaxis, ejecución directa del handler inicial y modificado, recorrido completo de las fases, persistencia, recuperación de estado, preguntas y reintentos, copia, teclado, modo maximizado, navegación de los demás bloques y lectura sin desbordamiento horizontal a 320, 390 y 1440 px. Los perfiles móviles son emulación de Chromium, no una certificación en dispositivos físicos. GitHub Actions ejecuta la misma verificación.
+Las comprobaciones incluyen sintaxis, comprobación de tipos, compilación y ejecución del handler TypeScript inicial y modificado, recorrido completo de las fases, persistencia, recuperación de estado, preguntas y reintentos, copia, teclado, modo maximizado, navegación de los demás bloques y lectura sin desbordamiento horizontal a 320, 390 y 1440 px. Los perfiles móviles son emulación de Chromium, no una certificación en dispositivos físicos. GitHub Actions ejecuta la misma verificación.
+
+## TypeScript es el lenguaje de partida
+
+El alumnado ya utiliza TypeScript. El bloque 01 recupera ese conocimiento: `src/hello.ts` tipa la entrada REST con `APIGatewayProxyEvent` y la respuesta con `APIGatewayProxyResult`. `@types/aws-lambda` aporta declaraciones y no instala un SDK de AWS.
+
+El proyecto del alumno incorpora `tsconfig.json` estricto y tres scripts: `typecheck` comprueba sin emitir, `build` genera `dist/hello.js` y `start` compila antes de ejecutar Offline. El YAML apunta a `dist/hello.handler`. El JavaScript generado no se edita ni se versiona. Los siguientes bloques se adaptarán al mismo entorno durante su revisión didáctica.
+
+La revisión TypeScript del bloque 01 registra comprobaciones propias. Los registros anteriores se conservan, pero no dan por comprobado automáticamente el contenido adaptado.
