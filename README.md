@@ -17,3 +17,31 @@ El bloque **00 · Preparación** guía la descarga e instalación de Git/Git Bas
 El bloque **01 · Primer Serverless** instala `serverless@4.45.0` y `serverless-offline@14.8.4` localmente, configura módulos ESM y explica la autenticación del Framework, independiente de AWS Academy. Las credenciales de Academy se preparan al trabajar el despliegue.
 
 Verificación del 26/10/2026: sintaxis JavaScript, recorrido de los nueve pasos, diagnósticos, pestañas maximizadas, navegación y vista móvil comprobados en Chromium. Paquetes instalados y versión de Serverless comprobados con Node 22 en macOS. Los asistentes de instalación de Windows y el inicio de sesión del alumno requieren validación en el ordenador del aula.
+
+## Bloque 01 · recorrido didáctico por fases
+
+[Empezar el bloque 01](https://albertohdezakkari.github.io/04-PILARES-SERVERLESS/#primer-serverless/destino).
+
+El bloque se organiza en **Destino → Prepara → Construye → Prueba → Entiende → Modifica → Comprueba → Cierra**. Cada fase tiene enlace propio y navegación inferior. Los archivos completos muestran ruta, responsabilidad y explicación, con copia y modo maximizado. Incluye modificación guiada del handler, tres preguntas formativas, README, gitignore y punto de recuperación en GitHub.
+
+El navegador conserva fase actual, pasos comprobados, casillas y respuestas. El progreso global cuenta **bloques asistidos completados de los diez existentes**; los pasos internos del 01 se muestran aparte. La evaluación sigue siendo únicamente Venue Control. Las comprobaciones son declaraciones del alumno: la web docente no ejecuta su proyecto ni valida automáticamente Windows, sus cuentas o su backend.
+
+La modificación guiada puede conservarse al pasar al bloque 02: mantiene GET /hello y su handler. El siguiente bloque añadirá una función diferente.
+
+## Verificar esta web docente (mantenimiento)
+
+El package.json de este repositorio sólo contiene herramientas de prueba de la web. No es el package.json del backend que construye el alumno en su workspace.
+
+Con Node 22:
+
+```bash
+npm ci
+npx playwright install chromium
+npm run check
+npm test
+npm run preview
+```
+
+La previsualización abre un servidor local en `http://127.0.0.1:4184`. Las pruebas usan otro puerto, 4185. La web publicada sigue siendo HTML/CSS/JS estáticos; GitHub Pages no necesita instalar estas herramientas.
+
+Las comprobaciones incluyen sintaxis, ejecución directa del handler inicial y modificado, recorrido completo de las fases, persistencia, recuperación de estado, preguntas y reintentos, copia, teclado, modo maximizado, navegación de los demás bloques y lectura sin desbordamiento horizontal a 320, 390 y 1440 px. Los perfiles móviles son emulación de Chromium, no una certificación en dispositivos físicos. GitHub Actions ejecuta la misma verificación.
