@@ -53,3 +53,7 @@ El alumnado ya utiliza TypeScript. El bloque 01 recupera ese conocimiento: `src/
 El proyecto del alumno incorpora `tsconfig.json` estricto y tres scripts: `typecheck` comprueba sin emitir, `build` genera `dist/hello.js` y `start` compila antes de ejecutar Offline. El YAML apunta a `dist/hello.handler`. El JavaScript generado no se edita ni se versiona. Los siguientes bloques se adaptarán al mismo entorno durante su revisión didáctica.
 
 La revisión TypeScript del bloque 01 registra comprobaciones propias. Los registros anteriores se conservan, pero no dan por comprobado automáticamente el contenido adaptado.
+
+## Revisión eficiente por lotes
+
+El [protocolo de revisión](docs/REVISION-POR-LOTES.md) fija el patrón del bloque 01 como referencia validable, una matriz de continuidad y los criterios de aceptación. `npm run audit` inventaría todos los bloques; `npm run verify` comprueba la referencia y ejecuta las pruebas en una pasada. El informe estructural conserva por separado la revisión pedagógica y la validación del entorno real.

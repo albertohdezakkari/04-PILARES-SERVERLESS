@@ -2,6 +2,8 @@ window.lesson01 = {
   "id": "primer-serverless",
   "navTitle": "01 · Primer Serverless",
   "revision": 3,
+  "modeLabel": "Práctica local · sin nota",
+  "completionText": "Has registrado las ocho fases, las comprobaciones y las preguntas. Conserva el proyecto TypeScript y sus evidencias para continuar.",
   "hero": {
     "eyebrow": "BLOQUE 01 · BACKEND LOCAL · APRENDIZAJE ASISTIDO",
     "title": "Tu primera función Serverless",

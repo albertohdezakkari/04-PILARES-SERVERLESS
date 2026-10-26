@@ -60,3 +60,31 @@ test('los handlers TypeScript se comprueban, compilan y devuelven el contrato do
     fs.rmSync(project, { recursive: true, force: true });
   }
 });
+
+
+test('el contrato por lotes detecta omisiones sin convertirlas en aprobaciones pedagógicas', () => {
+  const { auditLesson, auditAll } = require('../scripts/audit-lessons.cjs');
+  assert.equal(auditLesson(lesson).missing.length, 0);
+  for (const [type, criterion] of [['guidedChange', 'modificacion-guiada'], ['explainRows', 'entiende'], ['quiz', 'comprension-formativa']]) {
+    const changed = JSON.parse(JSON.stringify(lesson));
+    for (const phase of changed.phases) phase.sections = phase.sections.filter(section => section.type !== type);
+    assert(auditLesson(changed).missing.includes(criterion));
+  }
+  const changed = JSON.parse(JSON.stringify(lesson));
+  changed.phases.find(phase => phase.id === 'construye').sections[0].tabs.find(file => file.filename === 'hello.ts').filename = 'hello.js';
+  assert(auditLesson(changed).missing.includes('typescript'));
+  const training = JSON.parse(JSON.stringify(context.window.lessonTraining));
+  training.sections.push({ type: 'fileLab', tabs: [] });
+  assert(auditLesson(training).missing.includes('sin-receta'));
+  const result = auditAll();
+  assert.equal(result.length, 11);
+  assert(result.find(block => block.id === 'get').missing.includes('recorrido-por-fases'));
+  assert(result.every(block => block.status !== 'PEDAGOGÍA VALIDADA'));
+});
+
+test('el contrato estricto falla ante un bloque pendiente o inexistente', () => {
+  for (const id of ['get', 'bloque-inexistente']) {
+    const result = spawnSync(process.execPath, ['scripts/audit-lessons.cjs', '--strict', id], { encoding: 'utf8' });
+    assert.equal(result.status, 1);
+  }
+});

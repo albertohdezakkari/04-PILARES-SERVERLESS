@@ -2,11 +2,14 @@
   "name": "cuaderno-04-pilares-serverless",
   "version": "1.0.0",
   "private": true,
-  "description": "Herramientas de verificación de la web docente; no es el proyecto backend del alumno.",
+  "description": "Herramientas de verificaci\u00f3n de la web docente; no es el proyecto backend del alumno.",
   "scripts": {
     "preview": "node scripts/serve.mjs",
     "check": "node --check app.js && node --test tests/content.test.cjs",
-    "test": "playwright test"
+    "test": "playwright test",
+    "audit": "node scripts/audit-lessons.cjs",
+    "audit:reference": "node scripts/audit-lessons.cjs --strict primer-serverless",
+    "verify": "npm run audit:reference && npm run check && npm test"
   },
   "engines": {
     "node": ">=22"
