@@ -1,27 +1,460 @@
-window.lesson06={id:"rn-get",navTitle:"06 · RN consume GET",hero:{eyebrow:"BLOQUE 06 · PRIMERA CONEXIÓN FULL STACK",title:"React Native habla con Serverless",description:"Sustituimos los eventos locales por GET /events. Thunder Client y React Native se convierten en dos clientes de la misma API.",chips:["fetch","GET","useState","useEffect","loading","error","LAN","Serverless Offline"]},sections:[
-{type:"flow",title:"Recorrido del bloque",items:["Mapa objetivo","fetch","useEffect","IP local","api.js","App.js","Offline","Thunder","React Native","Diagnóstico"]},
-{type:"code",label:"ANTES DE EMPEZAR · MIRA EL DESTINO",title:"Añadiremos una pequeña capa API en mobile",filename:"Workspace",text:"No mezclaremos la URL del backend por toda la interfaz. Creamos src/api.js para centralizar la comunicación.",code:"04-PILARES-SERVERLESS\\\n├── backend\\\n│   └── ...                   ← npx serverless offline\n│\n└── mobile\\\n    ├── src\\                ← NUEVO\n    │   └── api.js            ← NUEVO · comunicación HTTP\n    ├── App.js               ← LO MODIFICAREMOS\n    └── ..."},
-{type:"tabs",label:"ANTES DE FETCH",title:"Conceptos nuevos que necesita el cliente",tabs:[
-{title:"fetch",text:"fetch realiza una petición HTTP desde JavaScript. No crea una API: consume la API que ya hemos probado con Thunder Client y curl."},
-{title:"await",text:"La petición tarda un tiempo. await permite esperar el resultado dentro de una función async antes de continuar."},
-{title:"response.json()",text:"La respuesta HTTP contiene un body JSON. response.json() lo convierte en datos JavaScript utilizables por la interfaz."},
-{title:"useState",text:"Guardaremos tres estados: events para datos, loading para indicar espera y error para mostrar un fallo."},
-{title:"useEffect",text:"useEffect permite ejecutar una acción cuando se monta la pantalla. Lo utilizaremos para cargar la programación una vez al abrir la app."},
-{title:"localhost",text:"Punto crítico: si React Native se ejecuta en un dispositivo físico, localhost apunta AL MÓVIL, no al PC. Necesitaremos la IP local del equipo que ejecuta serverless-offline.",note:"Éste será uno de los diagnósticos principales del bloque."}
-]},
-{type:"wizard",label:"PREPARA LA CONEXIÓN",title:"Backend primero, red después",steps:[
-{shortTitle:"Backend",title:"Demuestra que GET sigue funcionando",learn:"Nunca depuramos React Native contra un backend que no hemos comprobado.",text:"Arranca backend y prueba GET /events con Thunder Client.",code:"# TERMINAL BACKEND\ncd /d/DEVOPS/04-PILARES-SERVERLESS/backend\nnpx serverless offline",expected:"Thunder Client recibe 200 y la lista de dos eventos.",help:[["Thunder falla","Resuelve backend antes de tocar mobile."],["Ruta","Utiliza exactamente la URL anunciada por Offline."]],check:"GET /events ✓ en Thunder."},
-{shortTitle:"IP",title:"Identifica la dirección del PC para el móvil",learn:"Un dispositivo físico necesita alcanzar el servidor que corre en el PC a través de la red local.",text:"En Windows puedes consultar la configuración de red. Busca la IPv4 del adaptador que realmente utilizas.",code:"# Desde Git Bash puedes invocar la herramienta de Windows\nipconfig",expected:"Identificas una IPv4 local, por ejemplo 192.168.x.x. NO copies el ejemplo como si fuera tu IP.",help:[["Varias IPv4","Busca el adaptador Wi-Fi/Ethernet conectado a la misma red que el móvil."],["Móvil no alcanza PC","Red/firewall pueden impedir conexiones entre dispositivos. Diagnostica conectividad antes de cambiar fetch."]],check:"Sabes qué IP pertenece a TU PC."}
-]},
-{type:"code",label:"AHORA CONSTRUIMOS ESTA PIEZA",title:"Crea mobile/src/api.js",filename:"mobile/src/api.js",text:"Centralizamos API_URL y la función getEvents. Sustituye TU_IP por la IPv4 real del PC cuando pruebes desde un dispositivo físico.",code:"// Dirección del PC donde corre serverless-offline.\n// NO copies TU_IP literalmente.\nconst API_URL = 'http://TU_IP:3000/dev';\n\nexport async function getEvents() {\n  // Misma operación que ya probamos en Thunder Client.\n  const response = await fetch(API_URL + '/events');\n\n  // Un 404/500 también es una respuesta HTTP: la tratamos como error.\n  if (!response.ok) {\n    throw new Error('GET /events respondió ' + response.status);\n  }\n\n  return response.json();\n}"},
-{type:"code",label:"ANTES DE MODIFICAR APP.JS",title:"Nuevo flujo de datos",filename:"Modelo mental",text:"La interfaz deja de importar datos constantes. Ahora espera datos reales del backend local.",code:"React Native App.js\n       │\n       │ getEvents()\n       ▼\nmobile/src/api.js\n       │\n       │ fetch GET /events\n       ▼\nServerless Offline\n       │\n       ▼\nsrc/events/list.js\n       │\n       │ JSON response\n       ▼\nsetEvents(data)\n       │\n       ▼\nEvent cards"},
-{type:"code",label:"APP COMPLETA",title:"App.js · GET real + loading + error",filename:"mobile/App.js",text:"Reemplazamos EVENTS por estado. La parte visual se mantiene; cambia de dónde vienen los datos.",code:"import { useEffect, useState } from 'react';\nimport { StatusBar } from 'expo-status-bar';\nimport { StyleSheet, Text, View, ScrollView } from 'react-native';\nimport { getEvents } from './src/api';\n\nexport default function App() {\n  // Datos que llegarán del backend.\n  const [events, setEvents] = useState([]);\n  const [loading, setLoading] = useState(true);\n  const [error, setError] = useState(null);\n\n  useEffect(() => {\n    async function loadEvents() {\n      try {\n        setLoading(true);\n        setError(null);\n\n        const data = await getEvents();\n        setEvents(data);\n      } catch (err) {\n        setError(err.message);\n      } finally {\n        setLoading(false);\n      }\n    }\n\n    loadEvents();\n  }, []);\n\n  return (\n    <View style={styles.screen}>\n      <StatusBar style=\"light\" />\n      <View style={styles.header}>\n        <View>\n          <Text style={styles.brand}>FESTIVAL CONTROL</Text>\n          <Text style={styles.subtitle}>OPERATIONS APP</Text>\n        </View>\n        <Text style={styles.live}>● LOCAL API</Text>\n      </View>\n\n      <ScrollView contentContainerStyle={styles.content}>\n        <Text style={styles.date}>12 OCT</Text>\n        <Text style={styles.title}>PROGRAMACIÓN</Text>\n\n        {loading && <Text style={styles.info}>Cargando programación...</Text>}\n        {error && <Text style={styles.error}>ERROR · {error}</Text>}\n\n        {!loading && !error && events.map((event) => (\n          <View key={event.id} style={styles.card}>\n            <Text style={styles.time}>{event.time}</Text>\n            <Text style={styles.artist}>{event.artist}</Text>\n            <Text style={styles.space}>{event.space}</Text>\n            <Text style={[styles.status, event.status === 'DELAYED' && styles.delayed]}>● {event.status}</Text>\n          </View>\n        ))}\n      </ScrollView>\n    </View>\n  );\n}\n\nconst styles = StyleSheet.create({\n  screen: { flex: 1, backgroundColor: '#090909' },\n  header: { paddingTop: 58, paddingHorizontal: 22, paddingBottom: 18, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },\n  brand: { color: '#FFFFFF', fontSize: 18, fontWeight: '900' },\n  subtitle: { color: '#777777', fontSize: 10, letterSpacing: 2, marginTop: 3 },\n  live: { color: '#39D98A', fontWeight: '800', fontSize: 12 },\n  content: { padding: 22, paddingBottom: 50 },\n  date: { color: '#FF2F92', fontSize: 18, fontWeight: '900' },\n  title: { color: '#FFFFFF', fontSize: 38, fontWeight: '900', marginTop: 2, marginBottom: 22 },\n  info: { color: '#9B9B9B', marginBottom: 18 },\n  error: { color: '#FF5D5D', marginBottom: 18, fontWeight: '800' },\n  card: { backgroundColor: '#151515', borderWidth: 1, borderColor: '#292929', borderRadius: 18, padding: 20, marginBottom: 14 },\n  time: { color: '#FF2F92', fontWeight: '900', fontSize: 15 },\n  artist: { color: '#FFFFFF', fontWeight: '900', fontSize: 26, marginTop: 12 },\n  space: { color: '#9B9B9B', fontWeight: '700', marginTop: 5 },\n  status: { color: '#39D98A', fontWeight: '800', marginTop: 18 },\n  delayed: { color: '#F5C542' }\n});"},
-{type:"code",label:"STOP · ESTRUCTURA",title:"Antes de probar React Native",filename:"Workspace",text:"Comprueba que api.js está dentro de mobile/src y que backend sigue separado.",code:"04-PILARES-SERVERLESS\\\n├── backend\\\n│   └── src\\events\\list.js\n│\n└── mobile\\\n    ├── src\\\n    │   └── api.js             ← GET /events\n    ├── App.js                ← consume getEvents()\n    └── ..."},
-{type:"wizard",label:"PRUEBA FULL STACK",title:"Thunder demuestra backend · móvil demuestra integración",steps:[
-{shortTitle:"Thunder",title:"Última comprobación aislada",learn:"Si Thunder falla, React Native no puede arreglar el backend.",text:"GET /events.",code:"GET http://localhost:3000/dev/events",expected:"200 y dos eventos.",help:[["Falla","Vuelve al backend."],["Desde móvil usaré localhost","No necesariamente: dispositivo físico necesita IP del PC."]],check:"Backend ✓."},
-{shortTitle:"Mobile",title:"Arranca Expo y observa GET",learn:"Ahora React Native debe provocar una petición que también veremos en la terminal de serverless-offline.",text:"Desde mobile/:",code:"npx expo start",expected:"Festival Control muestra los mismos dos eventos que GET /events y la terminal backend registra LISTANDO EVENTOS.",help:[["Network request failed","Revisa API_URL, IP, misma red y firewall."],["404","Revisa /dev/events y salida de Offline."],["Se queda cargando","Mira terminal y conectividad."]],check:"Debes observar interfaz + log backend de la misma petición."},
-{shortTitle:"Comparar",title:"Thunder y React Native son clientes",learn:"Éste es el concepto central del bloque.",text:"Haz GET desde Thunder y recarga/reabre la app. Observa que ambas acciones llegan al mismo handler.",code:"THUNDER CLIENT ─┐\n                ├── GET /events → list.handler\nREACT NATIVE ───┘",expected:"Dos clientes, misma ruta, misma función y misma estructura de respuesta.",help:[["Resultados distintos","Comprueba que ambos apuntan al mismo host/stage/ruta."]],check:"Puedes explicarlo sin hablar de pantallas."}
-]},
-{type:"checklist",title:"CHECKPOINT · Primera conexión Full Stack",items:["GET /events funciona en Thunder antes de probar mobile.","Sé por qué localhost puede fallar desde un móvil físico.","api.js centraliza la URL del backend.","Entiendo fetch y response.json().","Entiendo loading/error/events.","React Native muestra datos del backend, no constantes locales.","Veo la invocación en la terminal Serverless Offline."]},
-{type:"success",title:"React Native ya consume tu API",text:"En el Bloque 07 transferiremos POST, PUT, PATCH y DELETE al móvil. HTTP ya está aprendido: cambia el cliente que construye las peticiones."}
-]};
+window.lesson06 = {
+  "id": "rn-get",
+  "navTitle": "06 · React Native + GET",
+  "revision": 1,
+  "modeLabel": "Aprendizaje asistido · TypeScript · sin nota",
+  "hero": {
+    "eyebrow": "BLOQUE 06 · APRENDIZAJE ASISTIDO",
+    "title": "La pantalla recibe datos de la API",
+    "description": "Sustituye el array local por un GET y distingue carga, respuesta y error.",
+    "chips": [
+      "TypeScript",
+      "Festival Control"
+    ]
+  },
+  "validation": {
+    "sourceLanguage": "typescript"
+  },
+  "phases": [
+    {
+      "id": "destino",
+      "navTitle": "Destino",
+      "title": "Reconoce el resultado antes de construir",
+      "description": "Sustituye el array local por un GET y distingue carga, respuesta y error.",
+      "sections": [
+        {
+          "type": "orientation",
+          "id": "objetivo",
+          "title": "La pantalla recibe datos de la API",
+          "objective": "Cargar dos actuaciones desde backend y mostrar un error recuperable si el servidor se detiene.",
+          "prior": "Interfaz de 05 y API completa de 04. Mantén sus tipos y la configuración CORS.",
+          "new": "fetch, Promises, efecto inicial y estados de carga/error.",
+          "boundary": "La vía de aula es navegador y backend en el mismo PC. Localhost sirve aquí; en un teléfono identifica al teléfono, no al ordenador.",
+          "request": "React Native Web → GET http://localhost:3000/dev/events",
+          "response": "200 OK → dos tarjetas recibidas por HTTP",
+          "caption": "Resultado esperado que contrastarás con tu ejecución."
+        },
+        {
+          "type": "conceptGrid",
+          "id": "conceptos",
+          "title": "Las piezas que necesitas comprender",
+          "items": [
+            [
+              "Dos orígenes",
+              "Expo suele usar 8081 y backend 3000. El navegador exige CORS aunque ambos estén en localhost."
+            ],
+            [
+              "API_URL",
+              "Es la base de la API, con /dev, sin /events ni barra final. El helper añade la ruta."
+            ],
+            [
+              "fetch y response.ok",
+              "La Promise puede resolverse aun con 400/404. response.ok permite convertirlo en un error visible."
+            ],
+            [
+              "Carga y recuperación",
+              "useEffect inicia la primera carga; finally libera el estado; GET recargar vuelve a intentarlo."
+            ]
+          ]
+        },
+        {
+          "type": "routeDiagram",
+          "id": "recorrido",
+          "title": "Sigue el dato de principio a fin",
+          "items": [
+            "useEffect / botón",
+            "getEvents()",
+            "fetch a /events",
+            "JSON validado",
+            "setEvents → tarjetas"
+          ],
+          "text": "El cliente importa tipos, pero no el catálogo fijo del backend. Una petición visible en Network demuestra el origen HTTP."
+        }
+      ]
+    },
+    {
+      "id": "prepara",
+      "navTitle": "Prepara",
+      "title": "Recupera el punto de partida",
+      "description": "Continúas en el mismo repositorio del alumno. Comprueba el bloque anterior antes de modificar archivos.",
+      "sections": [
+        {
+          "type": "wizard",
+          "id": "preparacion",
+          "label": "HAZLO · OBSERVA · DIAGNOSTICA",
+          "title": "Prepara la carpeta y el checkpoint",
+          "steps": [
+            {
+              "id": "api",
+              "shortTitle": "Backend primero",
+              "title": "Backend primero",
+              "learn": "Separar la API del cliente permite localizar el fallo antes de revisar React.",
+              "text": "En una terminal de backend, ejecuta npm start. En otra prueba GET con curl. Conserva la primera abierta.",
+              "code": "cd /d/DEVOPS/04-PILARES-SERVERLESS/backend\nnpm start",
+              "expected": "Se anuncian las rutas de 04. En la segunda terminal curl -i http://localhost:3000/dev/events devuelve 200 y dos actuaciones.",
+              "help": [
+                [
+                  "La terminal está en otra carpeta",
+                  "Ejecuta pwd. Los comandos del backend van en /d/DEVOPS/04-PILARES-SERVERLESS/backend; los de Expo, en mobile."
+                ],
+                [
+                  "Error de TypeScript",
+                  "Lee archivo y línea del primer error. Compara ese archivo completo, guarda y repite npm run typecheck."
+                ]
+              ],
+              "check": "Si GET no funciona fuera del frontend, corrige backend antes de abrir Expo."
+            },
+            {
+              "id": "cliente",
+              "shortTitle": "Cliente",
+              "title": "Cliente · punto de partida",
+              "learn": "Expo y el backend son procesos distintos; cada uno necesita su propia terminal.",
+              "text": "Desde mobile, verifica el proyecto previo. Para 06 y 07 deja además backend activo con npm start.",
+              "code": "cd /d/DEVOPS/04-PILARES-SERVERLESS/mobile\nnpm run typecheck",
+              "expected": "El cliente compila sin errores; backend mantiene las rutas de 04 si este bloque usa HTTP.",
+              "help": [
+                [
+                  "La terminal está en otra carpeta",
+                  "Ejecuta pwd. Los comandos del backend van en /d/DEVOPS/04-PILARES-SERVERLESS/backend; los de Expo, en mobile."
+                ],
+                [
+                  "Error de TypeScript",
+                  "Lee archivo y línea del primer error. Compara ese archivo completo, guarda y repite npm run typecheck."
+                ]
+              ],
+              "check": "Corrige el primer error antes de sustituir archivos. No ejecutes los comandos Expo dentro de backend."
+            }
+          ]
+        },
+        {
+          "type": "code",
+          "id": "mapa-archivos",
+          "label": "MIRA EL MAPA · ANTES DE CONSTRUIR",
+          "title": "Proyecto acumulado al finalizar este bloque",
+          "filename": "Workspace del alumno",
+          "text": "El árbol es una referencia. Crea cada archivo por separado en las pestañas de Construye; las llaves del esquema agrupan nombres, no forman parte del nombre real. Conserva el resto del trabajo del bloque anterior.",
+          "code": "04-PILARES-SERVERLESS/\n└── backend/\n    ├── package.json + package-lock.json\n    ├── tsconfig.json\n    ├── serverless.yml\n    ├── src/hello.ts\n    ├── src/events/{model,list,get,create,replace,update,delete}.ts\n    └── dist/ (generado por npm run build)\n\n└── mobile/\n    ├── package.json + package-lock.json\n    ├── app.json + tsconfig.json\n    ├── App.tsx\n    └── src/\n        ├── types.ts\n        └── api.ts\n"
+        }
+      ]
+    },
+    {
+      "id": "construye",
+      "navTitle": "Construye",
+      "title": "Construye una pieza cada vez",
+      "description": "Primero comprende su responsabilidad; después copia el archivo completo y comprueba su ruta.",
+      "sections": [
+        {
+          "type": "fileLab",
+          "id": "archivos",
+          "label": "CONSTRUYE · ARCHIVOS COMPLETOS",
+          "title": "Archivos de este bloque",
+          "intro": "Recorre las pestañas de izquierda a derecha. Cada una contiene un archivo completo, no un fragmento que debas adivinar.",
+          "tabs": [
+            {
+              "title": "api.ts",
+              "filename": "api.ts",
+              "path": "mobile/src/api.ts",
+              "responsibility": "Centralizar URL, métodos, serialización y errores HTTP.",
+              "instruction": "Crea las carpetas de la ruta si faltan. Abre el archivo en VS Code, lee la explicación y guarda el contenido completo.",
+              "learn": [
+                [
+                  "API_URL",
+                  "URL base del servidor, sin barra final y sin /events. En el navegador de este PC, localhost se refiere a ese mismo PC."
+                ],
+                [
+                  "fetch + response.ok",
+                  "fetch puede completar con 400/404. response.ok distingue esos errores de una respuesta correcta."
+                ],
+                [
+                  "unknown y type guard",
+                  "Antes de renderizar una lista, comprobamos su forma. Los tipos estáticos no validan JSON remoto."
+                ],
+                [
+                  "encodeURIComponent",
+                  "GET no envía body ni Content-Type innecesario."
+                ]
+              ],
+              "code": "import type { FestivalEvent } from './types';\n\n// URL base sin /events al final. Sustituye sólo este valor en el bloque 09.\nexport const API_URL = 'http://localhost:3000/dev';\n\nasync function request(path: string, method = 'GET', body?: unknown): Promise<unknown> {\n  const response = await fetch(API_URL + path, {\n    method,\n    ...(body !== undefined ? { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : {})\n  });\n  const value: unknown = await response.json();\n  if (!response.ok) {\n    const message = typeof value === 'object' && value !== null && 'message' in value\n      ? String(value.message) : response.statusText;\n    throw new Error('HTTP ' + response.status + ': ' + message);\n  }\n  return value;\n}\n\nfunction isFestivalEvent(value: unknown): value is FestivalEvent {\n  return typeof value === 'object' && value !== null &&\n    'id' in value && typeof value.id === 'string' &&\n    'artist' in value && typeof value.artist === 'string' &&\n    'space' in value && typeof value.space === 'string' &&\n    'time' in value && typeof value.time === 'string' &&\n    'status' in value && (value.status === 'CONFIRMED' || value.status === 'CANCELLED');\n}\n\nexport async function getEvents(): Promise<FestivalEvent[]> {\n  const value = await request('/events');\n  if (!Array.isArray(value) || !value.every(isFestivalEvent)) throw new Error('La API no devolvió una lista de actuaciones válida');\n  return value;\n}\n",
+              "stop": "Guarda con Ctrl+S. Comprueba nombre, extensión y ruta antes de pasar a la siguiente pestaña."
+            },
+            {
+              "title": "App.tsx",
+              "filename": "App.tsx",
+              "path": "mobile/App.tsx",
+              "responsibility": "Dibujar la pantalla y expresar sus estados de interacción.",
+              "instruction": "Crea las carpetas de la ruta si faltan. Abre el archivo en VS Code, lee la explicación y guarda el contenido completo.",
+              "learn": [
+                [
+                  "TSX y componentes",
+                  "View organiza, Text muestra texto, ScrollView permite recorrer la pantalla y Pressable activa una acción. Las llaves insertan expresiones TypeScript en JSX."
+                ],
+                [
+                  "useState",
+                  "Cambiar estado provoca un nuevo render. No modifica el servidor."
+                ],
+                [
+                  "useEffect + loadEvents",
+                  "El efecto solicita datos al montar; el botón permite repetir la carga. try/catch/finally actualiza carga, error y resultado."
+                ],
+                [
+                  "StyleSheet",
+                  "La UI del producto es negra y rosa; el cuaderno mantiene azul, cian y blanco."
+                ]
+              ],
+              "code": "import { useEffect, useState } from 'react';\nimport { ScrollView, View, Text, Pressable, StyleSheet } from 'react-native';\nimport { StatusBar } from 'expo-status-bar';\nimport type { FestivalEvent } from './src/types';\nimport { getEvents } from './src/api';\n\nexport default function App() {\n  const [events, setEvents] = useState<FestivalEvent[]>([]);\n  const [loading, setLoading] = useState(false);\n  const [error, setError] = useState('');\n  async function loadEvents() {\n    setLoading(true);\n    setError('');\n    try { setEvents(await getEvents()); }\n    catch (cause) { setError(cause instanceof Error ? cause.message : 'Error de red'); }\n    finally { setLoading(false); }\n  }\n  useEffect(() => { void loadEvents(); }, []);\n  return (\n    <View style={styles.page}>\n      <StatusBar style=\"light\" />\n      <ScrollView contentContainerStyle={styles.content}>\n        <Text style={styles.eyebrow}>FESTIVAL CONTROL</Text>\n        <Text style={styles.title}>Programación</Text>\n        <Text style={styles.text}>Catálogo recibido por HTTP</Text>\n        {events.map(item => (\n          <View key={item.id} style={styles.card}>\n            <Text style={styles.tag}>{item.id} · {item.status}</Text>\n            <Text style={styles.artist}>{item.artist}</Text>\n            <Text style={styles.text}>{item.space} · {item.time}</Text>\n          </View>\n        ))}\n        <Pressable accessibilityRole=\"button\" disabled={loading} style={styles.button} onPress={() => void loadEvents()}>\n          <Text style={styles.buttonText}>{loading ? 'Cargando…' : 'GET recargar'}</Text>\n        </Pressable>\n        {error ? <Text accessibilityRole=\"alert\" style={styles.error}>{error}</Text> : null}\n      </ScrollView>\n    </View>\n  );\n}\n\nconst styles = StyleSheet.create({\n  page: { flex: 1, backgroundColor: '#08090d' },\n  content: { padding: 24, paddingTop: 48, gap: 16, width: '100%', maxWidth: 760, alignSelf: 'center' },\n  eyebrow: { color: '#ff4b9b', fontWeight: '700', letterSpacing: 2 },\n  title: { color: '#ffffff', fontSize: 34, fontWeight: '800' },\n  text: { color: '#d2d3df', fontSize: 16, lineHeight: 24 },\n  card: { padding: 20, gap: 8, borderRadius: 16, borderWidth: 1, borderColor: '#353644', backgroundColor: '#151620' },\n  artist: { color: '#ffffff', fontSize: 22, fontWeight: '700' },\n  tag: { color: '#ff8fc0', fontWeight: '700' },\n  button: { padding: 14, backgroundColor: '#cf236e', borderRadius: 10, alignItems: 'center' },\n  buttonText: { color: '#ffffff', fontSize: 16, fontWeight: '700' },\n  error: { color: '#ffb4b4', fontSize: 16 },\n  result: { color: '#afffcf', fontFamily: 'monospace', fontSize: 14, lineHeight: 20 }\n});\n",
+              "stop": "Guarda con Ctrl+S. Comprueba nombre, extensión y ruta antes de pasar a la siguiente pestaña."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "prueba",
+      "navTitle": "Prueba",
+      "title": "Prueba por capas y conserva las evidencias",
+      "description": "No avances porque una pantalla parezca correcta. Contrasta acción, respuesta y diagnóstico.",
+      "sections": [
+        {
+          "type": "wizard",
+          "id": "pruebas",
+          "label": "HAZLO · OBSERVA · DIAGNOSTICA",
+          "title": "Ejecuta las pruebas del bloque",
+          "steps": [
+            {
+              "id": "expo",
+              "shortTitle": "Expo",
+              "title": "Expo · navegador del aula",
+              "learn": "React Native Web utiliza los componentes React Native en el navegador. Esta es la vía común del ejercicio, sin instalar Expo Go.",
+              "text": "En una terminal exclusiva de mobile ejecuta npm run web. Acepta abrir el navegador o pulsa w. Conserva la URL que muestra Expo; si 8081 está ocupado, usa el puerto que proponga.",
+              "code": "npm run typecheck\nnpm run web",
+              "expected": "La pestaña muestra Festival Control, fondo negro y acentos rosas; no hay error de Metro.",
+              "help": [
+                [
+                  "Cannot find module",
+                  "Dentro de mobile ejecuta npm install con el package.json completo de 05."
+                ],
+                [
+                  "Puerto ocupado",
+                  "Acepta un puerto libre. El API_URL sigue apuntando al backend, no al puerto de Expo."
+                ],
+                [
+                  "Expo Go / teléfono",
+                  "La práctica principal usa navegador. El teléfono es opcional y exige versión compatible del SDK, URL LAN del PC y red permitida. No uses localhost en un teléfono para llegar al PC."
+                ]
+              ],
+              "check": "Anota la URL del frontend por separado de la URL del backend."
+            },
+            {
+              "id": "red",
+              "shortTitle": "Comprueba Network",
+              "title": "Comprueba Network",
+              "learn": "Las tarjetas por sí solas no demuestran una llamada. La pestaña Network registra método, URL, estado y body.",
+              "text": "Abre F12 → Network (Red), filtra events, recarga y selecciona la petición. Comprueba el panel Response.",
+              "code": "GET http://localhost:3000/dev/events",
+              "expected": "GET 200, respuesta con dos actuaciones y tarjetas que corresponden a esos datos.",
+              "help": [
+                [
+                  "CORS",
+                  "Revisa cors: true y el helper json del bloque 04, incluido en respuestas de error. No desactives la protección del navegador."
+                ],
+                [
+                  "404",
+                  "API_URL debe acabar en /dev, no en /events; confirma ruta y puerto con curl."
+                ]
+              ],
+              "check": "Guarda una evidencia que relacione respuesta y tarjetas."
+            },
+            {
+              "id": "fallo",
+              "shortTitle": "Detén y recupera",
+              "title": "Detén y recupera",
+              "learn": "La recuperación forma parte del comportamiento esperado, no es un fallo a ocultar.",
+              "text": "Detén sólo backend con Ctrl+C. Pulsa GET recargar. Después arranca backend otra vez y pulsa de nuevo.",
+              "code": "Backend detenido → GET recargar\nBackend activo → GET recargar",
+              "expected": "Aparece error de red al detener backend; con el servidor activo desaparece el error y reaparecen/actualizan las dos tarjetas.",
+              "help": [
+                [
+                  "No hay error",
+                  "Comprueba que has pulsado recargar y detenido la terminal correcta."
+                ],
+                [
+                  "Error persistente",
+                  "Prueba curl de nuevo y comprueba API_URL."
+                ]
+              ],
+              "check": "Explica qué capa fallaba y cuál continuaba funcionando."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "entiende",
+      "navTitle": "Entiende",
+      "title": "Explica por qué ha funcionado",
+      "description": "Relaciona la instrucción con el efecto observado antes de modificarla.",
+      "sections": [
+        {
+          "type": "explainRows",
+          "id": "explicacion",
+          "title": "Del código al comportamiento",
+          "rows": [
+            [
+              "getEvents(): Promise<FestivalEvent[]>",
+              "La función entrega datos comprobados; el componente no concatena URLs."
+            ],
+            [
+              "setLoading(true) / finally",
+              "La interfaz vuelve a estar disponible tanto al acertar como al fallar."
+            ],
+            [
+              "setError(…)",
+              "El alumno puede ver el error en pantalla y volver a intentar la operación."
+            ]
+          ]
+        },
+        {
+          "type": "predict",
+          "id": "prediccion",
+          "title": "Predice antes de probar",
+          "question": "Si recibes HTTP 404, ¿fetch entra automáticamente en catch?",
+          "answer": "No por el estado HTTP. Nuestro helper revisa response.ok y lanza Error; ese throw hace que el componente entre en catch."
+        }
+      ]
+    },
+    {
+      "id": "modifica",
+      "navTitle": "Modifica",
+      "title": "Introduce un cambio pequeño y compruébalo",
+      "description": "La modificación utiliza lo que acabas de aprender y conserva el contrato necesario para continuar.",
+      "sections": [
+        {
+          "type": "guidedChange",
+          "id": "cambio",
+          "title": "Distingue ruta incorrecta de servidor detenido",
+          "steps": [
+            "En api.ts cambia temporalmente /events por /ruta-inexistente dentro de getEvents.",
+            "Con backend activo, pulsa recargar y observa Network: hay respuesta HTTP aunque sea 404.",
+            "Restaura /events, guarda y comprueba GET 200."
+          ],
+          "expected": "Ruta errónea → respuesta HTTP de error\nRuta restaurada → GET 200 y dos tarjetas",
+          "constraints": "No cambies los handlers ni CORS. Deja api.ts con /events antes de continuar."
+        }
+      ]
+    },
+    {
+      "id": "comprueba",
+      "navTitle": "Comprueba",
+      "title": "Contrasta tu comprensión",
+      "description": "Estas preguntas son formativas, sin nota. Si fallas, lee la explicación y vuelve a intentarlo.",
+      "sections": [
+        {
+          "type": "quiz",
+          "id": "pregunta-0",
+          "question": "¿Dónde se configura el destino HTTP?",
+          "options": [
+            "En StyleSheet",
+            "En API_URL de src/api.ts",
+            "En un token AWS del cliente",
+            "En cada Text"
+          ],
+          "correct": 1,
+          "explanation": "La base se centraliza en api.ts. El frontend no necesita credenciales AWS para esta API pública de práctica."
+        },
+        {
+          "type": "quiz",
+          "id": "pregunta-1",
+          "question": "¿Qué confirma que los datos vienen por HTTP?",
+          "options": [
+            "El color rosa",
+            "Ver una tarjeta",
+            "La petición GET y su respuesta en Network",
+            "Que exista types.ts"
+          ],
+          "correct": 2,
+          "explanation": "Network permite relacionar URL, método, estado y datos reales de la respuesta."
+        }
+      ]
+    },
+    {
+      "id": "cierra",
+      "navTitle": "Cierra",
+      "title": "Documenta y deja el proyecto recuperable",
+      "description": "Marca sólo las comprobaciones que has realizado en tu ordenador.",
+      "sections": [
+        {
+          "type": "fileLab",
+          "id": "evidencia",
+          "label": "CONSTRUYE · ARCHIVOS COMPLETOS",
+          "title": "Deja una evidencia breve y recuperable",
+          "intro": "Recorre las pestañas de izquierda a derecha. Cada una contiene un archivo completo, no un fragmento que debas adivinar.",
+          "tabs": [
+            {
+              "title": "README.md",
+              "filename": "README.md",
+              "path": "evidencias/06/README.md",
+              "responsibility": "Documentar lo que tú has comprobado, sin inventar evidencias.",
+              "instruction": "Crea las carpetas de la ruta si faltan. Abre el archivo en VS Code, lee la explicación y guarda el contenido completo.",
+              "learn": [
+                [
+                  "Resultado",
+                  "Completa cada apartado con tu ejecución. Este texto es una plantilla para tus respuestas."
+                ],
+                [
+                  "Sin credenciales",
+                  "No incluyas AWSDetails, tokens ni archivos .aws en capturas, Git o README."
+                ]
+              ],
+              "code": "# Bloque 06\n\n## Resultado\n- Qué añadí al proyecto:\n- Ruta o pantalla comprobada:\n- Estado y respuesta observados:\n\n## Comprensión\n- Recorrido del dato, explicado con mis palabras:\n- Cambio guiado y resultado:\n- Error encontrado y cómo lo resolví:\n\n## Evidencias\n- Captura o transcripción breve, sin credenciales:\n- Limitaciones del ejercicio:\n",
+              "stop": "Guarda con Ctrl+S. Comprueba nombre, extensión y ruta antes de pasar a la siguiente pestaña."
+            }
+          ]
+        },
+        {
+          "type": "wizard",
+          "id": "hito",
+          "label": "HAZLO · OBSERVA · DIAGNOSTICA",
+          "title": "Guarda el hito del bloque",
+          "steps": [
+            {
+              "id": "git",
+              "shortTitle": "Git",
+              "title": "Git · revisa y guarda",
+              "learn": "Un commit permite recuperar el proyecto acumulado en este punto. Revisar el diff evita subir archivos ajenos al ejercicio.",
+              "text": "Desde la raíz, completa el README de evidencias/06 y revisa los cambios. Los comandos añaden únicamente los archivos de este bloque. Antes del commit lee git diff --cached y verifica que el lockfile y las fuentes correctas están preparados.",
+              "code": "cd /d/DEVOPS/04-PILARES-SERVERLESS\ngit status --short\ngit diff\ngit add mobile/src/api.ts mobile/App.tsx evidencias/06/README.md\ngit diff --cached\ngit commit -m \"Completa bloque 06\"\ngit push\ngit log -1 --oneline",
+              "expected": "El commit contiene tu documentación y los archivos de trabajo revisados. No aparecen node_modules, dist, .serverless, .env ni .aws.",
+              "help": [
+                [
+                  "No hay cambios preparados",
+                  "Añade las rutas concretas que muestra git status y que pertenecen al bloque. No copies la línea de ejemplo si no corresponde a tus archivos."
+                ],
+                [
+                  "Push rechazado o remoto ausente",
+                  "Consulta la configuración Git del cierre del bloque 01. Conserva el commit local y resuelve acceso/remoto; no uses push --force."
+                ]
+              ],
+              "check": "Anota el hash con git log -1 --oneline y verifica en GitHub el contenido del commit."
+            }
+          ]
+        },
+        {
+          "type": "checklist",
+          "id": "cierre",
+          "title": "Checkpoint · listo para continuar",
+          "items": [
+            "GET 200 aparece en Network y alimenta la lista.",
+            "He probado fallo de red y recuperación sin ocultar el error.",
+            "He explicado mi resultado en el README y guardado un commit recuperable."
+          ]
+        },
+        {
+          "type": "note",
+          "id": "siguiente",
+          "title": "Siguiente paso",
+          "text": "Bloque 07: el cliente disparará las cuatro escrituras simuladas y mostrará sus respuestas."
+        }
+      ]
+    }
+  ]
+};

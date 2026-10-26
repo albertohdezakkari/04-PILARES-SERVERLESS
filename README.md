@@ -37,8 +37,7 @@ Con Node 22:
 ```bash
 npm ci
 npx playwright install chromium
-npm run check
-npm test
+npm run verify
 npm run preview
 ```
 
@@ -50,10 +49,18 @@ Las comprobaciones incluyen sintaxis, comprobación de tipos, compilación y eje
 
 El alumnado ya utiliza TypeScript. El bloque 01 recupera ese conocimiento: `src/hello.ts` tipa la entrada REST con `APIGatewayProxyEvent` y la respuesta con `APIGatewayProxyResult`. `@types/aws-lambda` aporta declaraciones y no instala un SDK de AWS.
 
-El proyecto del alumno incorpora `tsconfig.json` estricto y tres scripts: `typecheck` comprueba sin emitir, `build` genera `dist/hello.js` y `start` compila antes de ejecutar Offline. El YAML apunta a `dist/hello.handler`. El JavaScript generado no se edita ni se versiona. Los siguientes bloques se adaptarán al mismo entorno durante su revisión didáctica.
+El proyecto del alumno incorpora `tsconfig.json` estricto y tres scripts: `typecheck` comprueba sin emitir, `build` genera `dist/hello.js` y `start` compila antes de ejecutar Offline. El YAML apunta a `dist/hello.handler`. El JavaScript generado no se edita ni se versiona. Los bloques 02–09 conservan este entorno TypeScript. React Native utiliza App.tsx y su propia configuración Expo.
 
 La revisión TypeScript del bloque 01 registra comprobaciones propias. Los registros anteriores se conservan, pero no dan por comprobado automáticamente el contenido adaptado.
 
 ## Revisión eficiente por lotes
 
-El [protocolo de revisión](docs/REVISION-POR-LOTES.md) fija el patrón del bloque 01 como referencia validable, una matriz de continuidad y los criterios de aceptación. `npm run audit` inventaría todos los bloques; `npm run verify` comprueba la referencia y ejecuta las pruebas en una pasada. El informe estructural conserva por separado la revisión pedagógica y la validación del entorno real.
+El [protocolo de revisión](docs/REVISION-POR-LOTES.md) fija el patrón del bloque 01 como referencia validable, una matriz de continuidad y los criterios de aceptación. `npm run audit` inventaría todos los bloques; `npm run verify` comprueba todos los bloques y ejecuta las pruebas de contenido, navegador y proyectos del alumno en una pasada. El informe estructural conserva por separado la revisión pedagógica y la validación del entorno real.
+
+## Cuaderno completo revisado · 26/10/2026
+
+Los bloques 01–09 comparten el recorrido de ocho fases validado. El 00 conserva su perfil de instalación desde cero, repartido en cinco fases; Venue Control conserva requisitos y rúbrica sin archivos solución. Todos los ejemplos de trabajo utilizan TypeScript/TSX.
+
+La [matriz de continuidad y comprobaciones](docs/REVISION-COMPLETA.md) registra el resultado por bloque, los contratos y los límites de lo ejecutado. La vía común del cliente es React Native Web en el ordenador del aula, con Expo SDK 54 y versiones fijadas. La API es deliberadamente simulada y no persiste escrituras.
+
+`npm run verify:course` reconstruye los proyectos desde las mismas pestañas copiables que ve el alumno: comprueba y compila los hitos backend, comprueba los cuatro hitos TSX, exporta el cliente web y ejecuta sus cinco métodos contra los handlers reales compilados mediante un harness HTTP. No utiliza credenciales ni sustituye una prueba real de Serverless Offline/AWS. La primera ejecución instala las dependencias del cliente en node_modules/.cache; requiere conexión.

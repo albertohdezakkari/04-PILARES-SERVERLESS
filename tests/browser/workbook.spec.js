@@ -96,20 +96,20 @@ test('recorrido completo registra un bloque y revoca una comprobación retirada'
   expect(errors).toEqual([]);
 });
 
-test('el avance antiguo no produce 100 % y las casillas antiguas también se guardan', async ({ page }) => {
+test('el avance antiguo no completa preparación y las nuevas casillas se conservan', async ({ page }) => {
   await page.addInitScript(() => {
     if (!localStorage.getItem('fcState')) localStorage.setItem('fcState', JSON.stringify({ lesson: 'preparacion', done: Object.fromEntries(Array.from({ length: 20 }, (_, i) => ['paso-' + i, true])) }));
   });
-  await page.goto('/#preparacion');
+  await page.goto('/#preparacion/cierra');
   await expect(page.locator('#progress-text')).toHaveText('0/10 bloques');
   const check = page.locator('input[data-check]').first();
   await check.check();
-  await page.locator('[data-tab]').first().click();
+  await page.locator('[data-phase="destino"]').click();
+  await page.locator('[data-phase="cierra"]').click();
   await expect(check).toBeChecked();
   await page.reload();
   await expect(check).toBeChecked();
-  await page.locator('[data-legacy-complete]').click();
-  await expect(page.locator('#progress-text')).toHaveText('1/10 bloques');
+  await expect(page.locator('#progress-text')).toHaveText('0/10 bloques');
 });
 
 test('todos los bloques siguen accesibles y el entrenamiento conserva su maqueta', async ({ page }) => {
@@ -169,4 +169,33 @@ test('la revisión TypeScript requiere comprobar sus fases y conserva los regist
   await expect(page.locator('#progress-text')).toHaveText('0/10 bloques');
   await expect(page.locator('.lesson-meta')).toContainText('0 / 8 fases completadas');
   expect(await page.evaluate(()=>state.checks['primer-serverless/archivos-listos/0'])).toBe(true);
+});
+
+
+test('todos los recorridos nuevos se leen completos en móvil y escritorio', async ({ page }) => {
+  test.setTimeout(120000);
+  const errors = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto('/#get/destino');
+  const lessons = await page.evaluate(() => window.lessons.filter(l => l.phases && l.id !== 'primer-serverless').map(l => ({ id: l.id, phases: l.phases.map(p => p.id) })));
+  for (const width of [390, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    for (const lesson of lessons) {
+      await page.goto('/#' + lesson.id + '/' + lesson.phases[0]);
+      for (const phase of lesson.phases) {
+        await page.locator('[data-phase="' + phase + '"]').click();
+        await expect(page.locator('.phase-heading h2')).toBeVisible();
+        await expect(page.getByText('undefined', { exact: true })).toHaveCount(0);
+        expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), lesson.id + '/' + phase + ' width ' + width).toBe(true);
+        if (phase === 'construye') {
+          const tabs = page.locator('.file-lab [role="tab"]');
+          for (let i = 0; i < await tabs.count(); i++) {
+            await tabs.nth(i).click();
+            await expect(page.locator('.file-location')).toBeVisible();
+          }
+        }
+      }
+    }
+  }
+  expect(errors).toEqual([]);
 });

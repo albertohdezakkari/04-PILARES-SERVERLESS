@@ -78,12 +78,12 @@ test('el contrato por lotes detecta omisiones sin convertirlas en aprobaciones p
   assert(auditLesson(training).missing.includes('sin-receta'));
   const result = auditAll();
   assert.equal(result.length, 11);
-  assert(result.find(block => block.id === 'get').missing.includes('recorrido-por-fases'));
+  assert(result.every(block => block.missing.length === 0), JSON.stringify(result.filter(block => block.missing.length)));
   assert(result.every(block => block.status !== 'PEDAGOGÍA VALIDADA'));
 });
 
-test('el contrato estricto falla ante un bloque pendiente o inexistente', () => {
-  for (const id of ['get', 'bloque-inexistente']) {
+test('el contrato estricto falla ante una selección vacía o inexistente', () => {
+  for (const id of ['', 'bloque-inexistente']) {
     const result = spawnSync(process.execPath, ['scripts/audit-lessons.cjs', '--strict', id], { encoding: 'utf8' });
     assert.equal(result.status, 1);
   }

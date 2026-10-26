@@ -65,3 +65,7 @@ npm run verify
 ```
 
 Los criterios proceden de PROMPT-CUADRNOS.txt, VISUAL.txt y visual-2.txt, junto con el contexto específico de este proyecto. El mecanismo evita repetir decisiones de diseño y comprobaciones manuales que ya cubren las herramientas; no reduce la exigencia de aceptación.
+
+## Aplicación al cuaderno completo
+
+La adaptación 00–09 está registrada en [REVISION-COMPLETA.md](REVISION-COMPLETA.md). `npm run audit:all` exige cobertura de los once perfiles; `npm run verify` agrega los contratos compilados y el cliente exportado. Se conserva audit:reference para comprobar aisladamente el patrón original.

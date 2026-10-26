@@ -10,7 +10,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm run audit:reference
+      - run: npm run audit:all
       - run: npm run check
       - run: npx playwright install --with-deps chromium
       - run: npm test
+      - run: npm run verify:course
