@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DynamoDB · Usuarios, eventos y asistencia</title>
+<style>
+:root{color-scheme:light;font-family:system-ui,sans-serif;color:#172339;background:#f5f4f9}body{margin:0}main{max-width:1050px;margin:auto;padding:24px}nav{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:24px}a{color:#5435a5}h1{font-size:clamp(1.6rem,4vw,2.6rem);line-height:1.15}p{line-height:1.65}.poster{display:block;width:100%;height:auto;border-radius:12px}details{background:white;padding:20px;margin-top:20px;border:1px solid #dedbe8;border-radius:12px}summary{cursor:pointer;font-weight:600}li{line-height:1.65;margin:8px 0}code{overflow-wrap:anywhere}footer{margin-top:24px}a:focus-visible,summary:focus-visible{outline:3px solid #7950d1;outline-offset:5px}@media print{nav,footer{display:none}main{padding:0;max-width:none}.poster{border-radius:0}details{break-inside:avoid}}
+</style>
+</head>
+<body><main>
+<nav aria-label="Navegación"><a href="../../">Volver al cuaderno</a><a href="#lectura">Leer la explicación</a><a href="infografia.png" target="_blank" rel="noopener">Ver imagen completa</a></nav>
+<h1>DynamoDB · Usuarios, eventos y asistencia</h1>
+<p>Modelo inicial de Festival Control. Sigue las conexiones para entender qué guarda cada tabla y cómo una inscripción relaciona a un usuario con un evento.</p>
+<img class="poster" src="infografia.png" alt="Infografía de Users, Events y Registrations: relaciones uno a muchos, claves PK y SK y diferencia entre inscribirse y registrar la entrada. Explicación equivalente a continuación.">
+<details id="lectura" open><summary>Las tres tablas y sus relaciones</summary>
+<ul><li><strong>Users: quién es la persona.</strong> userId es la clave de partición (PK). displayName guarda el nombre visible y createdAt la fecha de creación.</li>
+<li><strong>Events: qué ocurre.</strong> eventId es la PK. También guarda organizerId, title, startsAt, capacity y status. organizerId identifica al usuario organizador.</li>
+<li><strong>Registrations: quién se apunta a qué evento.</strong> eventId es la PK y userId la clave de ordenación (SK). La pareja identifica una inscripción. Guarda status, registeredAt y, al registrar la entrada, checkedInAt y checkedInBy.</li></ul>
+<p>Un usuario puede tener cero o muchas inscripciones; cada inscripción corresponde a un usuario. Un evento puede tener cero o muchas inscripciones; cada inscripción corresponde a un evento. Un organizador puede organizar muchos eventos.</p>
+</details>
+<details open><summary>PK y SK con un ejemplo</summary>
+<p>La PK agrupa o identifica registros. Cuando la tabla tiene SK, esta distingue y ordena los registros que comparten PK. En Registrations, <code>eventId = evt-001</code> y <code>userId = usr-042</code> identifican una inscripción concreta.</p>
+<p>Consultar por eventId permite obtener las inscripciones del evento, por páginas. Para recuperar las inscripciones de un usuario se propone un índice secundario con userId como clave de partición y eventId como clave de ordenación. Este índice admite consistencia eventual.</p>
+</details>
+<details open><summary>Inscripción y asistencia son cosas distintas</summary>
+<p>Ana se inscribe y su estado pasa a CONFIRMED. Su inscripción reserva una plaza, pero todavía no prueba asistencia. Cuando entra, el personal autorizado registra checkedInAt y checkedInBy. Si no existe ese registro de entrada, no se debe dar por acreditada su asistencia.</p>
+<p>Las horas de registro y la identidad del personal se obtienen en el servidor. El aforo y la inscripción deben actualizarse de forma transaccional, con condiciones que eviten duplicados y sobreaforo.</p>
+</details>
+<details><summary>Cómo se conectan los datos en DynamoDB</summary>
+<p>Las líneas representan relaciones del negocio: DynamoDB no hace JOIN ni impone claves foráneas. El backend comprueba referencias y permisos. El perfil se obtiene leyendo Users por userId; no es necesario duplicar todos sus datos en cada inscripción.</p>
+<p>El índice para listar próximos eventos se diseñará según las consultas y el volumen. Las fechas se guardan con un formato UTC uniforme; DynamoDB las almacena como texto en este modelo. Una capacidad es un número y sus reglas se validan en el backend.</p>
+</details>
+<footer><a href="https://github.com/albertohdezakkari/04-PILARES-SERVERLESS/tree/main/ayuda/dynamodb">Material en GitHub</a> · Diseño inicial, sin chat. Ejemplos ficticios.</footer>
+</main></body></html>
