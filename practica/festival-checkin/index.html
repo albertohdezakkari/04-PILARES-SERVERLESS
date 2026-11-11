@@ -38,17 +38,25 @@
 
 <section id="datos" class="phase" hidden>
 <h2>Dos tablas, un evento</h2>
-<p>En DynamoDB, cread dos tablas con un prefijo propio del equipo. Usad claves de tipo String.</p>
+<p>En AWS Academy, iniciad el laboratorio y abrid la consola de AWS. Confirmad arriba a la derecha la región autorizada. Usad esa misma región para las tablas, Lambda y API Gateway.</p>
 <div class="relation" aria-label="Un evento tiene cero o muchas inscripciones">
   <div><strong>Events</strong><br><code>eventId</code> · PK<br><code>title</code> · texto</div>
   <span aria-hidden="true">1 ─── 0..N</span>
   <div><strong>Registrations</strong><br><code>eventId</code> · PK<br><code>userId</code> · SK<br><code>registeredAt</code> · texto<br><code>checkedInAt</code> · opcional</div>
 </div>
-<p>En <strong>Explore table items</strong>, cread este ítem en Events con el editor JSON de DynamoDB. Los códigos <code>equipo-01</code>, <code>equipo-02</code>… representan a usuarios ficticios.</p>
+<ol>
+  <li>En <strong>DynamoDB → Tables → Create table</strong>, cread <code>equipo-01-events</code>. Escribid <code>eventId</code> en <strong>Partition key</strong> y elegid <strong>String</strong>. Dejad <strong>Sort key</strong> vacío y conservad la configuración predeterminada.</li>
+  <li>Repetid con <code>equipo-01-registrations</code>. Usad <code>eventId</code> como <strong>Partition key</strong> y <code>userId</code> como <strong>Sort key</strong>, ambos <strong>String</strong>. Cambiad <code>equipo-01</code> en ambos nombres por vuestro prefijo. Anotad los nombres exactos para la fase Lectura.</li>
+  <li>Cuando Events esté <strong>Active</strong>, abrid <strong>Explore table items → Create item</strong>. En la vista de formulario, dad a <code>eventId</code> el valor <code>evt-001</code>. Con <strong>Add new attribute → String</strong>, añadid <code>title</code> con el valor <code>Festival de otoño</code>. Pulsad <strong>Create item</strong>.</li>
+</ol>
+<p><code>title</code> se añade al crear el registro. Los atributos <code>registeredAt</code> y <code>checkedInAt</code> se escribirán desde Lambda en sus respectivas fases.</p>
+<details><summary>Alternativa para cargar el evento desde la vista JSON</summary>
+<p>En <strong>Create item → JSON view</strong>, usad el formato DynamoDB JSON con los tipos incluidos. Si el editor tiene la opción <strong>View DynamoDB JSON</strong>, activadla antes de pegar el bloque.</p>
 <pre><code>{
   "eventId": { "S": "evt-001" },
   "title": { "S": "Festival de otoño" }
 }</code></pre>
+</details>
 <p><strong>Antes de avanzar:</strong> ambas tablas están activas, el evento aparece en Events y Registrations está vacía.</p>
 </section>
 
