@@ -482,6 +482,26 @@ button:disabled { opacity: .65; cursor: wait; }
 .yaml-question { margin-top: 10px; }
 .yaml-question button { min-height: 40px; }
 .yaml-feedback:empty { display: none; }
+.route-map, .request-trace {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 215px), 1fr));
+  gap: 8px;
+  list-style: none;
+  padding: 0;
+  margin: 12px 0;
+}
+.route-map li, .request-trace > div {
+  min-width: 0;
+  margin: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--background);
+}
+.route-map li > span, .request-trace dt { display: block; color: var(--muted); font-size: .85rem; }
+.route-map code, .request-trace code { color: #9ee4d8; }
+.request-trace dd { margin: 3px 0 0; }
+.read-feedback { color: #9ee4d8; }
 .output-label { color: var(--muted); }
 .relation, .screen-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
 .relation { justify-content: flex-start; }

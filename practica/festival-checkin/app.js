@@ -4,6 +4,11 @@ const endpoint = document.querySelector('#endpoint');
 const user = document.querySelector('#user');
 const response = document.querySelector('#response');
 const feedback = document.querySelector('#feedback');
+const requestTrace = document.querySelector('#request-trace');
+const requestPath = document.querySelector('#request-path');
+const requestModule = document.querySelector('#request-module');
+const readFeedback = document.querySelector('#read-feedback');
+const modules = { GET: 'consultar', POST: 'inscribir', PATCH: 'entrada' };
 const passState = document.querySelector('#pass-state');
 const title = document.querySelector('#screen-title');
 const eventId = 'evt-001';
@@ -13,6 +18,8 @@ const demoRegistrations = new Map();
 function clearScreen() {
   const demo = mode.value === 'demo';
   document.querySelector('#endpoint-field').hidden = demo;
+  requestTrace.hidden = true;
+  readFeedback.hidden = true;
   title.textContent = demo ? demoTitle : 'Evento del equipo';
   passState.textContent = 'Por consultar';
   feedback.textContent = demo ? 'Ensayo · datos en memoria' : 'AWS · pulsa Consultar para leer la API';
@@ -46,8 +53,11 @@ function apiBase() {
   return value;
 }
 
-async function awsRequest(base, method, userId) {
-  const path = '/events/' + eventId + '/registrations/' + encodeURIComponent(userId);
+function passPath(userId) {
+  return '/events/' + eventId + '/registrations/' + encodeURIComponent(userId);
+}
+
+async function awsRequest(base, method, path) {
   const result = await fetch(base + path, { method, signal: AbortSignal.timeout(12000) });
   const body = await result.json().catch(() => ({ message: 'La API no devolvió JSON' }));
   return { status: result.status, body };
@@ -73,23 +83,35 @@ async function run(method) {
 
   const controls = [...methodButtons, mode, user, endpoint];
   for (const control of controls) control.disabled = true;
-  feedback.textContent = label + ' · consultando…';
+  const path = passPath(userId);
+  readFeedback.hidden = true;
+  requestPath.textContent = method + ' ' + path;
+  requestModule.textContent = 'src/pases/' + modules[method] + '.mjs';
+  requestTrace.hidden = false;
+  response.textContent = 'Esperando respuesta…';
+  feedback.textContent = label + ' · enviando ' + method + '…';
   let result;
   try {
     const base = demo ? '' : apiBase();
-    const request = verb => demo ? demoRequest(verb, userId) : awsRequest(base, verb, userId);
+    const request = verb => demo ? demoRequest(verb, userId) : awsRequest(base, verb, path);
     result = await request(method);
     response.textContent = JSON.stringify(result.body, null, 2);
     feedback.textContent = label + ' · ' + method + ' → ' + result.status
       + (result.body.message ? ' · ' + result.body.message : '');
-    if (method === 'GET' && result.status === 200) showPass(result.body);
+    if (method === 'GET') {
+      if (result.status === 200) showPass(result.body);
+      else passState.textContent = 'Por comprobar';
+    }
     if (method !== 'GET' && result.status >= 200 && result.status < 300) {
       const read = await request('GET');
       if (read.status !== 200) throw new Error('La lectura posterior devolvió ' + read.status + '.');
       showPass(read.body);
+      readFeedback.textContent = 'GET posterior → ' + read.status + ' · Pase actualizado desde la respuesta de lectura.';
+      readFeedback.hidden = false;
     }
   } catch (error) {
     passState.textContent = 'Por comprobar';
+    if (!result) response.textContent = 'Petición sin respuesta disponible.';
     feedback.textContent = (result ? label + ' · ' + method + ' → ' + result.status + '. ' : '')
       + error.message + ' Revisa la URL, la ruta y CORS si estás en AWS.';
   } finally {

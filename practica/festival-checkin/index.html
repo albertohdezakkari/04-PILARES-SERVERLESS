@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Festival Check-in · práctica guiada</title>
-<link rel="stylesheet" href="style.css?v=modulos-pases">
-<script type="module" src="app.js?v=usuario"></script>
+<link rel="stylesheet" href="style.css?v=prueba-rutas">
+<script type="module" src="app.js?v=prueba-rutas"></script>
 <script type="module" src="guia.js?v=modulos-pases"></script>
 <script type="module" src="visor-modelo.js?v=usuario"></script>
 </head>
@@ -759,8 +759,13 @@ done</code></pre><p class="checkpoint"><strong>Antes de avanzar</strong> Ambas e
 <h2>Leer desde Lambda</h2>
 <article id="leer-pase" class="guide-step" data-step="Lectura">
 <h3>Lee el evento y la inscripción con getPass</h3>
+<ol class="route-map" aria-label="De la ruta al caso de uso">
+  <li><span>Petición</span><strong>GET · Ruta del pase</strong></li>
+  <li><span>Archivo que invoca AWS</span><code>src/pases/consultar.mjs</code></li>
+  <li><span>Función que completas</span><code>getPass(key)</code></li>
+</ol>
 <p class="lesson-note"><strong>La pregunta que resuelve GET.</strong> El navegador pide el título y el estado del pase en una misma respuesta. La función lee <code>EVENTO</code> con una clave y <code>INSCRIPCION</code> con dos. Si existe el evento y aún falta la inscripción, la respuesta incluye <code>registration: null</code>.</p>
-<p>Abre el archivo desde la terminal y localiza <code>getPass</code>.</p><pre data-command><code>vi '+/async function getPass(' src/pases/consultar.mjs</code></pre><p>Pulsa <kbd>i</kbd> para editar y sustituye la respuesta <code>501</code> de <code>getPass(key)</code> siguiendo estos pasos.</p>
+<p>Desde la raíz de <code>festival-checkin</code>, abre el archivo de la ruta GET y localiza <code>getPass</code>.</p><pre data-command><code>vi '+/async function getPass(' src/pases/consultar.mjs</code></pre><p>Implementa la función <code>getPass(key)</code> que devuelve <code>501</code>. Mantén los imports y el <code>handler</code> que ya preparaste.</p>
 <ol>
   <li>Usa <code>GetCommand</code> sobre <code>eventsTable</code> con la clave <code>{ eventId: key.eventId }</code>. Si el resultado carece de <code>Item</code>, devuelve <code>404</code>.</li>
   <li>Usa otro <code>GetCommand</code> sobre <code>registrationsTable</code> con <code>key</code> completa. Activa <code>ConsistentRead</code> en ambas lecturas.</li>
@@ -793,16 +798,21 @@ done</code></pre><p class="checkpoint"><strong>Antes de avanzar</strong> Ambas e
 </article>
 <article id="conectar-api" class="guide-step" data-step="Probar GET">
 <h3>Despliega la lectura y prueba la pantalla</h3>
-<p>Guarda los cambios en <code>src/pases/consultar.mjs</code> y ejecuta el mismo despliegue. Después prueba la ruta GET desde la terminal con un código ficticio nuevo.</p><pre><code>node --check src/pases/consultar.mjs &amp;&amp; npx serverless deploy --stage dev --aws-profile "$perfil"</code></pre><pre><code>curl -i "$api_url/events/evt-001/registrations/usuario-01"</code></pre><p>En <a href="#pantalla">Pantalla de prueba</a>, elige AWS, pega el valor de <code>api_url</code> en URL de invocación y pulsa Consultar con el mismo código.</p><p class="checkpoint"><strong>Antes de avanzar</strong> curl devuelve 200 y registration: null. La pantalla muestra Festival de otoño y Sin inscripción.</p>
+<p>Guarda los cambios en <code>src/pases/consultar.mjs</code> y ejecuta el mismo despliegue. Después prueba la ruta GET desde la terminal. Cambia <code>usuario-01</code> si ese código ya tiene una inscripción.</p><pre><code>node --check src/pases/consultar.mjs &amp;&amp; npx serverless deploy --stage dev --aws-profile "$perfil"</code></pre><pre><code>curl -i "$api_url/events/evt-001/registrations/usuario-01"</code></pre><p>Si acabas de cambiar de terminal o de stack, recupera la URL en <a href="#salidas-stack">Salidas</a>. En <a href="#pantalla">Pantalla de prueba</a>, elige AWS, pega el valor de <code>api_url</code> en URL de invocación y pulsa Consultar con el mismo código.</p><p class="checkpoint"><strong>Antes de avanzar</strong> curl devuelve 200 y registration: null. La pantalla muestra Festival de otoño y Sin inscripción.</p>
 </article>
 </section>
 <section id="inscripcion" class="phase" hidden>
 <h2>Guardar una inscripción</h2>
 <article id="construir-post" class="guide-step" data-step="Construir">
 <h3>Crea la inscripción con las dos claves</h3>
+<ol class="route-map" aria-label="De la ruta al caso de uso">
+  <li><span>Petición</span><strong>POST · Ruta del pase</strong></li>
+  <li><span>Archivo que invoca AWS</span><code>src/pases/inscribir.mjs</code></li>
+  <li><span>Función que completas</span><code>register(key)</code></li>
+</ol>
 <p class="lesson-note"><strong>La regla que protege POST.</strong> DynamoDB evalúa la condición durante la escritura del ítem identificado por la pareja completa. Si llegan dos intentos para el mismo pase, el segundo recibe <code>409</code> y la primera hora queda guardada.</p>
 <pre><code>vi '+/async function register(' src/pases/inscribir.mjs</code></pre>
-<p>Pulsa <kbd>i</kbd> para editar. Completa <code>register</code>. Comprueba que el evento existe. Guarda las dos claves y <code>registeredAt</code> en UTC. Condiciona <code>PutCommand</code> a que el ítem no exista. Devuelve <code>201</code>. Guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro. Después, vuelve a desplegar.</p>
+<p>En la raíz de <code>festival-checkin</code>, abre el módulo de POST. Completa <code>register</code> y conserva los imports y el <code>handler</code>. Comprueba que el evento existe. Guarda las dos claves y <code>registeredAt</code> en UTC. Condiciona <code>PutCommand</code> a que el ítem no exista. Devuelve <code>201</code>. Guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro. Después, vuelve a desplegar.</p>
 <details class="lesson-example">
   <summary>Ver la función completa <code>register</code></summary>
   <p>Puedes copiar esta función y reemplazar la versión de <code>register</code> que devuelve <code>501</code> en <code>src/pases/inscribir.mjs</code>.</p>
@@ -826,10 +836,11 @@ done</code></pre><p class="checkpoint"><strong>Antes de avanzar</strong> Ambas e
 </article>
 <article id="probar-post" class="guide-step" data-step="Probar">
 <h3>Comprueba que no se inscribe dos veces</h3>
-<p>Elige un código sin inscripción. Cambia <code>usuario-01</code> si ya se ha usado. Ejecuta los dos POST y luego consulta el registro.</p>
+<p>Elige un código sin inscripción. Cambia <code>usuario-01</code> si ya se ha usado. Ejecuta el primer POST y consulta <code>registeredAt</code>. Repite el POST y compara la hora con otro GET.</p>
 <pre><code>usuario=usuario-01
 pase="$api_url/events/evt-001/registrations/$usuario"
 curl -i -X POST "$pase"
+curl -i "$pase"
 curl -i -X POST "$pase"
 curl -i "$pase"</code></pre>
 <p class="checkpoint"><strong>Antes de avanzar</strong> La primera respuesta es 201. La segunda es 409 y se conserva la primera hora de registro.</p>
@@ -839,9 +850,14 @@ curl -i "$pase"</code></pre>
 <h2>Registrar la entrada</h2>
 <article id="construir-patch" class="guide-step" data-step="Construir">
 <h3>Añade checkedInAt a una inscripción existente</h3>
+<ol class="route-map" aria-label="De la ruta al caso de uso">
+  <li><span>Petición</span><strong>PATCH · Ruta del pase</strong></li>
+  <li><span>Archivo que invoca AWS</span><code>src/pases/entrada.mjs</code></li>
+  <li><span>Función que completas</span><code>checkIn(key)</code></li>
+</ol>
 <p class="lesson-note"><strong>La regla que protege PATCH.</strong> La entrada modifica la inscripción que ya existe. La condición evita crear una fila en la puerta y protege la primera hora de entrada si se repite la petición.</p>
 <pre><code>vi '+/async function checkIn(' src/pases/entrada.mjs</code></pre>
-<p>Pulsa <kbd>i</kbd> para editar. Completa <code>checkIn</code> con <code>UpdateCommand</code>. La condición exige que el ítem exista y que aún no tenga <code>checkedInAt</code>. Guarda la hora en UTC, devuelve <code>200</code> y guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro. Después, vuelve a desplegar.</p><details class="lesson-example">
+<p>En la raíz de <code>festival-checkin</code>, abre el módulo de PATCH. Conserva los imports y el <code>handler</code>. Completa <code>checkIn</code> con <code>UpdateCommand</code>. La condición exige que el ítem exista y que aún no tenga <code>checkedInAt</code>. Guarda la hora en UTC, devuelve <code>200</code> y guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro. Después, vuelve a desplegar.</p><details class="lesson-example">
   <summary>Ver la función completa <code>checkIn</code></summary>
   <p>Puedes copiar esta función y reemplazar la versión de <code>checkIn</code> que devuelve <code>501</code> en <code>src/pases/entrada.mjs</code>.</p>
   <pre data-example><code>async function checkIn(key) {
@@ -859,13 +875,16 @@ curl -i "$pase"</code></pre>
 </article>
 <article id="probar-patch" class="guide-step" data-step="Probar">
 <h3>Prueba los tres resultados</h3>
-<p>Usa un código sin inscripción en el primer PATCH. <code>$pase</code> conserva la URL del código que inscribiste en el paso anterior.</p>
-<pre><code>sin_inscripcion=usuario-02
+<p>Pon en <code>usuario_inscrito</code> el código que usaste en <strong>Inscribir</strong>. Elige otro código sin inscripción para la primera prueba. Tras la primera entrada válida, consulta la hora y comprueba que se mantiene al repetir PATCH.</p>
+<pre><code>usuario_inscrito=usuario-01
+sin_inscripcion=usuario-02
+pase="$api_url/events/evt-001/registrations/$usuario_inscrito"
 curl -i -X PATCH "$api_url/events/evt-001/registrations/$sin_inscripcion"
 curl -i -X PATCH "$pase"
+curl -i "$pase"
 curl -i -X PATCH "$pase"
 curl -i "$pase"</code></pre>
-<p class="checkpoint"><strong>Antes de avanzar</strong> Los resultados son 409, 200 y 409. El registro inscrito conserva registeredAt y checkedInAt.</p>
+<p class="checkpoint"><strong>Antes de avanzar</strong> Los tres PATCH devuelven 409, 200 y 409. Los dos GET muestran los mismos valores de registeredAt y checkedInAt.</p>
 </article>
 </section>
 <section id="prueba" class="phase" hidden>
@@ -893,9 +912,16 @@ curl -i "$pase_prueba"</code></pre>
 <article id="persistencia" class="guide-step" data-step="Persistencia">
 <h3>Recarga y lee las dos horas</h3>
 <p class="lesson-note"><strong>Qué demuestra la comparación.</strong> El GET y la consulta directa a DynamoDB deben mostrar las mismas marcas de tiempo para la misma pareja <code>eventId + userId</code>.</p>
-<p>Consulta de nuevo el pase y repite el <a href="#comprobar-datos">SELECT de inscripciones</a>. Compara las horas de la respuesta HTTP y de DynamoDB. Si estás usando la pantalla, recárgala, vuelve a introducir la URL y el código y pulsa <strong>Consultar</strong>.</p>
-<pre><code>curl -i "$pase_prueba"</code></pre>
-<p class="checkpoint"><strong>Antes de avanzar</strong> El registro sigue en DynamoDB y las dos horas coinciden con la respuesta del GET.</p>
+<p>Usa el mismo <code>codigo_prueba</code> del recorrido anterior. El primer comando consulta la API. El segundo usa las dos claves para leer esa misma inscripción en DynamoDB. Si abriste otra terminal, recupera antes <code>api_url</code> y <code>tabla_inscripciones</code> en <a href="#salidas-stack">Salidas</a>.</p>
+<pre><code>codigo_prueba=usuario-03
+curl -i "$api_url/events/evt-001/registrations/$codigo_prueba"
+
+aws dynamodb execute-statement \
+  --profile "$perfil" --region "$region" --consistent-read \
+  --statement "SELECT eventId, userId, registeredAt, checkedInAt FROM \"$tabla_inscripciones\" WHERE eventId = ? AND userId = ?" \
+  --parameters "[{\"S\":\"evt-001\"},{\"S\":\"$codigo_prueba\"}]"</code></pre>
+<p>Si usas la <a href="#pantalla">Pantalla de prueba</a>, selecciona AWS, indica la misma URL y el mismo usuario y pulsa <strong>Consultar</strong>.</p>
+<p class="checkpoint"><strong>Antes de avanzar</strong> DynamoDB devuelve un ítem y sus dos horas coinciden con la respuesta del GET. En la pantalla ves «Entrada registrada».</p>
 </article>
 </section>
 <section id="referencias" class="phase" hidden>
@@ -956,7 +982,13 @@ curl -i "$pase_prueba"</code></pre>
     <button data-method="POST">Inscribirse</button>
     <button data-method="PATCH">Registrar entrada</button>
   </div>
+  <p class="lesson-note">En <strong>Ensayo</strong> puedes practicar los estados. Para probar tu despliegue, elige <strong>AWS</strong> y usa la URL del paso <a href="#salidas-stack">Salidas</a>.</p>
+  <dl id="request-trace" class="request-trace" hidden>
+    <div><dt>Petición</dt><dd><code id="request-path"></code></dd></div>
+    <div><dt>Módulo que atiende esta ruta en AWS</dt><dd><code id="request-module"></code></dd></div>
+  </dl>
   <p id="feedback" role="status">Ensayo listo. Usa los botones para recorrer los estados.</p>
+  <p id="read-feedback" class="read-feedback" hidden></p>
   <p class="output-label">Respuesta de la operación</p><pre id="response">Pulsa Consultar para empezar.</pre>
 </section>
 </div>
