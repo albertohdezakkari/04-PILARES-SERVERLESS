@@ -119,7 +119,7 @@ function addCodeControls(pre) {
       ? sections.map(section => lines.findIndex(line => line.startsWith(section.dataset.codeStart)))
       : lines.filter((_, index) => index % 17 === 0).map((_, pageIndex) => pageIndex * 17);
     const count = starts.length;
-    if (notes) toolbar.after(notes);
+    if (notes) pre.after(notes);
     const pageLabel = document.createElement('span');
     let page = 0;
     let full = false;

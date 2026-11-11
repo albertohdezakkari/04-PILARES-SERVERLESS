@@ -75,6 +75,19 @@ button:disabled { opacity: .65; cursor: wait; }
 }
 .code-notes h4 { margin: 0 0 4px; }
 .code-notes p { margin: 4px 0; }
+.yaml-terms { margin: 6px 0 12px; }
+.yaml-terms dt { color: var(--accent); font-weight: 700; }
+.yaml-terms dd { margin: 2px 0 8px; }
+@media (min-width: 800px) {
+  .yaml-reader {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    align-items: start;
+    column-gap: 14px;
+  }
+  .yaml-reader .code-toolbar { grid-column: 1 / -1; }
+  .yaml-reader pre { position: sticky; top: 6px; max-height: 68dvh; }
+}
 .yaml-question { margin-top: 10px; }
 .yaml-question button { min-height: 40px; }
 .yaml-feedback:empty { display: none; }

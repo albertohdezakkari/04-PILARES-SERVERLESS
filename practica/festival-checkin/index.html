@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Festival Check-in · práctica guiada</title>
-<link rel="stylesheet" href="style.css?v=leer-yaml">
+<link rel="stylesheet" href="style.css?v=yaml-linea">
 <script type="module" src="app.js"></script>
-<script type="module" src="guia.js?v=leer-yaml"></script>
+<script type="module" src="guia.js?v=yaml-linea"></script>
 <script type="module" src="visor-modelo.js"></script>
 </head>
 <body>
@@ -110,13 +110,24 @@ LAMBDA_ROLE_ARN=$(aws iam get-role --role-name LabRole --profile "$perfil" --reg
   printf '%s\n' "$LAMBDA_ROLE_ARN"</code></pre><p>Si el laboratorio deniega <code>iam:GetRole</code>, consulta las instrucciones del laboratorio o solicita el ARN autorizado para tu cuenta. Escríbelo con <code>export LAMBDA_ROLE_ARN="ARN_DEL_LAB"</code>, sustituyendo el valor entre comillas.</p><p class="checkpoint"><strong>Antes de avanzar</strong> Tienes el ARN del rol del laboratorio y sigues usando el perfil y la región que comprobaste en Conexión.</p>
 </article>
 <article id="infraestructura" class="guide-step" data-step="Leer el YAML">
-<h3>Sigue una petición en serverless.yml</h3>
-<p>Imagina que <code>equipo-02</code> pulsa <strong>Consultar</strong> para el evento <code>evt-001</code>. Sigue la petición en el YAML. En cada página, busca la pista en el código y elige una respuesta para comprobar tu razonamiento.</p>
+<h3>Lee serverless.yml línea a línea</h3>
+<p>Este archivo describe qué desplegar en AWS. Ábrelo por bloques y lee cada línea como una instrucción de configuración. Puedes seguir la explicación junto al código.</p>
+<p><strong>Cómo leer YAML.</strong> En <code>name: aws</code>, <code>name</code> es la clave y <code>aws</code> su valor. Si después de <code>provider:</code> hay líneas más a la derecha, esas líneas forman su bloque. Usa espacios para la sangría y alinea las claves del mismo nivel. Un guion al principio de una línea, como <code>- GET</code>, introduce un elemento de una lista.</p>
+<div class="yaml-reader">
 <div class="code-notes" aria-live="polite">
   <section data-code-start="service:">
-    <h4>Nombre, región y permisos</h4>
-    <p><code>${env:STUDENT_CODE}</code> toma el código que exportaste en la terminal. Con <code>equipo-01</code>, el servicio se llama <code>festival-checkin-equipo-01</code>. <code>region</code> toma <code>AWS_REGION</code>, <code>stage</code> identifica el entorno <code>dev</code> y <code>runtime</code> indica que Lambda ejecuta Node.js 22.</p>
-    <p><code>iam.role</code> asigna a Lambda el rol del laboratorio con el que accederá a DynamoDB. <code>frameworkVersion</code> mantiene el proyecto en la serie 4.45.x de Serverless Framework.</p>
+    <h4>Nombre, versión y destino del despliegue</h4>
+    <dl class="yaml-terms">
+      <dt><code>service:</code></dt><dd>Nombre del servicio. <code>festival-checkin-</code> es nuestro prefijo. <code>${env:STUDENT_CODE}</code> pide a Serverless el valor de la variable exportada en la terminal. Con <code>equipo-01</code>, el nombre queda <code>festival-checkin-equipo-01</code>.</dd>
+      <dt><code>frameworkVersion: ~4.45.0</code></dt><dd>Versión de Serverless Framework que admite el proyecto. <code>~</code> permite actualizaciones de parche de la serie 4.45, como 4.45.1.</dd>
+      <dt><code>provider:</code></dt><dd>Abre el bloque de configuración de la plataforma. Las líneas <code>name</code>, <code>runtime</code>, <code>region</code>, <code>stage</code> e <code>iam</code> están dentro de ese bloque.</dd>
+      <dt><code>name: aws</code></dt><dd>Selecciona Amazon Web Services como plataforma.</dd>
+      <dt><code>runtime: nodejs22.x</code></dt><dd>Indica con qué entorno ejecutará AWS el código de Lambda. Aquí se usa Node.js 22.</dd>
+      <dt><code>region: ${env:AWS_REGION}</code></dt><dd>Elige la región de AWS leyendo la variable de la terminal. Por ejemplo, <code>us-east-1</code>.</dd>
+      <dt><code>stage: dev</code></dt><dd>Nombra el entorno del servicio. <code>dev</code> es el nombre que elegimos para el entorno de desarrollo.</dd>
+      <dt><code>iam:</code></dt><dd>Abre el bloque de identidad y permisos de AWS.</dd>
+      <dt><code>role: ${env:LAMBDA_ROLE_ARN}</code></dt><dd>Indica qué rol del laboratorio usará Lambda. Un ARN identifica ese rol en AWS. Sus permisos determinan qué puede hacer la función, como leer o escribir en DynamoDB.</dd>
+    </dl>
     <div class="yaml-question">
       <p><strong>Si exportas STUDENT_CODE=equipo-03, ¿cómo se llama el servicio?</strong></p>
       <div class="actions">
@@ -127,9 +138,13 @@ LAMBDA_ROLE_ARN=$(aws iam get-role --role-name LabRole --profile "$perfil" --reg
     </div>
   </section>
   <section data-code-start="  environment:" hidden>
-    <h4>Qué tablas usa Lambda y desde qué web se llama a la API</h4>
-    <p><code>Ref: EventsTable</code> devuelve el nombre real que CloudFormation da a la tabla. Lambda recibe ese nombre en <code>EVENTS_TABLE</code> y lo lee con <code>process.env.EVENTS_TABLE</code>. Lo mismo ocurre con <code>REGISTRATIONS_TABLE</code>.</p>
-    <p><code>payload: '2.0'</code> indica el formato en que API Gateway entrega la petición a Lambda. CORS permite que el navegador haga GET, POST y PATCH desde el origen de GitHub Pages indicado.</p>
+    <h4>Cómo recibe Lambda los nombres de sus tablas</h4>
+    <dl class="yaml-terms">
+      <dt><code>environment:</code></dt><dd>Agrupa las variables de entorno que Serverless configura para Lambda. En JavaScript se leen con <code>process.env</code>.</dd>
+      <dt><code>EVENTS_TABLE:</code></dt><dd>Nombre que elegimos para la variable que guarda el nombre de la tabla de eventos. El código la lee con <code>process.env.EVENTS_TABLE</code>.</dd>
+      <dt><code>REGISTRATIONS_TABLE:</code></dt><dd>Variable que elegimos para el nombre de la tabla de inscripciones.</dd>
+      <dt><code>Ref: EventsTable</code></dt><dd><code>Ref</code> es una referencia de CloudFormation. <code>EventsTable</code> es el identificador que damos al recurso en <code>Resources</code>. Para una tabla DynamoDB, <code>Ref</code> devuelve el nombre real asignado en AWS. <code>Ref: RegistrationsTable</code> hace lo mismo con la otra tabla.</dd>
+    </dl>
     <div class="yaml-question">
       <p><strong>En index.mjs, ¿qué variable leerías para localizar la tabla de inscripciones?</strong></p>
       <div class="actions">
@@ -139,10 +154,30 @@ LAMBDA_ROLE_ARN=$(aws iam get-role --role-name LabRole --profile "$perfil" --reg
       <p class="yaml-feedback" role="status"></p>
     </div>
   </section>
+  <section data-code-start="  httpApi:" hidden>
+    <h4>Cómo se comunica la web con API Gateway</h4>
+    <dl class="yaml-terms">
+      <dt><code>httpApi:</code></dt><dd>Abre la configuración de la API HTTP de API Gateway, el servicio que recibe las peticiones de la web.</dd>
+      <dt><code>payload: '2.0'</code></dt><dd>Indica el formato que API Gateway usa para entregar la petición a Lambda. El código lee el método en <code>event.requestContext.http.method</code>. Las comillas hacen que YAML lea <code>2.0</code> como texto.</dd>
+      <dt><code>cors:</code></dt><dd>Agrupa las reglas que consulta el navegador cuando la web y la API están en orígenes distintos.</dd>
+      <dt><code>allowedOrigins:</code></dt><dd>Lista los orígenes web permitidos. El guion introduce <code>https://albertohdezakkari.github.io</code> como elemento de la lista.</dd>
+      <dt><code>allowedHeaders:</code></dt><dd>Lista las cabeceras admitidas desde el navegador. <code>Content-Type</code> indica el tipo de contenido enviado.</dd>
+      <dt><code>allowedMethods:</code></dt><dd>Lista los métodos que puede usar la web: <code>GET</code> para consultar el pase, <code>POST</code> para inscribirse y <code>PATCH</code> para registrar la entrada. Cada guion añade un método.</dd>
+    </dl>
+    <p>Busca el guion delante de <code>PATCH</code>. Marca un elemento de la lista <code>allowedMethods</code>.</p>
+  </section>
   <section data-code-start="build:" hidden>
-    <h4>Qué función recibe cada petición</h4>
-    <p>Las tres rutas llaman a <code>index.handler</code>, la función <code>handler</code> exportada en <code>index.mjs</code>. En <code>GET /events/evt-001/registrations/equipo-02</code>, <code>eventId</code> vale <code>evt-001</code> y <code>userId</code> vale <code>equipo-02</code>.</p>
-    <p>GET consulta el pase, POST crea la inscripción y PATCH registra la entrada. <code>esbuild: false</code> desactiva el empaquetador de código integrado. Lambda ejecutará el archivo JavaScript que prepararás en el siguiente paso.</p>
+    <h4>Cómo una ruta llega a index.mjs</h4>
+    <dl class="yaml-terms">
+      <dt><code>build:</code></dt><dd>Abre los ajustes de preparación del código para el despliegue.</dd>
+      <dt><code>esbuild: false</code></dt><dd><code>false</code> es un valor booleano. Aquí desactiva la herramienta integrada esbuild porque desplegamos el JavaScript de <code>index.mjs</code>.</dd>
+      <dt><code>functions:</code></dt><dd>Agrupa las funciones Lambda del servicio.</dd>
+      <dt><code>checkin:</code></dt><dd>Es el nombre que le damos a nuestra función dentro del proyecto.</dd>
+      <dt><code>handler: index.handler</code></dt><dd>Une el nombre base del archivo <code>index.mjs</code> con el nombre de la función exportada <code>handler</code>. AWS llama a esa función cuando llega la petición.</dd>
+      <dt><code>events:</code></dt><dd>Lista lo que puede activar esa Lambda. Cada <code>- httpApi:</code> añade una ruta HTTP.</dd>
+      <dt><code>method:</code></dt><dd>Selecciona el método HTTP de la ruta. GET, POST y PATCH activan el mismo <code>handler</code>, que usa el método para elegir la operación.</dd>
+      <dt><code>path:</code></dt><dd>Define la dirección que se compara con la petición. En <code>/events/evt-001/registrations/equipo-02</code>, las llaves de la plantilla marcan los huecos: <code>{eventId}</code> recibe <code>evt-001</code> y <code>{userId}</code> recibe <code>equipo-02</code>.</dd>
+    </dl>
     <div class="yaml-question">
       <p><strong>El equipo ya está inscrito y llega al festival. ¿Qué petición registra su entrada?</strong></p>
       <div class="actions">
@@ -153,9 +188,16 @@ LAMBDA_ROLE_ARN=$(aws iam get-role --role-name LabRole --profile "$perfil" --reg
     </div>
   </section>
   <section data-code-start="resources:" hidden>
-    <h4>Events · Un identificador por evento</h4>
-    <p><code>AttributeDefinitions</code> declara el tipo de los atributos que participan en las claves. Aquí <code>S</code> significa texto. <code>KeySchema</code> indica qué función cumple cada atributo. <code>eventId</code> es <code>HASH</code>, la clave de partición. Con <code>evt-001</code> puedes recuperar un evento concreto.</p>
-    <p><code>PAY_PER_REQUEST</code> configura el cobro por las lecturas y escrituras que se realicen.</p>
+    <h4>Cómo se crea EventsTable</h4>
+    <dl class="yaml-terms">
+      <dt><code>resources: → Resources:</code></dt><dd>El primer bloque pertenece a Serverless Framework. Dentro, <code>Resources</code>, con mayúscula, lista los recursos que crea CloudFormation.</dd>
+      <dt><code>EventsTable:</code></dt><dd>Identificador lógico que elegimos para la tabla de eventos. Es el mismo que aparece en <code>Ref: EventsTable</code>.</dd>
+      <dt><code>Type: AWS::DynamoDB::Table</code></dt><dd>Indica a CloudFormation qué tipo de recurso debe crear: una tabla DynamoDB.</dd>
+      <dt><code>Properties:</code></dt><dd>Agrupa los ajustes de esa tabla.</dd>
+      <dt><code>BillingMode: PAY_PER_REQUEST</code></dt><dd>Selecciona el modo bajo demanda. Las lecturas y escrituras se cobran según el uso.</dd>
+      <dt><code>AttributeDefinitions:</code></dt><dd>Lista los atributos que forman las claves y su tipo. <code>AttributeName: eventId</code> da el nombre del atributo y <code>AttributeType: S</code> lo declara de tipo texto.</dd>
+      <dt><code>KeySchema:</code></dt><dd>Lista qué papel cumple cada atributo en la clave. <code>AttributeName</code> repite el nombre del atributo y <code>KeyType: HASH</code> lo declara clave de partición. En esta tabla, <code>eventId</code> basta para localizar <code>evt-001</code>.</dd>
+    </dl>
     <div class="yaml-question">
       <p><strong>¿Qué valor necesitas para buscar el evento Festival de otoño en EventsTable?</strong></p>
       <div class="actions">
@@ -166,8 +208,13 @@ LAMBDA_ROLE_ARN=$(aws iam get-role --role-name LabRole --profile "$perfil" --reg
     </div>
   </section>
   <section data-code-start="    RegistrationsTable:" hidden>
-    <h4>Registrations · Dos valores para localizar una inscripción</h4>
-    <p><code>eventId</code> sigue siendo la clave de partición y agrupa las inscripciones de un evento. <code>userId</code> es <code>RANGE</code>, la clave de ordenación. Dentro de <code>evt-001</code>, <code>equipo-01</code> y <code>equipo-02</code> ocupan filas distintas. La pareja <code>evt-001</code> + <code>equipo-02</code> identifica una sola fila.</p>
+    <h4>Por qué RegistrationsTable necesita dos valores</h4>
+    <dl class="yaml-terms">
+      <dt><code>RegistrationsTable:</code></dt><dd>Identificador lógico de la tabla de inscripciones. <code>Type</code>, <code>Properties</code> y <code>BillingMode</code> tienen la misma función que en EventsTable.</dd>
+      <dt><code>AttributeDefinitions:</code></dt><dd>Contiene dos elementos: <code>eventId</code> y <code>userId</code>. El campo <code>AttributeType: S</code> indica que ambos valores son texto.</dd>
+      <dt><code>KeyType: HASH</code></dt><dd><code>eventId</code> es la clave de partición y permite agrupar las inscripciones por evento.</dd>
+      <dt><code>KeyType: RANGE</code></dt><dd><code>userId</code> es la clave de ordenación y distingue a cada equipo dentro del evento. <code>(evt-001, equipo-01)</code> y <code>(evt-001, equipo-02)</code> son dos claves completas distintas.</dd>
+    </dl>
     <div class="yaml-question">
       <p><strong>Si ya existe (evt-001, equipo-01), ¿puedes guardar (evt-001, equipo-02) como otra fila?</strong></p>
       <div class="actions">
@@ -178,8 +225,12 @@ LAMBDA_ROLE_ARN=$(aws iam get-role --role-name LabRole --profile "$perfil" --reg
     </div>
   </section>
   <section data-code-start="  Outputs:" hidden>
-    <h4>Los nombres que usarás desde la terminal</h4>
-    <p><code>Outputs</code> publica los nombres reales en las salidas del despliegue. En <a href="#salidas-stack">Salidas</a> leerás <code>EventsTableName</code> y <code>RegistrationsTableName</code> para ejecutar las consultas de AWS CLI sobre tus tablas.</p>
+    <h4>Qué devuelve el despliegue a la terminal</h4>
+    <dl class="yaml-terms">
+      <dt><code>Outputs:</code></dt><dd>Declara los valores que CloudFormation muestra como resultado del despliegue. Está al mismo nivel que <code>Resources</code>.</dd>
+      <dt><code>EventsTableName:</code></dt><dd>Nombre que elegimos para la salida de la tabla de eventos. <code>RegistrationsTableName</code> es la salida de la otra tabla.</dd>
+      <dt><code>Value:</code></dt><dd>Indica qué dato devuelve cada salida. Con <code>Ref: EventsTable</code>, devuelve el nombre real de la tabla de eventos. Lo recuperarás desde la terminal en <a href="#salidas-stack">Salidas</a>.</dd>
+    </dl>
     <div class="yaml-question">
       <p><strong>¿Qué salida consultarás para saber sobre qué tabla ejecutar el INSERT del evento?</strong></p>
       <div class="actions">
@@ -267,6 +318,7 @@ resources:
     RegistrationsTableName:
       Value:
         Ref: RegistrationsTable</code></pre>
+</div>
 <p class="checkpoint"><strong>Antes de avanzar</strong> En la página de <strong>Registrations</strong>, localiza <code>eventId</code> como <code>HASH</code> y <code>userId</code> como <code>RANGE</code>. Responde la pregunta y comprueba que el mensaje confirma que los dos equipos tienen filas distintas.</p>
 </article>
 <article id="escribir-yaml" class="guide-step" data-step="Crear el YAML">
