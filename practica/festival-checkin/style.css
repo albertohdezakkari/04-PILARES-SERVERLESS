@@ -369,6 +369,7 @@ button:disabled { opacity: .65; cursor: wait; }
   background: #15101e;
 }
 .index-reader pre { margin: 0; min-width: 0; }
+.index-reader pre > code { display: block; }
 .index-reader .code-toolbar { margin: 0; }
 .index-note {
   padding: 14px;
@@ -379,6 +380,9 @@ button:disabled { opacity: .65; cursor: wait; }
 .index-note strong { font-size: 1.2rem; line-height: 1.15; }
 .index-note p { margin: 6px 0 0; }
 .index-line { text-align: left; }
+@media (max-width: 899px) {
+  .index-reader pre { grid-row: 2; }
+}
 @media (min-width: 900px) {
   .index-reader { grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr); align-items: start; }
   .index-reader .code-toolbar { grid-column: 1 / -1; }

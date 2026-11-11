@@ -7,8 +7,13 @@ const feedback = document.querySelector('#feedback');
 const requestTrace = document.querySelector('#request-trace');
 const requestPath = document.querySelector('#request-path');
 const requestModule = document.querySelector('#request-module');
+const requestLesson = document.querySelector('#request-lesson');
 const readFeedback = document.querySelector('#read-feedback');
-const modules = { GET: 'consultar', POST: 'inscribir', PATCH: 'entrada' };
+const routes = {
+  GET: { module: 'consultar', lesson: '#leer-pase' },
+  POST: { module: 'inscribir', lesson: '#construir-post' },
+  PATCH: { module: 'entrada', lesson: '#construir-patch' }
+};
 const passState = document.querySelector('#pass-state');
 const title = document.querySelector('#screen-title');
 const eventId = 'evt-001';
@@ -86,7 +91,8 @@ async function run(method) {
   const path = passPath(userId);
   readFeedback.hidden = true;
   requestPath.textContent = method + ' ' + path;
-  requestModule.textContent = 'src/pases/' + modules[method] + '.mjs';
+  requestModule.textContent = 'src/pases/' + routes[method].module + '.mjs';
+  requestLesson.href = routes[method].lesson;
   requestTrace.hidden = false;
   response.textContent = 'Esperando respuesta…';
   feedback.textContent = label + ' · enviando ' + method + '…';
