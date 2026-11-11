@@ -71,26 +71,17 @@
 <ol>
   <li>En <strong>DynamoDB → Tables → Create table</strong>, cread <code>equipo-01-events</code>. Escribid <code>eventId</code> en <strong>Partition key</strong> y elegid <strong>String</strong>. Dejad <strong>Sort key</strong> vacío y conservad la configuración predeterminada.</li>
   <li>Repetid con <code>equipo-01-registrations</code>. Usad <code>eventId</code> como <strong>Partition key</strong> y <code>userId</code> como <strong>Sort key</strong>, ambos <strong>String</strong>. Cambiad <code>equipo-01</code> en ambos nombres por vuestro prefijo. Anotad los nombres exactos para la fase Lectura.</li>
-  <li>Cuando Events esté <strong>Active</strong>, abrid <strong>Explore table items → Create item</strong>. En la vista de formulario, dad a <code>eventId</code> el valor <code>evt-001</code>. Con <strong>Add new attribute → String</strong>, añadid <code>title</code> con el valor <code>Festival de otoño</code>. Pulsad <strong>Create item</strong>.</li>
+  <li>Cuando las dos tablas estén <strong>Active</strong>, abrid <strong>PartiQL editor</strong> en el menú lateral de DynamoDB. PartiQL permite usar sentencias parecidas a SQL sobre los datos de DynamoDB. Cambiad <code>equipo-01</code> por vuestro prefijo y ejecutad cada bloque por separado con <strong>Run</strong>.</li>
 </ol>
-<p><code>title</code> se añade al crear el registro. Los atributos <code>registeredAt</code> y <code>checkedInAt</code> se escribirán desde Lambda en sus respectivas fases.</p>
-<details><summary>Alternativa para cargar el evento desde la vista JSON</summary>
-<p>En <strong>Create item → JSON view</strong>, usad el formato DynamoDB JSON con los tipos incluidos. Si el editor tiene la opción <strong>View DynamoDB JSON</strong>, activadla antes de pegar el bloque.</p>
-<pre><code>{
-  "eventId": { "S": "evt-001" },
-  "title": { "S": "Festival de otoño" }
-}</code></pre>
-</details>
-<details>
-<summary>Repetir la preparación con AWS CloudShell</summary>
-<p>Elegid el formulario de DynamoDB o este script para preparar las tablas. Podéis leer el <a href="https://github.com/albertohdezakkari/04-PILARES-SERVERLESS/blob/main/practica/festival-checkin/preparar-tablas.sh">script completo en GitHub</a>. En la consola AWS, abrid <strong>CloudShell</strong> si el laboratorio lo tiene habilitado.</p>
-<p>Descargad el script desde CloudShell y cambiad la región de ejemplo y el prefijo por los que estéis usando. <code>--plan</code> muestra el destino. <code>--apply</code> crea las tablas, espera a que estén activas y carga el evento. Si ya existen, comprueba las claves y conserva el evento guardado.</p>
-<pre><code>curl -fsSLO https://albertohdezakkari.github.io/04-PILARES-SERVERLESS/practica/festival-checkin/preparar-tablas.sh
-bash preparar-tablas.sh us-east-1 equipo-01 --plan
-bash preparar-tablas.sh us-east-1 equipo-01 --apply</code></pre>
-<p>Volved a <strong>DynamoDB → Tables</strong> para comprobar las claves y el registro con la interfaz web.</p>
-</details>
-<p><strong>Antes de avanzar:</strong> ambas tablas están activas, el evento aparece en Events y Registrations está vacía.</p>
+<h3>Cargar el evento</h3>
+<pre><code>INSERT INTO "equipo-01-events" VALUE {'eventId': 'evt-001', 'title': 'Festival de otoño'}</code></pre>
+<p>El <code>INSERT</code> crea el registro con su título. Si el evento ya existe, pasad a la consulta para comprobarlo.</p>
+<h3>Comprobar el evento</h3>
+<pre><code>SELECT eventId, title FROM "equipo-01-events" WHERE eventId = 'evt-001'</code></pre>
+<p>Debe aparecer una fila con <code>evt-001</code> y <strong>Festival de otoño</strong>. El <code>WHERE</code> busca por la clave de partición.</p>
+<h3>Comprobar las inscripciones</h3>
+<pre><code>SELECT * FROM "equipo-01-registrations" WHERE eventId = 'evt-001'</code></pre>
+<p>Antes de avanzar, comprobad que ambas tablas están activas, el evento aparece en Events y la consulta de inscripciones devuelve cero filas. Al terminar la práctica, esta misma consulta mostrará <code>registeredAt</code> y, para quienes hayan entrado, <code>checkedInAt</code>.</p>
 </section>
 
 <section id="lectura" class="phase" hidden>
@@ -188,7 +179,7 @@ export async function handler(event) {
 <li>Intentad entrar → <code>409</code>.</li>
 <li>Inscribíos → <code>201</code>. Repetid → <code>409</code>.</li>
 <li>Registrad la entrada → <code>200</code>. Repetid → <code>409</code>.</li>
-<li>Recargad, volved a indicar la URL y el código, y pulsad Consultar. Comparad las dos horas con el ítem de DynamoDB.</li>
+<li>Recargad, volved a indicar la URL y el código, y pulsad Consultar. Repetid el <code>SELECT</code> de inscripciones de la pestaña Datos en el editor PartiQL y comparad las dos horas con el registro del equipo.</li>
 </ol>
 <p>Al terminar, seguid las indicaciones del profesor para retirar los recursos de prueba.</p>
 </section>
