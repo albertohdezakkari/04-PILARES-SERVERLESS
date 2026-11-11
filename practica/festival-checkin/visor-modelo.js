@@ -22,10 +22,11 @@ function formatValue(value) {
   return typeof value === 'string' ? value : JSON.stringify(value);
 }
 
-function renderTable(model) {
+function renderTable(model, practice = false) {
   const name = model?.TableName;
   const partitionKey = model?.KeyAttributes?.PartitionKey;
   const sortKey = model?.KeyAttributes?.SortKey;
+  const showPractice = practice && partitionKey?.AttributeName === 'eventId' && sortKey?.AttributeName === 'userId';
   const rows = model?.TableData ?? [];
   const attributes = model?.NonKeyAttributes ?? [];
   if (typeof name !== 'string' || !name.trim() || !partitionKey?.AttributeName) {
@@ -55,20 +56,61 @@ function renderTable(model) {
     header.append(cell);
   }
   const body = table.createTBody();
-  for (const row of rows) {
+  const renderedRows = rows.map(row => {
     const line = body.insertRow();
     for (const column of columns) {
-      line.insertCell().textContent = formatValue(Object.hasOwn(row, column) ? row[column] : undefined);
+      const value = Object.hasOwn(row, column) ? row[column] : undefined;
+      const cell = line.insertCell();
+      cell.textContent = formatValue(value);
+      if (showPractice && column === 'checkedInAt') {
+        cell.append(element('span', value === undefined ? 'Sin entrada registrada' : 'Entrada registrada', 'model-key'));
+      }
     }
-  }
+    return { row, line };
+  });
   const wrapper = element('div', undefined, 'model-table-scroll');
   wrapper.append(table);
-  section.append(element('h3', name), wrapper);
+  section.append(element('h3', name));
+  if (showPractice) section.append(createPractice(renderedRows));
+  section.append(wrapper);
   if (rows.length === 0) section.append(element('p', 'Sin registros de ejemplo.'));
   return section;
 }
 
-function showModel(message = status) {
+function createPractice(renderedRows) {
+  const panel = element('div', undefined, 'model-practice');
+  const buttons = element('div', undefined, 'actions');
+  const all = element('button', 'Ver inscritos del evento');
+  const one = element('button', 'Buscar a equipo-02');
+  all.type = one.type = 'button';
+  const condition = element('code');
+  const output = element('p');
+  output.setAttribute('role', 'status');
+
+  function query(onlyOne) {
+    let count = 0;
+    for (const { row, line } of renderedRows) {
+      const match = formatValue(row.eventId) === 'evt-001' &&
+        (!onlyOne || formatValue(row.userId) === 'equipo-02');
+      line.hidden = !match;
+      if (match) count++;
+    }
+    all.setAttribute('aria-pressed', String(!onlyOne));
+    one.setAttribute('aria-pressed', String(onlyOne));
+    condition.textContent = "WHERE eventId = 'evt-001'" + (onlyOne ? " AND userId = 'equipo-02'" : '');
+    const rows = count === 1 ? '1 inscripción' : count + ' inscripciones';
+    output.textContent = rows + (onlyOne ? ' al buscar por evento y persona.' : ' al buscar por evento.');
+  }
+
+  all.addEventListener('click', () => query(false));
+  one.addEventListener('click', () => query(true));
+  buttons.append(all, one);
+  panel.append(element('p', 'Predice cuántas filas saldrán y prueba las dos búsquedas con los datos de ejemplo.'), buttons, condition, output);
+  query(false);
+  return panel;
+}
+
+function showModel(message = status, practice = false) {
   message.textContent = '';
   let model;
   try {
@@ -82,7 +124,7 @@ function showModel(message = status) {
     return;
   }
   try {
-    result.replaceChildren(...model.DataModel.map(renderTable));
+    result.replaceChildren(...model.DataModel.map(table => renderTable(table, practice)));
     status.textContent = 'Tablas del modelo: ' + model.DataModel.length + '. PK = partición, SK = ordenación, S = texto.';
     if (message === feedback) feedback.textContent = 'Tablas actualizadas arriba.';
   } catch (error) {
@@ -98,7 +140,7 @@ async function loadExample(message, onlyIfEmpty = false) {
     const source = await response.text();
     if (onlyIfEmpty && input.value.trim()) return;
     input.value = source;
-    showModel(message);
+    showModel(message, true);
   } catch (error) {
     message.textContent = error.message;
   } finally {

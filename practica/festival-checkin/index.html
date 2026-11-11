@@ -96,11 +96,12 @@ aws dynamodb list-tables --profile "$perfil" --region "$region"</code></pre>
   <div><strong>Registrations</strong><br><code>eventId</code> · PK<br><code>userId</code> · SK<br><code>registeredAt</code> · texto<br><code>checkedInAt</code> · opcional</div>
 </div>
 <section aria-labelledby="modelo-titulo">
-<h3 id="modelo-titulo">Lee las filas antes de abrir el JSON</h3>
+<h3 id="modelo-titulo">¿Quién se ha inscrito y quién ha entrado?</h3>
 <p>En <strong>Events</strong>, una fila es un evento. En <strong>Registrations</strong>, una fila es la inscripción de una persona a un evento. Estas filas son ejemplos para entender el modelo.</p>
 <p id="model-status" role="status">Cargando el ejemplo…</p>
 <div id="model-result"></div>
-<p><strong>Fíjate en <code>evt-001</code>.</strong> En Events identifica «Festival de otoño». En Registrations agrupa a las dos personas inscritas. La pareja <code>evt-001</code> + <code>equipo-02</code> identifica una sola inscripción. Esa fila tiene <code>checkedInAt</code>, así que esa persona ya ha entrado. En la otra fila, el guion indica que aún no hay hora de entrada.</p>
+<p><strong>Fíjate en <code>evt-001</code>.</strong> En Events identifica «Festival de otoño». En Registrations agrupa a las dos personas inscritas. La pareja <code>evt-001</code> + <code>equipo-02</code> identifica una sola inscripción. Esa fila tiene <code>checkedInAt</code>, así que esa persona ya ha entrado.</p>
+<p>Cuando creéis las tablas reales, cargaréis solo el evento. Las inscripciones de AWS empezarán vacías y se crearán más adelante en la práctica.</p>
 <details>
   <summary>Compruébalo · ¿qué pasa si equipo-01 se apunta a otro evento?</summary>
   <p>La nueva inscripción tendría <code>eventId = evt-002</code> y <code>userId = equipo-01</code>. Es una pareja de claves distinta. Si buscas por <code>evt-001</code>, siguen saliendo solo las dos filas del primer evento.</p>
@@ -133,17 +134,6 @@ aws dynamodb list-tables --profile "$perfil" --region "$region"</code></pre>
     <img src="infografia-terminal.png" alt="Del modelo DynamoDB a AWS CLI: elegir las claves, comprobar la identidad, crear las tablas, esperar a que estén activas, cargar el evento y verificarlo con PartiQL. Los pasos con comandos aparecen debajo.">
   </a>
 </figure>
-<details>
-<summary>Ver y explorar las tablas en el diseñador</summary>
-<p>Descargad el <a href="modelo-dynamodb.json" download>modelo de Festival Check-in</a> y abrid <a href="https://amazondynamodblabs.com/static/visualizer/index.html" target="_blank" rel="noopener">DynamoDB Data Modeler</a>. En <strong>☰ → Load from File</strong>, elegid el JSON. Usad el icono de cambiar tabla para pasar de Events a Registrations.</p>
-<p>En Registrations, pulsad los prismáticos y seleccionad <strong>Define new query</strong>. Dadle un nombre, elegid la tabla Registrations y escribid <code>evt-001</code> en <strong>Partition Key Value</strong>. Los dos registros comparten PK y tienen distinto <code>userId</code>. El atributo <code>checkedInAt</code> aparece en el registro con entrada. Para buscar por usuario en todos los eventos haría falta otro patrón de acceso.</p>
-<p>El diseñador muestra la clave de Events, pero su visor omite las filas de tablas sin SK. Este es el registro de Events incluido en el modelo.</p>
-<table>
-  <thead><tr><th scope="col">eventId · PK</th><th scope="col">title</th></tr></thead>
-  <tbody><tr><td><code>evt-001</code></td><td>Festival de otoño</td></tr></tbody>
-</table>
-<p>Los registros del diseñador son ejemplos. En el laboratorio empezamos con el evento y la tabla de inscripciones vacía.</p>
-</details>
 <h3>Crear y comprobar desde la terminal</h3>
 <p>Cambiad <code>equipo-01</code> por vuestro prefijo. Anotad los nombres que resulten para la pestaña Lectura.</p>
 <pre><code>equipo=equipo-01
