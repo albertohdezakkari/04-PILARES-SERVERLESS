@@ -51,6 +51,24 @@ input, select { width: 100%; min-width: 0; }
 pre { background: var(--background); border-radius: 8px; padding: 12px; overflow: auto; max-height: 45vh; }
 code { overflow-wrap: anywhere; }
 footer { margin: 24px 0; }
+.guide-poster {
+  margin: 18px 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.guide-poster figcaption { margin-bottom: 10px; }
+.guide-poster figcaption a { margin-left: .6em; }
+.guide-poster img {
+  display: block;
+  margin: auto;
+  max-width: 100%;
+  max-height: 520px;
+  width: auto;
+  height: auto;
+  border-radius: 8px;
+}
+.phase details + details { margin-top: 12px; }
 #model-json {
   display: block;
   width: 100%;

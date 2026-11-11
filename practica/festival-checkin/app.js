@@ -20,13 +20,21 @@ function selectPhase(phase) {
 }
 
 for (const button of phaseButtons) {
-  button.addEventListener('click', () => selectPhase(button.dataset.phase));
+  button.addEventListener('click', () => {
+    selectPhase(button.dataset.phase);
+    history.replaceState(null, '', '#' + button.dataset.phase);
+  });
 }
 
-const linkedPhase = location.hash.slice(1);
-if ([...phaseButtons].some(button => button.dataset.phase === linkedPhase)) {
-  selectPhase(linkedPhase);
+function followPhaseLink() {
+  const target = document.getElementById(location.hash.slice(1));
+  const phase = target?.closest('.phase');
+  if (!phase) return;
+  selectPhase(phase.id);
+  if (target !== phase) target.scrollIntoView();
 }
+window.addEventListener('hashchange', followPhaseLink);
+followPhaseLink();
 
 function clearScreen() {
   const demo = mode.value === 'demo';

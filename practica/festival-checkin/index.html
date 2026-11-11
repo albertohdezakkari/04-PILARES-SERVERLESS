@@ -15,10 +15,14 @@
   <p class="eyebrow">Práctica guiada · 180 minutos</p>
   <h1>Festival<br><em>Check-in</em></h1>
   <p>El festival abre puertas. Construye el registro de entrada y comprueba que se conserva al volver a cargar la pantalla.</p>
-  <a href="../../ayuda/dynamodb/">Consultar la infografía de DynamoDB ↗</a>
+  <div class="actions">
+    <a href="#infografia-terminal">Infografía del recorrido</a>
+    <a href="../../ayuda/dynamodb/">Infografía del modelo DynamoDB ↗</a>
+  </div>
 </header>
 <nav class="phases" aria-label="Fases de la práctica">
   <button data-phase="mision" aria-pressed="true">Misión</button>
+  <button data-phase="conexion" aria-pressed="false">Conexión</button>
   <button data-phase="datos" aria-pressed="false">Datos</button>
   <button data-phase="lectura" aria-pressed="false">Lectura</button>
   <button data-phase="inscripcion" aria-pressed="false">Inscripción</button>
@@ -37,14 +41,66 @@
 <p><strong>Antes de avanzar:</strong> cada persona puede explicar la diferencia entre reservar y entrar.</p>
 </section>
 
+<section id="conexion" class="phase" hidden>
+<h2>Conectar AWS Academy con la terminal</h2>
+<ol>
+  <li>Abrid <strong>Learner Lab → Start Lab</strong>. Con el laboratorio activo, entrad en <strong>AWS Details → AWS CLI → Show</strong> y copiad el bloque de vuestra sesión.</li>
+  <li>Abrid <strong>Git Bash en Windows</strong> o <strong>Terminal en macOS</strong>. Ejecutad <code>aws --version</code>. Si el comando no existe, instalad <a href="https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html">AWS CLI v2</a> para vuestro sistema y volved a abrir la terminal.</li>
+  <li>Cread y abrid el archivo de credenciales con el bloque que corresponda a vuestro equipo.</li>
+</ol>
+<details open>
+  <summary>Windows del aula · Git Bash</summary>
+  <pre><code>mkdir -p ~/.aws
+touch ~/.aws/credentials
+notepad.exe "$(cygpath -w ~/.aws/credentials)"</code></pre>
+</details>
+<details>
+  <summary>macOS · Terminal</summary>
+  <pre><code>mkdir -p ~/.aws
+touch ~/.aws/credentials
+chmod 600 ~/.aws/credentials
+open -e ~/.aws/credentials</code></pre>
+</details>
+<p>Pegad en el editor el bloque del laboratorio. Si el perfil <code>default</code> ya se usa para otra cuenta, guardad el del laboratorio bajo la cabecera <code>[academy]</code>. Si el perfil elegido ya está dedicado al laboratorio, sustituid las tres líneas anteriores por las nuevas. Guardad con <strong>Ctrl+S</strong> en Windows o <strong>⌘S</strong> en Mac.</p>
+<pre><code>[default]
+aws_access_key_id = VALOR_DE_LA_SESION
+aws_secret_access_key = VALOR_DE_LA_SESION
+aws_session_token = VALOR_DE_LA_SESION</code></pre>
+<p>El ejemplo muestra la forma del archivo. Pegad los tres valores reales en <code>~/.aws/credentials</code>, fuera del repositorio. El token también es necesario y se renueva junto con las dos claves.</p>
+<h3>Comprobar el perfil y la región</h3>
+<p>Usad la región autorizada del laboratorio. <code>us-east-1</code> es la del ejemplo. Elegid <code>default</code> o <code>academy</code> según la cabecera que hayáis guardado.</p>
+<pre><code>aws configure list-profiles
+perfil=default
+region=us-east-1
+
+aws sts get-caller-identity --profile "$perfil" --region "$region"
+aws dynamodb list-tables --profile "$perfil" --region "$region"</code></pre>
+<p><strong>Antes de avanzar:</strong> el perfil aparece en la lista, STS devuelve la identidad y DynamoDB devuelve <code>TableNames</code>. Una lista vacía es normal en una región donde aún no hay tablas.</p>
+<details>
+  <summary>Si aparece un error</summary>
+  <ul>
+    <li><code>The config profile (...) could not be found</code>. Usad un nombre de <code>list-profiles</code> o comprobad la cabecera del archivo y volved a guardar.</li>
+    <li><code>ExpiredToken</code> o <code>InvalidClientTokenId</code>. Comprobad que el laboratorio esté activo y sustituid los tres valores por el bloque vigente.</li>
+    <li><code>AccessDenied</code> en DynamoDB después de que STS funcione. Confirmad con el profesor los permisos y la región del laboratorio.</li>
+  </ul>
+</details>
+<p><a href="#datos">Continuar a Datos →</a></p>
+</section>
+
 <section id="datos" class="phase" hidden>
 <h2>Dos tablas, un evento</h2>
-<p>En AWS Academy, iniciad el laboratorio y abrid la consola de AWS. Confirmad arriba a la derecha la región autorizada. Usad esa misma región para las tablas, Lambda y API Gateway.</p>
+<p>Completad primero <a href="#conexion">Conexión</a> y conservad la misma terminal. Usad la región del laboratorio también para Lambda y API Gateway.</p>
 <div class="relation" aria-label="Un evento tiene cero o muchas inscripciones">
   <div><strong>Events</strong><br><code>eventId</code> · PK<br><code>title</code> · texto</div>
   <span aria-hidden="true">1 ─── 0..N</span>
   <div><strong>Registrations</strong><br><code>eventId</code> · PK<br><code>userId</code> · SK<br><code>registeredAt</code> · texto<br><code>checkedInAt</code> · opcional</div>
 </div>
+<figure class="guide-poster" id="infografia-terminal">
+  <figcaption><strong>Del modelo al primer registro</strong> · <a href="infografia-terminal.png" target="_blank" rel="noopener">Ampliar infografía ↗</a></figcaption>
+  <a href="infografia-terminal.png" target="_blank" rel="noopener" aria-label="Ampliar la infografía del recorrido por terminal">
+    <img src="infografia-terminal.png" alt="Del modelo DynamoDB a AWS CLI: elegir las claves, comprobar la identidad, crear las tablas, esperar a que estén activas, cargar el evento y verificarlo con PartiQL. Los pasos con comandos aparecen debajo.">
+  </a>
+</figure>
 <details open>
 <summary>Pegar JSON y ver las tablas</summary>
 <p>Pega un modelo con <code>DataModel</code>, <code>KeyAttributes</code> y <code>TableData</code> de DynamoDB. Puedes cargar el ejemplo para ver qué parte del JSON define cada clave y cada registro.</p>
@@ -68,6 +124,61 @@
 </table>
 <p>Los registros del diseñador son ejemplos. En el laboratorio empezamos con el evento y la tabla de inscripciones vacía.</p>
 </details>
+<h3>Crear y comprobar desde la terminal</h3>
+<p>Cambiad <code>equipo-01</code> por vuestro prefijo. Anotad los nombres que resulten para la pestaña Lectura.</p>
+<pre><code>equipo=equipo-01
+tabla_eventos="$equipo-events"
+tabla_inscripciones="$equipo-registrations"</code></pre>
+<details open>
+  <summary>1 · Crear Events con eventId como PK</summary>
+  <pre><code>aws dynamodb create-table \
+  --profile "$perfil" --region "$region" \
+  --table-name "$tabla_eventos" \
+  --attribute-definitions AttributeName=eventId,AttributeType=S \
+  --key-schema AttributeName=eventId,KeyType=HASH \
+  --billing-mode PAY_PER_REQUEST \
+  --query 'TableDescription.TableStatus' --output text</code></pre>
+  <p>La salida inicial suele ser <code>CREATING</code>. <code>S</code> significa texto. <code>HASH</code> indica la clave de partición.</p>
+</details>
+<details>
+  <summary>2 · Crear Registrations con eventId como PK y userId como SK</summary>
+  <pre><code>aws dynamodb create-table \
+  --profile "$perfil" --region "$region" \
+  --table-name "$tabla_inscripciones" \
+  --attribute-definitions AttributeName=eventId,AttributeType=S AttributeName=userId,AttributeType=S \
+  --key-schema AttributeName=eventId,KeyType=HASH AttributeName=userId,KeyType=RANGE \
+  --billing-mode PAY_PER_REQUEST \
+  --query 'TableDescription.TableStatus' --output text</code></pre>
+  <p><code>RANGE</code> indica la clave de ordenación. Dos personas inscritas en el mismo evento comparten <code>eventId</code> y se distinguen por <code>userId</code>.</p>
+</details>
+<details>
+  <summary>3 · Esperar y revisar las claves</summary>
+  <pre><code>for tabla in "$tabla_eventos" "$tabla_inscripciones"; do
+  aws dynamodb wait table-exists \
+    --profile "$perfil" --region "$region" --table-name "$tabla" || break
+  aws dynamodb describe-table \
+    --profile "$perfil" --region "$region" --table-name "$tabla" \
+    --query 'Table.{Nombre:TableName,Estado:TableStatus,Claves:KeySchema}' || break
+done</code></pre>
+  <p>Esperad <code>ACTIVE</code> en ambas. Events tiene solo <code>eventId</code> como <code>HASH</code>. Registrations tiene además <code>userId</code> como <code>RANGE</code>. Si una tabla ya existía, comprobad sus claves en este paso antes de continuar.</p>
+</details>
+<details>
+  <summary>4 · Cargar y consultar con PartiQL</summary>
+  <pre><code>aws dynamodb execute-statement \
+  --profile "$perfil" --region "$region" \
+  --statement "INSERT INTO \"$tabla_eventos\" VALUE {'eventId': 'evt-001', 'title': 'Festival de otoño'}"
+
+aws dynamodb execute-statement \
+  --profile "$perfil" --region "$region" --consistent-read \
+  --statement "SELECT eventId, title FROM \"$tabla_eventos\" WHERE eventId = 'evt-001'"
+
+aws dynamodb execute-statement \
+  --profile "$perfil" --region "$region" --consistent-read \
+  --statement "SELECT * FROM \"$tabla_inscripciones\" WHERE eventId = 'evt-001'"</code></pre>
+  <p>Si el <code>INSERT</code> indica que el evento ya existe, comprobadlo con el <code>SELECT</code>. El primer <code>SELECT</code> devuelve <code>evt-001</code> y <strong>Festival de otoño</strong>. El segundo devuelve <code>Items: []</code> antes de registrar inscripciones.</p>
+</details>
+<details>
+<summary>Alternativa · Crear y consultar en la consola web</summary>
 <ol>
   <li>En <strong>DynamoDB → Tables → Create table</strong>, cread <code>equipo-01-events</code>. Escribid <code>eventId</code> en <strong>Partition key</strong> y elegid <strong>String</strong>. Dejad <strong>Sort key</strong> vacío y conservad la configuración predeterminada.</li>
   <li>Repetid con <code>equipo-01-registrations</code>. Usad <code>eventId</code> como <strong>Partition key</strong> y <code>userId</code> como <strong>Sort key</strong>, ambos <strong>String</strong>. Cambiad <code>equipo-01</code> en ambos nombres por vuestro prefijo. Anotad los nombres exactos para la fase Lectura.</li>
@@ -81,7 +192,8 @@
 <p>Debe aparecer una fila con <code>evt-001</code> y <strong>Festival de otoño</strong>. El <code>WHERE</code> busca por la clave de partición.</p>
 <h3>Comprobar las inscripciones</h3>
 <pre><code>SELECT * FROM "equipo-01-registrations" WHERE eventId = 'evt-001'</code></pre>
-<p>Antes de avanzar, comprobad que ambas tablas están activas, el evento aparece en Events y la consulta de inscripciones devuelve cero filas. Al terminar la práctica, esta misma consulta mostrará <code>registeredAt</code> y, para quienes hayan entrado, <code>checkedInAt</code>.</p>
+</details>
+<p><strong>Antes de avanzar a Lectura:</strong> ambas tablas están activas, el evento aparece en Events y la consulta de inscripciones devuelve cero filas.</p>
 </section>
 
 <section id="lectura" class="phase" hidden>
@@ -179,7 +291,7 @@ export async function handler(event) {
 <li>Intentad entrar → <code>409</code>.</li>
 <li>Inscribíos → <code>201</code>. Repetid → <code>409</code>.</li>
 <li>Registrad la entrada → <code>200</code>. Repetid → <code>409</code>.</li>
-<li>Recargad, volved a indicar la URL y el código, y pulsad Consultar. Repetid el <code>SELECT</code> de inscripciones de la pestaña Datos en el editor PartiQL y comparad las dos horas con el registro del equipo.</li>
+<li>Recargad, volved a indicar la URL y el código, y pulsad Consultar. Repetid el <code>SELECT</code> de inscripciones de la pestaña Datos y comparad las dos horas con el registro del equipo.</li>
 </ol>
 <p>Al terminar, seguid las indicaciones del profesor para retirar los recursos de prueba.</p>
 </section>
