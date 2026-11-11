@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Festival Check-in · práctica guiada</title>
-<link rel="stylesheet" href="style.css?v=yaml-ux2">
+<link rel="stylesheet" href="style.css?v=yaml-tree">
 <script type="module" src="app.js"></script>
-<script type="module" src="guia.js?v=yaml-ux2"></script>
+<script type="module" src="guia.js?v=yaml-tree"></script>
 <script type="module" src="visor-modelo.js"></script>
 </head>
 <body>
@@ -111,8 +111,91 @@ LAMBDA_ROLE_ARN=$(aws iam get-role --role-name LabRole --profile "$perfil" --reg
 </article>
 <article id="infraestructura" class="guide-step" data-step="Leer el YAML">
 <h3>Lee serverless.yml línea a línea</h3>
-<p>Elige un bloque para ver qué configura en AWS. Pulsa una línea resaltada para leer su explicación.</p>
+<p>Elige un nodo para abrir su bloque de código. Las ramas muestran qué claves están dentro de otras. Pulsa una línea resaltada para leer su explicación.</p>
 <p><strong>Cómo leer YAML.</strong> En <code>name: aws</code>, <code>name</code> es la clave y <code>aws</code> su valor. Si después de <code>provider:</code> hay líneas más a la derecha, esas líneas forman su bloque. Usa espacios para la sangría y alinea las claves del mismo nivel. Un guion al principio de una línea, como <code>- GET</code>, introduce un elemento de una lista.</p>
+<nav class="yaml-tree" aria-label="Jerarquía de serverless.yml">
+  <h4 class="yaml-tree-title" tabindex="-1"><code>serverless.yml</code></h4>
+  <ul class="yaml-tree-roots">
+    <li><button type="button" data-yaml-block="Servicio" data-yaml-line="service:" aria-pressed="false"><code>service</code></button></li>
+    <li><button type="button" data-yaml-block="Servicio" data-yaml-line="frameworkVersion: ~4.45.0" aria-pressed="false"><code>frameworkVersion</code></button></li>
+    <li><button type="button" data-yaml-block="Servicio" data-yaml-line="provider:" aria-pressed="false"><code>provider</code></button>
+      <ul>
+        <li><button type="button" data-yaml-block="Servicio" data-yaml-line="iam:" aria-pressed="false"><code>iam</code></button>
+          <ul>
+            <li><button type="button" data-yaml-block="Servicio" data-yaml-line="role:" aria-pressed="false"><code>role</code></button></li>
+          </ul>
+        </li>
+        <li><button type="button" data-yaml-block="Variables" data-yaml-line="environment:" aria-pressed="false"><code>environment</code></button>
+          <ul>
+            <li><button type="button" data-yaml-block="Variables" data-yaml-line="EVENTS_TABLE:" aria-pressed="false"><code>EVENTS_TABLE</code></button></li>
+            <li><button type="button" data-yaml-block="Variables" data-yaml-line="REGISTRATIONS_TABLE:" aria-pressed="false"><code>REGISTRATIONS_TABLE</code></button></li>
+          </ul>
+        </li>
+        <li><button type="button" data-yaml-block="API y CORS" data-yaml-line="httpApi:" aria-pressed="false"><code>httpApi</code></button>
+          <ul>
+            <li><button type="button" data-yaml-block="API y CORS" data-yaml-line="payload: &#x27;2.0&#x27;" aria-pressed="false"><code>payload</code></button></li>
+            <li><button type="button" data-yaml-block="API y CORS" data-yaml-line="cors:" aria-pressed="false"><code>cors</code></button></li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+    <li><button type="button" data-yaml-block="Rutas" data-yaml-line="build:" aria-pressed="false"><code>build</code></button>
+      <ul>
+        <li><button type="button" data-yaml-block="Rutas" data-yaml-line="esbuild: false" aria-pressed="false"><code>esbuild</code></button></li>
+      </ul>
+    </li>
+    <li><button type="button" data-yaml-block="Rutas" data-yaml-line="functions:" aria-pressed="false"><code>functions</code></button>
+      <ul>
+        <li><button type="button" data-yaml-block="Rutas" data-yaml-line="checkin:" aria-pressed="false"><code>checkin</code></button>
+          <ul>
+            <li><button type="button" data-yaml-block="Rutas" data-yaml-line="handler: index.handler" aria-pressed="false"><code>handler</code></button></li>
+            <li><button type="button" data-yaml-block="Rutas" data-yaml-line="events:" aria-pressed="false"><code>events</code></button>
+              <ul>
+                <li><button type="button" data-yaml-block="Rutas" data-yaml-line="method: GET" aria-pressed="false"><code>httpApi · GET</code></button></li>
+                <li><button type="button" data-yaml-block="Rutas" data-yaml-line="method: POST" aria-pressed="false"><code>httpApi · POST</code></button></li>
+                <li><button type="button" data-yaml-block="Rutas" data-yaml-line="method: PATCH" aria-pressed="false"><code>httpApi · PATCH</code></button></li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+    <li><button type="button" data-yaml-block="Eventos" data-yaml-line="resources:" aria-pressed="false"><code>resources</code></button>
+      <ul>
+        <li><button type="button" data-yaml-block="Eventos" data-yaml-line="Resources:" aria-pressed="false"><code>Resources</code></button>
+          <ul>
+            <li><button type="button" data-yaml-block="Eventos" data-yaml-line="EventsTable:" aria-pressed="false"><code>EventsTable</code></button>
+              <ul>
+                <li><button type="button" data-yaml-block="Eventos" data-yaml-line="Properties:" aria-pressed="false"><code>Properties</code></button>
+                    <ul>
+                      <li><button type="button" data-yaml-block="Eventos" data-yaml-line="AttributeDefinitions:" aria-pressed="false"><code>AttributeDefinitions</code></button></li>
+                      <li><button type="button" data-yaml-block="Eventos" data-yaml-line="KeySchema:" aria-pressed="false"><code>KeySchema</code></button></li>
+                    </ul>
+                  </li>
+              </ul>
+            </li>
+            <li><button type="button" data-yaml-block="Inscripciones" data-yaml-line="RegistrationsTable:" aria-pressed="false"><code>RegistrationsTable</code></button>
+              <ul>
+                <li><button type="button" data-yaml-block="Inscripciones" data-yaml-line="Properties:" aria-pressed="false"><code>Properties</code></button>
+                    <ul>
+                      <li><button type="button" data-yaml-block="Inscripciones" data-yaml-line="AttributeDefinitions:" aria-pressed="false"><code>AttributeDefinitions</code></button></li>
+                      <li><button type="button" data-yaml-block="Inscripciones" data-yaml-line="KeySchema:" aria-pressed="false"><code>KeySchema</code></button></li>
+                    </ul>
+                  </li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+        <li><button type="button" data-yaml-block="Salidas" data-yaml-line="Outputs:" aria-pressed="false"><code>Outputs</code></button>
+          <ul>
+            <li><button type="button" data-yaml-block="Salidas" data-yaml-line="EventsTableName:" aria-pressed="false"><code>EventsTableName</code></button></li>
+            <li><button type="button" data-yaml-block="Salidas" data-yaml-line="RegistrationsTableName:" aria-pressed="false"><code>RegistrationsTableName</code></button></li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</nav>
 <div class="yaml-reader">
 <div class="code-notes" aria-live="polite">
   <section data-code-start="service:" data-label="Servicio">
@@ -216,8 +299,9 @@ LAMBDA_ROLE_ARN=$(aws iam get-role --role-name LabRole --profile "$perfil" --reg
     <p class="yaml-outcome" hidden>Puedes localizar la inscripción de un equipo dentro de un evento.</p>
     <h4>Por qué RegistrationsTable necesita dos valores</h4>
     <dl class="yaml-terms">
-      <div><dt><code>RegistrationsTable:</code></dt><dd>Identificador lógico de la tabla de inscripciones. <code>Type</code>, <code>Properties</code> y <code>BillingMode</code> tienen la misma función que en EventsTable.</dd></div>
+      <div><dt data-lines="RegistrationsTable:|Properties:"><code>RegistrationsTable:</code></dt><dd>Identificador lógico de la tabla de inscripciones. <code>Type</code>, <code>Properties</code> y <code>BillingMode</code> tienen la misma función que en EventsTable.</dd></div>
       <div><dt data-lines="AttributeDefinitions:|AttributeType:"><code>AttributeDefinitions:</code></dt><dd>Contiene dos elementos: <code>eventId</code> y <code>userId</code>. El campo <code>AttributeType: S</code> indica que ambos valores son texto.</dd></div>
+      <div><dt><code>KeySchema:</code></dt><dd>Define la clave compuesta de la tabla. <code>eventId</code> agrupa las inscripciones y <code>userId</code> distingue a cada equipo dentro del grupo.</dd></div>
       <div><dt><code>KeyType: HASH</code></dt><dd><code>eventId</code> es la clave de partición y permite agrupar las inscripciones por evento.</dd></div>
       <div><dt><code>KeyType: RANGE</code></dt><dd><code>userId</code> es la clave de ordenación y distingue a cada equipo dentro del evento. <code>(evt-001, equipo-01)</code> y <code>(evt-001, equipo-02)</code> son dos claves completas distintas.</dd></div>
     </dl>
@@ -326,7 +410,7 @@ resources:
       Value:
         Ref: RegistrationsTable</code></pre>
 </div>
-<p class="checkpoint"><strong>Antes de avanzar</strong> En la página de <strong>Registrations</strong>, localiza <code>eventId</code> como <code>HASH</code> y <code>userId</code> como <code>RANGE</code>. Responde la pregunta y comprueba que el mensaje confirma que los dos equipos tienen filas distintas.</p>
+<p class="checkpoint"><strong>Antes de avanzar</strong> En el árbol, abre <strong>RegistrationsTable</strong> y localiza <code>eventId</code> como <code>HASH</code> y <code>userId</code> como <code>RANGE</code>. Responde la pregunta y comprueba que el mensaje confirma que los dos equipos tienen filas distintas.</p>
 </article>
 <article id="escribir-yaml" class="guide-step" data-step="Crear el YAML">
 <h3>Crea serverless.yml y comprueba lo que has guardado</h3>

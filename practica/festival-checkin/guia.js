@@ -1,6 +1,5 @@
 const phases = [...document.querySelectorAll('.phase')];
 const phaseButtons = [...document.querySelectorAll('[data-phase]')];
-const content = document.querySelector('#course-content');
 const progress = document.querySelector('#guide-progress');
 const tabs = document.querySelector('#guide-steps');
 const back = document.querySelector('#guide-back');
@@ -62,7 +61,7 @@ function showRoute() {
   back.disabled = courseIndex === 0;
   next.hidden = courseIndex < 0 && (index < 0 || index === phaseSteps.length - 1);
   next.textContent = courseIndex === courseSteps.length - 1 ? 'Abrir pantalla de prueba →' : 'Siguiente →';
-  content.scrollTop = 0;
+  window.scrollTo(0, 0);
   const heading = activeStep?.querySelector('h3') ?? phase.querySelector('h2');
   heading.tabIndex = -1;
   heading.focus({ preventScroll: true });
@@ -91,24 +90,38 @@ function addYamlReader(pre, toolbar, lines) {
   const notes = pre.parentElement.querySelector('.code-notes');
   const sections = [...notes.querySelectorAll('[data-code-start]')];
   const starts = sections.map(section => lines.findIndex(line => line.startsWith(section.dataset.codeStart)));
-  const blocks = document.createElement('nav');
-  blocks.className = 'yaml-blocks actions';
-  blocks.setAttribute('aria-label', 'Bloques del YAML');
+  const tree = pre.closest('.guide-step').querySelector('.yaml-tree');
+  const nodes = [...tree.querySelectorAll('[data-yaml-block]')];
   const outcome = document.createElement('p');
   outcome.className = 'yaml-outcome';
+  outcome.id = 'yaml-block-outcome';
+  outcome.tabIndex = -1;
   outcome.setAttribute('role', 'status');
-  const tabs = sections.map((section, index) => button(section.dataset.label, () => render(index)));
-  blocks.append(...tabs);
+  const returnToTree = button('↑ Volver al árbol', () => {
+    const target = tree.querySelector('[aria-pressed="true"]') ?? tree.querySelector('.yaml-tree-title');
+    target.focus({preventScroll: true});
+    tree.scrollIntoView({block: 'start'});
+  });
+  returnToTree.className = 'yaml-back';
   const header = document.createElement('div');
   header.className = 'yaml-reader-header';
-  header.append(blocks, outcome);
+  header.append(outcome, returnToTree);
   toolbar.replaceWith(header);
   pre.after(notes);
 
-  function render(page) {
+  for (const node of nodes) {
+    node.addEventListener('click', () => {
+      const page = sections.findIndex(section => section.dataset.label === node.dataset.yamlBlock);
+      render(page, node);
+      outcome.focus({preventScroll: true});
+      header.scrollIntoView({block: 'start'});
+    });
+  }
+
+  function render(page, node = nodes[0]) {
     const section = sections[page];
     sections.forEach((item, index) => { item.hidden = index !== page; });
-    tabs.forEach((tab, index) => tab.setAttribute('aria-pressed', String(index === page)));
+    nodes.forEach(item => item.setAttribute('aria-pressed', String(item === node)));
     outcome.textContent = section.querySelector('.yaml-outcome').textContent;
     const definitions = [...section.querySelectorAll('.yaml-terms > div')];
     const interactiveLines = [];
@@ -133,7 +146,7 @@ function addYamlReader(pre, toolbar, lines) {
       });
       lineButton.className = 'yaml-line';
       lineButton.setAttribute('aria-label', 'Explicar ' + text);
-      interactiveLines.push({lineButton, term});
+      interactiveLines.push({lineButton, term, text});
       code.append(lineButton);
     }
     function select(term, activeButton) {
@@ -141,8 +154,9 @@ function addYamlReader(pre, toolbar, lines) {
       interactiveLines.forEach(({lineButton}) =>
         lineButton.setAttribute('aria-pressed', String(lineButton === activeButton)));
     }
-    select(definitions[0], interactiveLines[0]?.lineButton);
-    pre.scrollTop = 0;
+    const selected = interactiveLines.find(item => item.text.startsWith(node.dataset.yamlLine))
+      ?? interactiveLines[0];
+    select(selected.term, selected.lineButton);
     pre.scrollLeft = 0;
   }
   render(0);
@@ -207,7 +221,6 @@ function addCodeControls(pre) {
       previous.disabled = page === 0;
       following.disabled = page === count - 1;
       toggle.textContent = full ? 'Volver a páginas' : 'Ver archivo entero';
-      pre.scrollTop = 0;
       pre.scrollLeft = 0;
     }
     toolbar.append(toggle, previous, following, pageLabel);
