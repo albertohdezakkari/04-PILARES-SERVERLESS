@@ -94,7 +94,20 @@
     <p>El pase recibe <code>usuario-02</code> y guarda ese código en la inscripción. Crearías una tabla <code>USUARIO</code> si el festival necesitara guardar perfiles.</p>
   </section>
 </div>
-<p class="checkpoint"><strong>Antes de avanzar</strong> Imagina que <code>usuario-02</code> también se inscribe en <code>evt-002</code>. Compara las dos claves de inscripción. Verás el mismo <code>userId</code> y un <code>eventId</code> distinto para cada pase.</p>
+<h4 class="design-label">Dos consultas sobre las mismas inscripciones</h4>
+<ul class="route-map" role="list">
+  <li>
+    <span>Tabla <code>INSCRIPCION_01</code> · <code>Query</code></span>
+    <strong>Usuarios de un evento</strong>
+    <p>Busca por <code>eventId</code>, la clave de partición. En este ejemplo, <code>evt-001</code> devuelve <code>usuario-01</code> y <code>usuario-02</code>.</p>
+  </li>
+  <li>
+    <span>Índice <code>PorUsuario</code> · <code>Query</code></span>
+    <strong>Eventos de un usuario</strong>
+    <p>Busca por <code>userId</code>, la clave de partición del índice. En este ejemplo, <code>usuario-02</code> devuelve <code>evt-001</code> y <code>evt-002</code>.</p>
+  </li>
+</ul>
+<p class="checkpoint"><strong>Antes de avanzar</strong> Abre <a href="#patrones-acceso">Preguntas y claves</a> y selecciona las dos preguntas de arriba. Comprueba en cuál empiezas por <code>evt-001</code> y en cuál por <code>usuario-02</code>. Puedes ejecutar ambas consultas en <a href="#consultar-indice">Validar → Consultar índice</a>.</p>
 </article>
 <article id="patrones-acceso" class="guide-step" data-step="Preguntas y claves">
 <h3>De las preguntas a las claves de DynamoDB</h3>
