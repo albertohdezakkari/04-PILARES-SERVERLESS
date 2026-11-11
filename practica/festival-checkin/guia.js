@@ -90,31 +90,48 @@ function addYamlReader(pre, toolbar, lines) {
   const notes = pre.parentElement.querySelector('.code-notes');
   const sections = [...notes.querySelectorAll('[data-code-start]')];
   const starts = sections.map(section => lines.findIndex(line => line.startsWith(section.dataset.codeStart)));
-  const tree = pre.closest('.guide-step').querySelector('.yaml-tree');
+  const tree = pre.parentElement.querySelector('.yaml-tree');
   const nodes = [...tree.querySelectorAll('[data-yaml-block]')];
+  const narrow = matchMedia('(max-width: 999px)');
   const outcome = document.createElement('p');
   outcome.className = 'yaml-outcome';
-  outcome.id = 'yaml-block-outcome';
-  outcome.tabIndex = -1;
-  outcome.setAttribute('role', 'status');
-  const returnToTree = button('↑ Volver al árbol', () => {
-    const target = tree.querySelector('[aria-pressed="true"]') ?? tree.querySelector('.yaml-tree-title');
-    target.focus({preventScroll: true});
-    tree.scrollIntoView({block: 'start'});
+  const nodePreview = document.createElement('p');
+  nodePreview.className = 'yaml-node-preview';
+  const backToTree = button('↑ Volver al árbol', () => {
+    const selected = tree.querySelector('[aria-pressed="true"]');
+    selected.focus({preventScroll: true});
+    selected.scrollIntoView({block: 'nearest'});
   });
-  returnToTree.className = 'yaml-back';
-  const header = document.createElement('div');
-  header.className = 'yaml-reader-header';
-  header.append(outcome, returnToTree);
-  toolbar.replaceWith(header);
+  backToTree.className = 'yaml-back';
+  notes.prepend(outcome, backToTree);
+  toolbar.remove();
   pre.after(notes);
 
-  for (const node of nodes) {
+  for (const [index, node] of nodes.entries()) {
+    const branch = node.nextElementSibling;
+    if (branch) {
+      branch.id = 'yaml-branch-' + index;
+      branch.hidden = node.dataset.yamlLine !== 'provider:';
+      node.setAttribute('aria-label', node.textContent);
+      node.setAttribute('aria-controls', branch.id);
+      node.setAttribute('aria-expanded', String(!branch.hidden));
+    }
+    const show = () => render(sections.findIndex(section =>
+      section.dataset.label === node.dataset.yamlBlock), node);
+    node.addEventListener('pointerenter', event => {
+      if (event.pointerType === 'mouse' && !narrow.matches) show();
+    });
     node.addEventListener('click', () => {
-      const page = sections.findIndex(section => section.dataset.label === node.dataset.yamlBlock);
-      render(page, node);
-      outcome.focus({preventScroll: true});
-      header.scrollIntoView({block: 'start'});
+      if (branch) {
+        branch.hidden = !branch.hidden;
+        node.setAttribute('aria-expanded', String(!branch.hidden));
+      }
+      show();
+      if (narrow.matches) {
+        const explanation = notes.querySelector(':scope > section:not([hidden]) .yaml-terms > div:not([hidden]) dd');
+        nodePreview.replaceChildren(...[...explanation.childNodes].map(child => child.cloneNode(true)));
+        node.after(nodePreview);
+      }
     });
   }
 
@@ -134,20 +151,32 @@ function addYamlReader(pre, toolbar, lines) {
         const keys = (heading.dataset.lines ?? heading.textContent).split('|');
         return keys.some(key => key.endsWith(':') ? text.startsWith(key) : text === key);
       });
-      if (!term) {
-        code.append(line);
-        continue;
+      const lineElement = term ? button('', () => {
+        select(term, lineElement);
+        if (narrow.matches) term.scrollIntoView({block: 'nearest'});
+      }) : document.createElement('span');
+      if (term) {
+        lineElement.className = 'yaml-line';
+        lineElement.setAttribute('aria-label', 'Explicar ' + text);
+        lineElement.addEventListener('pointerenter', event => {
+          if (event.pointerType === 'mouse') select(term, lineElement);
+        });
+        interactiveLines.push({lineButton: lineElement, term, text});
       }
-      const lineButton = button(line, () => {
-        select(term, lineButton);
-        if (matchMedia('(max-width: 799px)').matches) {
-          term.scrollIntoView({block: 'nearest'});
-        }
-      });
-      lineButton.className = 'yaml-line';
-      lineButton.setAttribute('aria-label', 'Explicar ' + text);
-      interactiveLines.push({lineButton, term, text});
-      code.append(lineButton);
+      const parts = /^(\s*(?:- )?)([\w]+)(:)(.*)$/.exec(line);
+      if (parts) {
+        const [, indent, key, colon, value] = parts;
+        const keyText = document.createElement('strong');
+        keyText.className = 'yaml-key';
+        keyText.textContent = key;
+        const valueText = document.createElement('span');
+        valueText.className = 'yaml-value';
+        valueText.textContent = value;
+        lineElement.append(indent, keyText, colon, valueText);
+      } else {
+        lineElement.textContent = line;
+      }
+      code.append(lineElement);
     }
     function select(term, activeButton) {
       definitions.forEach(item => { item.hidden = item !== term; });

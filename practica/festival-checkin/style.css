@@ -71,13 +71,16 @@ button:disabled { opacity: .65; cursor: wait; }
 }
 .code-notes h4 { margin: 0 0 4px; }
 .code-notes p { margin: 4px 0; }
-.yaml-tree {
+.yaml-reader {
+  display: grid;
+  gap: 14px;
   margin: 16px 0 24px;
-  padding: clamp(10px, 2vw, 22px);
+  padding: clamp(10px, 2vw, 20px);
   border: 1px solid var(--border);
   border-radius: 12px;
   background: var(--background);
 }
+.yaml-tree { min-width: 0; }
 .yaml-tree-title {
   margin: 0 0 8px;
   color: var(--accent);
@@ -110,23 +113,22 @@ button:disabled { opacity: .65; cursor: wait; }
 }
 .yaml-tree button:hover:not([aria-pressed="true"]) { border-color: var(--accent); }
 .yaml-tree button code { white-space: normal; }
-.yaml-tree .yaml-tree-roots > li { break-inside: avoid; }
-@media (min-width: 860px) {
-  .yaml-tree .yaml-tree-roots { columns: 3; column-gap: 32px; }
+.yaml-tree button[aria-expanded]::after {
+  content: '▸';
+  margin-left: 6px;
 }
+.yaml-tree button[aria-expanded="true"]::after { content: '▾'; }
 @media (pointer: coarse) {
   .yaml-tree button { min-height: 40px; }
   .yaml-tree li::before { top: 23px; }
 }
-.yaml-reader-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-bottom: 8px;
+.yaml-node-preview {
+  margin: 5px 0;
+  padding: 6px 8px;
+  border-left: 2px solid var(--accent);
+  background: var(--surface);
 }
-.yaml-reader-header .yaml-outcome { flex: 1 1 300px; margin: 0; }
-.yaml-back { min-height: 40px; }
+.yaml-back { min-height: 40px; margin: 4px 0 8px; }
 
 .yaml-outcome {
   margin: 8px 0;
@@ -136,7 +138,15 @@ button:disabled { opacity: .65; cursor: wait; }
   background: var(--surface);
   font-weight: 650;
 }
-.yaml-reader pre { margin-top: 0; }
+.yaml-reader pre {
+  margin: 0;
+  border: 1px solid var(--border);
+  min-width: 0;
+  white-space: pre-wrap;
+}
+.yaml-reader pre code { white-space: inherit; }
+.yaml-key { color: #ffb1c8; font-weight: 750; }
+.yaml-value { color: #9ee4d8; }
 .yaml-line {
   color: var(--accent);
   background: transparent;
@@ -146,7 +156,9 @@ button:disabled { opacity: .65; cursor: wait; }
   padding: 0 3px;
   font: inherit;
   text-align: left;
-  white-space: pre;
+  white-space: pre-wrap;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 .yaml-line:focus-visible { outline-offset: -2px; }
 @media (pointer: coarse) {
@@ -154,22 +166,21 @@ button:disabled { opacity: .65; cursor: wait; }
 }
 .yaml-line:hover { background: var(--surface); text-decoration: underline; }
 .yaml-line[aria-pressed="true"] {
-  color: #25131b;
-  background: var(--accent);
+  color: var(--ink);
+  background: #38243e;
+  box-shadow: inset 3px 0 var(--accent);
   font-weight: 400;
 }
 .yaml-terms { margin: 8px 0 12px; }
 .yaml-terms dt { color: var(--accent); font-weight: 700; }
 .yaml-terms dd { margin: 4px 0 8px; line-height: 1.55; }
-@media (min-width: 800px) {
+@media (min-width: 1000px) {
   .yaml-reader {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.65fr) minmax(0, 1.25fr);
     align-items: start;
-    column-gap: 14px;
   }
-  .yaml-reader-header { grid-column: 1 / -1; }
-  .yaml-reader .code-notes { margin-top: 0; }
+  .yaml-reader .code-notes { margin: 0; position: sticky; top: 10px; }
+  .yaml-back, .yaml-node-preview { display: none; }
 }
 .yaml-question { margin-top: 10px; }
 .yaml-question button { min-height: 40px; }

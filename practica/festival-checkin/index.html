@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Festival Check-in · práctica guiada</title>
-<link rel="stylesheet" href="style.css?v=yaml-tree">
+<link rel="stylesheet" href="style.css?v=yaml-columnas">
 <script type="module" src="app.js"></script>
-<script type="module" src="guia.js?v=yaml-tree"></script>
+<script type="module" src="guia.js?v=yaml-columnas"></script>
 <script type="module" src="visor-modelo.js"></script>
 </head>
 <body>
@@ -111,8 +111,9 @@ LAMBDA_ROLE_ARN=$(aws iam get-role --role-name LabRole --profile "$perfil" --reg
 </article>
 <article id="infraestructura" class="guide-step" data-step="Leer el YAML">
 <h3>Lee serverless.yml línea a línea</h3>
-<p>Elige un nodo para abrir su bloque de código. Las ramas muestran qué claves están dentro de otras. Pulsa una línea resaltada para leer su explicación.</p>
+<p>Pasa el ratón sobre una etiqueta del árbol o del código para ver su explicación. Pulsa una rama para abrirla. En móvil, toca la etiqueta para consultar su explicación.</p>
 <p><strong>Cómo leer YAML.</strong> En <code>name: aws</code>, <code>name</code> es la clave y <code>aws</code> su valor. Si después de <code>provider:</code> hay líneas más a la derecha, esas líneas forman su bloque. Usa espacios para la sangría y alinea las claves del mismo nivel. Un guion al principio de una línea, como <code>- GET</code>, introduce un elemento de una lista.</p>
+<div class="yaml-reader">
 <nav class="yaml-tree" aria-label="Jerarquía de serverless.yml">
   <h4 class="yaml-tree-title" tabindex="-1"><code>serverless.yml</code></h4>
   <ul class="yaml-tree-roots">
@@ -196,7 +197,6 @@ LAMBDA_ROLE_ARN=$(aws iam get-role --role-name LabRole --profile "$perfil" --reg
     </li>
   </ul>
 </nav>
-<div class="yaml-reader">
 <div class="code-notes" aria-live="polite">
   <section data-code-start="service:" data-label="Servicio">
     <p class="yaml-outcome" hidden>Cada equipo despliega su propio servicio en la región del laboratorio.</p>
@@ -228,7 +228,8 @@ LAMBDA_ROLE_ARN=$(aws iam get-role --role-name LabRole --profile "$perfil" --reg
       <div><dt><code>environment:</code></dt><dd>Agrupa las variables de entorno que Serverless configura para Lambda. En JavaScript se leen con <code>process.env</code>.</dd></div>
       <div><dt><code>EVENTS_TABLE:</code></dt><dd>Nombre que elegimos para la variable que guarda el nombre de la tabla de eventos. El código la lee con <code>process.env.EVENTS_TABLE</code>.</dd></div>
       <div><dt><code>REGISTRATIONS_TABLE:</code></dt><dd>Variable que elegimos para el nombre de la tabla de inscripciones.</dd></div>
-      <div><dt data-lines="Ref:"><code>Ref: EventsTable</code></dt><dd><code>Ref</code> es una referencia de CloudFormation. <code>EventsTable</code> es el identificador que damos al recurso en <code>Resources</code>. Para una tabla DynamoDB, <code>Ref</code> devuelve el nombre real asignado en AWS. <code>Ref: RegistrationsTable</code> hace lo mismo con la otra tabla.</dd></div>
+      <div><dt><code>Ref: EventsTable</code></dt><dd>CloudFormation busca <code>EventsTable</code> en <code>Resources</code> y devuelve el nombre real de la tabla de eventos en AWS. Lambda recibe ese valor en <code>EVENTS_TABLE</code>.</dd></div>
+      <div><dt><code>Ref: RegistrationsTable</code></dt><dd>CloudFormation busca <code>RegistrationsTable</code> en <code>Resources</code> y devuelve el nombre real de la tabla de inscripciones en AWS. Lambda recibe ese valor en <code>REGISTRATIONS_TABLE</code>.</dd></div>
     </dl>
     <div class="yaml-question">
       <p><strong>En index.mjs, ¿qué variable leerías para localizar la tabla de inscripciones?</strong></p>
@@ -283,7 +284,7 @@ LAMBDA_ROLE_ARN=$(aws iam get-role --role-name LabRole --profile "$perfil" --reg
       <div><dt><code>Type: AWS::DynamoDB::Table</code></dt><dd>Indica a CloudFormation qué tipo de recurso debe crear: una tabla DynamoDB.</dd></div>
       <div><dt><code>Properties:</code></dt><dd>Agrupa los ajustes de esa tabla.</dd></div>
       <div><dt><code>BillingMode: PAY_PER_REQUEST</code></dt><dd>Selecciona el modo bajo demanda. Las lecturas y escrituras se cobran según el uso.</dd></div>
-      <div><dt data-lines="AttributeDefinitions:|AttributeType:"><code>AttributeDefinitions:</code></dt><dd>Lista los atributos que forman las claves y su tipo. <code>AttributeName: eventId</code> da el nombre del atributo y <code>AttributeType: S</code> lo declara de tipo texto.</dd></div>
+      <div><dt data-lines="AttributeDefinitions:|AttributeName:|AttributeType:"><code>AttributeDefinitions:</code></dt><dd>Lista los atributos que forman las claves y su tipo. <code>AttributeName: eventId</code> da el nombre del atributo y <code>AttributeType: S</code> lo declara de tipo texto.</dd></div>
       <div><dt data-lines="KeySchema:|KeyType:"><code>KeySchema:</code></dt><dd>Lista qué papel cumple cada atributo en la clave. <code>AttributeName</code> repite el nombre del atributo y <code>KeyType: HASH</code> lo declara clave de partición. En esta tabla, <code>eventId</code> basta para localizar <code>evt-001</code>.</dd></div>
     </dl>
     <div class="yaml-question">
@@ -299,8 +300,8 @@ LAMBDA_ROLE_ARN=$(aws iam get-role --role-name LabRole --profile "$perfil" --reg
     <p class="yaml-outcome" hidden>Puedes localizar la inscripción de un equipo dentro de un evento.</p>
     <h4>Por qué RegistrationsTable necesita dos valores</h4>
     <dl class="yaml-terms">
-      <div><dt data-lines="RegistrationsTable:|Properties:"><code>RegistrationsTable:</code></dt><dd>Identificador lógico de la tabla de inscripciones. <code>Type</code>, <code>Properties</code> y <code>BillingMode</code> tienen la misma función que en EventsTable.</dd></div>
-      <div><dt data-lines="AttributeDefinitions:|AttributeType:"><code>AttributeDefinitions:</code></dt><dd>Contiene dos elementos: <code>eventId</code> y <code>userId</code>. El campo <code>AttributeType: S</code> indica que ambos valores son texto.</dd></div>
+      <div><dt data-lines="RegistrationsTable:|Type:|Properties:|BillingMode:"><code>RegistrationsTable:</code></dt><dd>Identificador lógico de la tabla de inscripciones. <code>Type</code>, <code>Properties</code> y <code>BillingMode</code> tienen la misma función que en EventsTable.</dd></div>
+      <div><dt data-lines="AttributeDefinitions:|AttributeName:|AttributeType:"><code>AttributeDefinitions:</code></dt><dd>Contiene dos elementos: <code>eventId</code> y <code>userId</code>. El campo <code>AttributeType: S</code> indica que ambos valores son texto.</dd></div>
       <div><dt><code>KeySchema:</code></dt><dd>Define la clave compuesta de la tabla. <code>eventId</code> agrupa las inscripciones y <code>userId</code> distingue a cada equipo dentro del grupo.</dd></div>
       <div><dt><code>KeyType: HASH</code></dt><dd><code>eventId</code> es la clave de partición y permite agrupar las inscripciones por evento.</dd></div>
       <div><dt><code>KeyType: RANGE</code></dt><dd><code>userId</code> es la clave de ordenación y distingue a cada equipo dentro del evento. <code>(evt-001, equipo-01)</code> y <code>(evt-001, equipo-02)</code> son dos claves completas distintas.</dd></div>
