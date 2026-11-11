@@ -548,8 +548,22 @@ resources:
     <div><strong><code>src/pases/</code></strong><p><code>consultar.mjs</code>, <code>inscribir.mjs</code> y <code>entrada.mjs</code> contienen las operaciones. <code>dynamo.mjs</code> prepara el acceso a las tablas de pases.</p></div>
     <div><strong><code>peticion.mjs</code> · Validación compartida</strong><p>Los tres handlers de pases usan este módulo para validar <code>eventId</code> y <code>userId</code>, dar formato a las respuestas y convertir errores en códigos HTTP.</p></div>
   </div>
-  <pre><code>mkdir -p src/pases</code></pre>
-  <p>Abre cada archivo con su comando y copia el contenido correspondiente. En <code>vi</code>, usa <code>:set paste</code>, pulsa <kbd>Intro</kbd> y luego <kbd>i</kbd> para pegar. Para guardar, pulsa <kbd>Esc</kbd>, escribe <code>:wq</code> y pulsa <kbd>Intro</kbd>.</p>
+  <ol>
+    <li>
+      <strong>Sitúate en la raíz del proyecto.</strong> <code>pwd</code> muestra la carpeta actual. Debe ser <code>festival-checkin</code> y <code>ls</code> debe encontrar los dos archivos que preparaste.
+      <pre><code>pwd
+ls -l serverless.yml package.json</code></pre>
+      <p>Si estás en la carpeta que contiene el proyecto, entra con <code>cd festival-checkin</code> y repite la comprobación.</p>
+    </li>
+    <li>
+      <strong>Crea la carpeta donde irá el código de pases.</strong> <code>mkdir -p src/pases</code> crea <code>src</code> y su subcarpeta <code>pases</code>. <code>-p</code> permite repetirlo si ya existen. <code>ls -ld</code> comprueba que aparece el directorio <code>src/pases</code>.
+      <pre><code>mkdir -p src/pases &amp;&amp; ls -ld src/pases</code></pre>
+    </li>
+    <li>
+      <strong>Crea y abre el archivo de la pestaña.</strong> El comando de cada pestaña vuelve a asegurar que la carpeta existe. Después, <code>touch</code> crea el archivo si hace falta y <code>vi</code> lo abre. Con <code>&amp;&amp;</code>, cada paso se ejecuta cuando el anterior termina correctamente.
+      <p>En <code>vi</code>, usa <code>:set paste</code>, pulsa <kbd>Intro</kbd> y luego <kbd>i</kbd> para pegar. Para guardar, pulsa <kbd>Esc</kbd>, escribe <code>:wq</code> y pulsa <kbd>Intro</kbd>.</p>
+    </li>
+  </ol>
   <p>Pasa el ratón o toca una línea resaltada para ver su explicación.</p>
   <template id="index-explanations">
   <div data-prefix="import { DynamoDBClient"><strong>Conexión con DynamoDB</strong><p>Importa el cliente que comunica Lambda con DynamoDB. El paquete se instaló al preparar el proyecto.</p></div>
@@ -583,7 +597,7 @@ resources:
   <section id="modulo-lambda-1" data-explanation>
     <h5><code>src/pases/consultar.mjs</code></h5>
     <p>Consultar el pase. El YAML enlaza la ruta con el handler de este archivo.</p>
-    <pre><code>touch src/pases/consultar.mjs &amp;&amp; vi src/pases/consultar.mjs</code></pre>
+    <pre><code>mkdir -p src/pases &amp;&amp; touch src/pases/consultar.mjs &amp;&amp; vi src/pases/consultar.mjs</code></pre>
     <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/pases/consultar.mjs"><code>import { GetCommand } from '@aws-sdk/lib-dynamodb';
 import { db, eventsTable, registrationsTable } from './dynamo.mjs';
 import { handleRequest, json } from './peticion.mjs';
@@ -600,7 +614,7 @@ async function getPass(key) {
   <section id="modulo-lambda-2" data-explanation hidden>
     <h5><code>src/pases/inscribir.mjs</code></h5>
     <p>Inscribir al usuario. El YAML enlaza la ruta con el handler de este archivo.</p>
-    <pre><code>touch src/pases/inscribir.mjs &amp;&amp; vi src/pases/inscribir.mjs</code></pre>
+    <pre><code>mkdir -p src/pases &amp;&amp; touch src/pases/inscribir.mjs &amp;&amp; vi src/pases/inscribir.mjs</code></pre>
     <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/pases/inscribir.mjs"><code>import { GetCommand, PutCommand } from '@aws-sdk/lib-dynamodb';
 import { db, eventsTable, registrationsTable } from './dynamo.mjs';
 import { handleRequest, json } from './peticion.mjs';
@@ -617,7 +631,7 @@ async function register(key) {
   <section id="modulo-lambda-3" data-explanation hidden>
     <h5><code>src/pases/entrada.mjs</code></h5>
     <p>Registrar la entrada. El YAML enlaza la ruta con el handler de este archivo.</p>
-    <pre><code>touch src/pases/entrada.mjs &amp;&amp; vi src/pases/entrada.mjs</code></pre>
+    <pre><code>mkdir -p src/pases &amp;&amp; touch src/pases/entrada.mjs &amp;&amp; vi src/pases/entrada.mjs</code></pre>
     <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/pases/entrada.mjs"><code>import { UpdateCommand } from '@aws-sdk/lib-dynamodb';
 import { db, registrationsTable } from './dynamo.mjs';
 import { handleRequest, json } from './peticion.mjs';
@@ -634,7 +648,7 @@ async function checkIn(key) {
   <section id="modulo-lambda-4" data-explanation hidden>
     <h5><code>src/pases/dynamo.mjs</code></h5>
     <p>Prepara el cliente y los nombres de las tablas del dominio pases.</p>
-    <pre><code>touch src/pases/dynamo.mjs &amp;&amp; vi src/pases/dynamo.mjs</code></pre>
+    <pre><code>mkdir -p src/pases &amp;&amp; touch src/pases/dynamo.mjs &amp;&amp; vi src/pases/dynamo.mjs</code></pre>
     <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/pases/dynamo.mjs"><code>import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
 
@@ -645,7 +659,7 @@ export const registrationsTable = process.env.REGISTRATIONS_TABLE;</code></pre><
   <section id="modulo-lambda-5" data-explanation hidden>
     <h5><code>src/pases/peticion.mjs</code></h5>
     <p>Comparte el formato de respuesta y el tratamiento de errores de estas rutas.</p>
-    <pre><code>touch src/pases/peticion.mjs &amp;&amp; vi src/pases/peticion.mjs</code></pre>
+    <pre><code>mkdir -p src/pases &amp;&amp; touch src/pases/peticion.mjs &amp;&amp; vi src/pases/peticion.mjs</code></pre>
     <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/pases/peticion.mjs"><code>export function json(statusCode, body) {
   return {
     statusCode,
