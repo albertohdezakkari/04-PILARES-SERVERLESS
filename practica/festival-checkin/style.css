@@ -184,8 +184,8 @@ button:disabled { opacity: .65; cursor: wait; }
   border-radius: 8px;
   background: var(--surface);
 }
-.lesson-note strong, .lesson-example summary { color: #9ee4d8; }
-.lesson-example summary { cursor: pointer; font-weight: 750; }
+.lesson-note strong, .lesson-example h4 { color: #9ee4d8; }
+.lesson-example h4 { margin: 0; font-size: 1.15rem; }
 .command-reasons {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr));

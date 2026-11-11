@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Festival Check-in · práctica guiada</title>
-<link rel="stylesheet" href="style.css?v=entrenar-dynamo">
+<link rel="stylesheet" href="style.css?v=funciones-visibles">
 <script type="module" src="app.js?v=prueba-rutas"></script>
 <script type="module" src="guia.js?v=modulos-pases"></script>
 <script type="module" src="visor-modelo.js?v=usuario"></script>
@@ -818,8 +818,8 @@ done</code></pre><p class="checkpoint"><strong>Antes de avanzar</strong> Ambas e
   <li>Usa otro <code>GetCommand</code> sobre <code>registrationsTable</code> con <code>key</code> completa. Activa <code>ConsistentRead</code> en ambas lecturas.</li>
   <li>Devuelve <code>200</code> con el identificador y el título del evento. En <code>registration</code>, incluye el ítem de inscripción si existe, o <code>null</code>.</li>
 </ol><pre><code>{ "eventId": "evt-001", "title": "Festival de otoño", "registration": null }</code></pre><p>Cuando exista la inscripción, <code>registration</code> contiene el registro con <code>userId</code>, <code>registeredAt</code> y la hora de entrada si ya se guardó.</p>
-<details class="lesson-example">
-  <summary>Ver la función completa <code>getPass</code></summary>
+<section class="lesson-example" aria-labelledby="ejemplo-getPass">
+  <h4 id="ejemplo-getPass">Función completa <code>getPass</code></h4>
   <p>Puedes copiar esta función y reemplazar la versión de <code>getPass</code> que devuelve <code>501</code> en <code>src/pases/consultar.mjs</code>.</p>
   <pre data-example><code>async function getPass(key) {
   const { Item: event } = await db.send(new GetCommand({
@@ -840,7 +840,7 @@ done</code></pre><p class="checkpoint"><strong>Antes de avanzar</strong> Ambas e
     registration: registration ?? null
   });
 }</code></pre>
-</details>
+</section>
 <p class="checkpoint"><strong>Antes de avanzar</strong> En <code>src/pases/consultar.mjs</code>, el primer <code>GetCommand</code> usa <code>eventId</code> y el segundo usa <code>eventId</code> y <code>userId</code>. Pulsa <kbd>Esc</kbd>, escribe <code>:wq</code> y pulsa Intro para guardar.</p>
 </article>
 <article id="conectar-api" class="guide-step" data-step="Probar GET">
@@ -860,8 +860,8 @@ done</code></pre><p class="checkpoint"><strong>Antes de avanzar</strong> Ambas e
 <p class="lesson-note"><strong>La regla que protege POST.</strong> DynamoDB evalúa la condición durante la escritura del ítem identificado por la pareja completa. Si llegan dos intentos para el mismo pase, el segundo recibe <code>409</code> y la primera hora queda guardada.</p>
 <pre><code>vi '+/async function register(' src/pases/inscribir.mjs</code></pre>
 <p>En la raíz de <code>festival-checkin</code>, abre el módulo de POST. Completa <code>register</code> y conserva los imports y el <code>handler</code>. Comprueba que el evento existe. Guarda las dos claves y <code>registeredAt</code> en UTC. Condiciona <code>PutCommand</code> a que el ítem no exista. Devuelve <code>201</code>. Guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro. Después, vuelve a desplegar.</p>
-<details class="lesson-example">
-  <summary>Ver la función completa <code>register</code></summary>
+<section class="lesson-example" aria-labelledby="ejemplo-register">
+  <h4 id="ejemplo-register">Función completa <code>register</code></h4>
   <p>Puedes copiar esta función y reemplazar la versión de <code>register</code> que devuelve <code>501</code> en <code>src/pases/inscribir.mjs</code>.</p>
   <pre data-example><code>async function register(key) {
   const { Item: event } = await db.send(new GetCommand({
@@ -878,7 +878,7 @@ done</code></pre><p class="checkpoint"><strong>Antes de avanzar</strong> Ambas e
   }));
   return json(201, { message: 'Inscripción creada' });
 }</code></pre>
-</details>
+</section>
 <pre><code>node --check src/pases/inscribir.mjs &amp;&amp; npx serverless deploy --stage dev --aws-profile "$perfil"</code></pre><p class="checkpoint"><strong>Antes de avanzar</strong> El despliegue ha terminado. La ruta POST ya está lista para probarse.</p>
 </article>
 <article id="probar-post" class="guide-step" data-step="Probar">
@@ -904,8 +904,9 @@ curl -i "$pase"</code></pre>
 </ol>
 <p class="lesson-note"><strong>La regla que protege PATCH.</strong> La entrada modifica la inscripción que ya existe. La condición evita crear una fila en la puerta y protege la primera hora de entrada si se repite la petición.</p>
 <pre><code>vi '+/async function checkIn(' src/pases/entrada.mjs</code></pre>
-<p>En la raíz de <code>festival-checkin</code>, abre el módulo de PATCH. Conserva los imports y el <code>handler</code>. Completa <code>checkIn</code> con <code>UpdateCommand</code>. La condición exige que el ítem exista y que aún no tenga <code>checkedInAt</code>. Guarda la hora en UTC, devuelve <code>200</code> y guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro. Después, vuelve a desplegar.</p><details class="lesson-example">
-  <summary>Ver la función completa <code>checkIn</code></summary>
+<p>En la raíz de <code>festival-checkin</code>, abre el módulo de PATCH. Conserva los imports y el <code>handler</code>. Completa <code>checkIn</code> con <code>UpdateCommand</code>. La condición exige que el ítem exista y que aún no tenga <code>checkedInAt</code>. Guarda la hora en UTC, devuelve <code>200</code> y guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro. Después, vuelve a desplegar.</p>
+<section class="lesson-example" aria-labelledby="ejemplo-checkIn">
+  <h4 id="ejemplo-checkIn">Función completa <code>checkIn</code></h4>
   <p>Puedes copiar esta función y reemplazar la versión de <code>checkIn</code> que devuelve <code>501</code> en <code>src/pases/entrada.mjs</code>.</p>
   <pre data-example><code>async function checkIn(key) {
   await db.send(new UpdateCommand({
@@ -917,7 +918,7 @@ curl -i "$pase"</code></pre>
   }));
   return json(200, { message: 'Entrada registrada' });
 }</code></pre>
-</details>
+</section>
 <pre><code>node --check src/pases/entrada.mjs &amp;&amp; npx serverless deploy --stage dev --aws-profile "$perfil"</code></pre><p class="checkpoint"><strong>Antes de avanzar</strong> El despliegue ha terminado. La ruta PATCH ya está lista para probarse.</p>
 </article>
 <article id="probar-patch" class="guide-step" data-step="Probar">
