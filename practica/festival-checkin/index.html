@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Festival Check-in · práctica guiada</title>
 <link rel="stylesheet" href="style.css?v=pase-movil">
-<script type="module" src="app.js?v=explicar-rutas"></script>
+<script type="module" src="app.js?v=identificadores"></script>
 <script type="module" src="guia.js?v=leer-get-pass"></script>
 <script type="module" src="visor-modelo.js?v=usuario"></script>
 <script type="module" src="entrenamiento-dynamo.js"></script>
@@ -645,7 +645,7 @@ ls -l serverless.yml package.json</code></pre>
   <div data-prefix="return json(501"><strong>Operación pendiente</strong><p>El archivo base responde 501 hasta que escribas la operación. Esta respuesta te permite distinguir una ruta conectada de una operación ya implementada.</p></div>
   <div data-prefix="export async function handleRequest"><strong>Validación y errores compartidos</strong><p>Los tres handlers usan esta función. Recibe la petición y la operación elegida, valida los identificadores y convierte los errores en respuestas HTTP.</p></div>
   <div data-prefix="const { eventId, userId }"><strong>Los identificadores de la ruta</strong><p>En /events/evt-001/registrations/usuario-02, eventId es evt-001 y userId es usuario-02.</p></div>
-  <div data-prefix="if (eventId !=="><strong>Validar los identificadores</strong><p>La práctica usa evt-001 y códigos ficticios de dos cifras, como usuario-02. Una petición inválida devuelve 400.</p></div>
+  <div data-prefix="if (!eventId"><strong>Comprueba que llegan los dos identificadores</strong><p><code>!eventId || !userId</code> se cumple si falta el evento o el usuario en la ruta. En ese caso, la función devuelve <code>400</code>.</p></div>
   <div data-prefix="return await operation("><strong>Ejecutar el caso de uso</strong><p>La operación recibe eventId y userId. Por ejemplo, getPass busca la inscripción con esa pareja. await permite capturar aquí los errores de la operación.</p></div>
   <div data-prefix="if (error.name ==="><strong>Una condición impide escribir</strong><p>Cuando DynamoDB rechaza una condición, el handler devuelve 409. Por ejemplo, al intentar inscribir dos veces al mismo usuario.</p></div>
   <div data-prefix="console.error("><strong>Dónde mirar un fallo</strong><p>El detalle técnico se escribe en el registro de Lambda. La respuesta 500 indica a quien llama que ocurrió un fallo interno.</p></div>
@@ -724,7 +724,7 @@ export const registrationsTable = process.env.REGISTRATIONS_TABLE;</code></pre><
   </section>
   <section id="modulo-lambda-5" data-explanation hidden>
     <h5><code>src/pases/peticion.mjs</code></h5>
-    <p>Comparte el formato de respuesta y el tratamiento de errores de estas rutas.</p>
+    <p>Comparte el formato de respuesta y el tratamiento de errores de estas rutas. Si ya creaste el archivo con una versión anterior, sustituye la condición y el mensaje <code>400</code> por los de este ejemplo.</p>
     <pre><code>mkdir -p src/pases &amp;&amp; touch src/pases/peticion.mjs &amp;&amp; vi src/pases/peticion.mjs</code></pre>
     <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/pases/peticion.mjs"><code>export function json(statusCode, body) {
   return {
@@ -736,8 +736,8 @@ export const registrationsTable = process.env.REGISTRATIONS_TABLE;</code></pre><
 
 export async function handleRequest(event, operation) {
   const { eventId, userId } = event.pathParameters ?? {};
-  if (eventId !== 'evt-001' || !/^(?:usuario|equipo)-\d{2}$/.test(userId ?? '')) {
-    return json(400, { message: 'Usa evt-001 y un código usuario-00 a usuario-99' });
+  if (!eventId || !userId) {
+    return json(400, { message: 'Indica el evento y el usuario en la ruta' });
   }
 
   try {
@@ -1251,7 +1251,7 @@ aws dynamodb execute-statement \
         <div class="phone-settings">
           <label>Conexión<select id="mode"><option value="demo">Ensayo · datos en memoria</option><option value="aws">AWS · API del equipo</option></select></label>
           <label id="endpoint-field" hidden>URL de invocación<input id="endpoint" type="url" placeholder="https://…execute-api.…amazonaws.com" autocomplete="off"></label>
-          <label>Usuario ficticio<input id="user" value="usuario-01" maxlength="10" autocomplete="off" pattern="(?:usuario|equipo)-[0-9]{2}"></label>
+          <label>Usuario ficticio<input id="user" value="usuario-01" autocomplete="off"></label>
         </div>
         <div class="phone-actions">
           <button type="button" data-method="GET">Consultar</button>

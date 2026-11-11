@@ -81,7 +81,7 @@ async function run(method) {
   const userId = user.value.trim();
   const demo = mode.value === 'demo';
   const label = demo ? 'Ensayo' : 'AWS';
-  if (!/^(?:usuario|equipo)-\d{2}$/.test(userId)) {
+  if (!userId) {
     feedback.textContent = 'Escribe un código como usuario-01.';
     return;
   }
