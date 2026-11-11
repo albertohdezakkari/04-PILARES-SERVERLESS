@@ -114,25 +114,28 @@ LAMBDA_ROLE_ARN=$(aws iam get-role --role-name LabRole --profile "$perfil" --reg
 <p>Pasa el ratón sobre una etiqueta del árbol o del código para ver su explicación. Pulsa una rama para abrirla. En móvil, toca la etiqueta para consultar su explicación.</p>
 <p><strong>Cómo leer YAML.</strong> En <code>name: aws</code>, <code>name</code> es la clave y <code>aws</code> su valor. Si después de <code>provider:</code> hay líneas más a la derecha, esas líneas forman su bloque. Usa espacios para la sangría y alinea las claves del mismo nivel. Un guion al principio de una línea, como <code>- GET</code>, introduce un elemento de una lista.</p>
 <aside class="yaml-variables" aria-labelledby="yaml-variables-title">
-  <h4 id="yaml-variables-title">Las variables que preparaste en la terminal</h4>
+  <h4 id="yaml-variables-title">Los valores del ejemplo que configuraste en la terminal</h4>
   <dl>
     <div>
-      <dt><code>STUDENT_CODE</code></dt>
-      <dd>Tu código de equipo, por ejemplo <code>equipo-01</code>. <code>service</code> lo lee con <code>${env:STUDENT_CODE}</code> para formar el nombre del servicio.</dd>
+      <dt><code>STUDENT_CODE=equipo-01</code></dt>
+      <dd><code>service</code> lee <code>${env:STUDENT_CODE}</code> y forma <code>festival-checkin-equipo-01</code>.</dd>
     </div>
     <div>
-      <dt><code>AWS_REGION</code></dt>
-      <dd>La región que guardaste en <code>$region</code>. <code>provider.region</code> la lee con <code>${env:AWS_REGION}</code> para desplegar en esa región.</dd>
+      <dt><code>AWS_REGION=us-east-1</code></dt>
+      <dd>Sale de <code>region=us-east-1</code>. <code>provider.region</code> lee <code>${env:AWS_REGION}</code>.</dd>
     </div>
     <div>
       <dt><code>LAMBDA_ROLE_ARN</code></dt>
-      <dd>El identificador del rol del laboratorio. <code>provider.iam.role</code> lo lee con <code>${env:LAMBDA_ROLE_ARN}</code> para asignar el rol a Lambda.</dd>
+      <dd>Para <code>LabRole</code>, IAM devuelve un valor con la forma <code>arn:aws:iam::&lt;ID_DE_TU_CUENTA&gt;:role/LabRole</code>. <code>provider.iam.role</code> lee <code>${env:LAMBDA_ROLE_ARN}</code>.</dd>
     </div>
     <div>
-      <dt><code>AWS_PROFILE</code></dt>
-      <dd>El perfil de AWS que exportaste desde <code>$perfil</code>. El comando de despliegue indica ese mismo perfil con <code>--aws-profile "$perfil"</code>.</dd>
+      <dt><code>AWS_PROFILE=default</code></dt>
+      <dd>Sale de <code>perfil=default</code>. El comando de despliegue usa <code>--aws-profile "$perfil"</code>.</dd>
     </div>
   </dl>
+  <p>Ejecuta este comando en la misma terminal para ver tus cuatro valores, incluido el ARN exacto de tu rol.</p>
+  <pre><code>printf 'STUDENT_CODE=%s\nAWS_REGION=%s\nLAMBDA_ROLE_ARN=%s\nAWS_PROFILE=%s\n' \
+  "$STUDENT_CODE" "$AWS_REGION" "$LAMBDA_ROLE_ARN" "$AWS_PROFILE"</code></pre>
   <a href="#rol-laboratorio">Ver los comandos del paso Rol</a>
 </aside>
 <div class="yaml-reader">
