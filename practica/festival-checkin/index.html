@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Festival Check-in · práctica guiada</title>
-<link rel="stylesheet" href="style.css?v=yaml-columnas">
+<link rel="stylesheet" href="style.css?v=yaml-variables">
 <script type="module" src="app.js"></script>
 <script type="module" src="guia.js?v=yaml-columnas"></script>
 <script type="module" src="visor-modelo.js"></script>
@@ -113,6 +113,28 @@ LAMBDA_ROLE_ARN=$(aws iam get-role --role-name LabRole --profile "$perfil" --reg
 <h3>Lee serverless.yml línea a línea</h3>
 <p>Pasa el ratón sobre una etiqueta del árbol o del código para ver su explicación. Pulsa una rama para abrirla. En móvil, toca la etiqueta para consultar su explicación.</p>
 <p><strong>Cómo leer YAML.</strong> En <code>name: aws</code>, <code>name</code> es la clave y <code>aws</code> su valor. Si después de <code>provider:</code> hay líneas más a la derecha, esas líneas forman su bloque. Usa espacios para la sangría y alinea las claves del mismo nivel. Un guion al principio de una línea, como <code>- GET</code>, introduce un elemento de una lista.</p>
+<aside class="yaml-variables" aria-labelledby="yaml-variables-title">
+  <h4 id="yaml-variables-title">Las variables que preparaste en la terminal</h4>
+  <dl>
+    <div>
+      <dt><code>STUDENT_CODE</code></dt>
+      <dd>Tu código de equipo, por ejemplo <code>equipo-01</code>. <code>service</code> lo lee con <code>${env:STUDENT_CODE}</code> para formar el nombre del servicio.</dd>
+    </div>
+    <div>
+      <dt><code>AWS_REGION</code></dt>
+      <dd>La región que guardaste en <code>$region</code>. <code>provider.region</code> la lee con <code>${env:AWS_REGION}</code> para desplegar en esa región.</dd>
+    </div>
+    <div>
+      <dt><code>LAMBDA_ROLE_ARN</code></dt>
+      <dd>El identificador del rol del laboratorio. <code>provider.iam.role</code> lo lee con <code>${env:LAMBDA_ROLE_ARN}</code> para asignar el rol a Lambda.</dd>
+    </div>
+    <div>
+      <dt><code>AWS_PROFILE</code></dt>
+      <dd>El perfil de AWS que exportaste desde <code>$perfil</code>. El comando de despliegue indica ese mismo perfil con <code>--aws-profile "$perfil"</code>.</dd>
+    </div>
+  </dl>
+  <a href="#rol-laboratorio">Ver los comandos del paso Rol</a>
+</aside>
 <div class="yaml-reader">
 <nav class="yaml-tree" aria-label="Jerarquía de serverless.yml">
   <h4 class="yaml-tree-title" tabindex="-1"><code>serverless.yml</code></h4>

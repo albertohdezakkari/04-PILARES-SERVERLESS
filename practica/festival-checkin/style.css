@@ -71,6 +71,22 @@ button:disabled { opacity: .65; cursor: wait; }
 }
 .code-notes h4 { margin: 0 0 4px; }
 .code-notes p { margin: 4px 0; }
+.yaml-variables {
+  margin: 16px 0;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+}
+.yaml-variables h4 { margin: 0 0 8px; }
+.yaml-variables dl {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  gap: 12px;
+  margin: 0 0 10px;
+}
+.yaml-variables dt { color: var(--accent); font-weight: 700; }
+.yaml-variables dd { margin: 4px 0 0; line-height: 1.45; }
 .yaml-reader {
   display: grid;
   gap: 14px;
