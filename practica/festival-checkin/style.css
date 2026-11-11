@@ -127,11 +127,13 @@ button:disabled { opacity: .65; cursor: wait; }
 .lesson-flow h4, .er-diagram h4, .access-results h4 { margin: 0 0 4px; }
 .lesson-flow p { margin: 0; }
 .lesson-flow li > code { grid-column: 2; color: #9ee4d8; }
-.er-diagram {
+.design-label { margin: 16px 0 8px; color: var(--muted); font-size: .95rem; }
+.er-diagram, .dynamo-map {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(62px, .45fr) minmax(0, 1.35fr) minmax(62px, .45fr) minmax(0, 1fr);
+}
+.er-diagram {
   align-items: center;
-  padding: 16px 0;
 }
 .er-diagram section {
   display: grid;
@@ -147,6 +149,49 @@ button:disabled { opacity: .65; cursor: wait; }
 .er-diagram section > span { color: var(--muted); }
 .er-edge { display: flex; align-items: center; gap: 3px; color: var(--accent); font-size: .78rem; }
 .er-edge i { flex: 1; border-top: 1px solid currentColor; }
+.dynamo-map { margin-bottom: 12px; }
+.dynamo-map-card {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-top: 3px solid #9ee4d8;
+  border-radius: 10px;
+  background: var(--surface);
+}
+.dynamo-map-card:nth-child(2) { grid-column: 3; }
+.dynamo-map-reference { grid-column: 5; border-top-color: var(--accent); }
+.dynamo-map-card p { margin: 8px 0 0; font-size: .9rem; }
+.dynamo-map-card .dynamo-map-origin { margin: 0 0 7px; color: var(--muted); font-weight: 650; }
+.dynamo-map-origin span { color: #9ee4d8; }
+.dynamo-map-reference .dynamo-map-origin span, .dynamo-map-target { color: var(--accent); }
+.dynamo-map-card h5 { margin: 0; font-size: clamp(1.03rem, 2.4vw, 1.3rem); }
+.dynamo-map-card dl { margin: 8px 0 0; }
+.dynamo-map-card dl > div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 4px 8px;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: .86rem;
+}
+.dynamo-map-card dd { margin: 0; color: var(--muted); }
+.dynamo-map-card abbr {
+  display: inline-block;
+  padding: 2px 5px;
+  border-radius: 4px;
+  color: #171322;
+  font: 800 .72rem system-ui, sans-serif;
+  text-decoration: none;
+}
+.dynamo-pk { background: #9ee4d8; }
+.dynamo-sk { background: var(--accent); }
+@media (max-width: 820px) {
+  .dynamo-map { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .dynamo-map-card:nth-child(n) { grid-column: auto; }
+  .dynamo-map-origin span { display: none; }
+}
 @media (max-width: 620px) {
   .er-diagram { grid-template-columns: minmax(0, 1fr); justify-items: center; }
   .er-diagram section { width: min(100%, 320px); }

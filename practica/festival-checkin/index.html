@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Festival Check-in · práctica guiada</title>
-<link rel="stylesheet" href="style.css?v=funciones-visibles">
+<link rel="stylesheet" href="style.css?v=mapa-dynamodb">
 <script type="module" src="app.js?v=prueba-rutas"></script>
 <script type="module" src="guia.js?v=modulos-pases"></script>
 <script type="module" src="visor-modelo.js?v=usuario"></script>
@@ -55,8 +55,9 @@
 <section id="diseno" class="phase" hidden>
 <h2>Del caso de uso al diseño de datos</h2>
 <article id="entidad-relacion" class="guide-step" data-step="Entidad–relación">
-<h3>Dibuja las entidades y sus relaciones</h3>
-<p>Un usuario puede inscribirse en varios eventos y cada evento puede tener varios usuarios inscritos. Es una relación <strong>muchos a muchos</strong>. <strong>INSCRIPCION</strong> representa ese vínculo y guarda dos hechos propios: cuándo se inscribió el usuario y cuándo entró.</p>
+<h3>Del diagrama entidad–relación a DynamoDB</h3>
+<p>Un usuario puede inscribirse en varios eventos y cada evento puede tener varios usuarios inscritos. <strong>INSCRIPCION</strong> representa ese vínculo <strong>muchos a muchos</strong> y guarda cuándo se inscribió el usuario y cuándo entró.</p>
+<h4 class="design-label">Entidades y cardinalidades</h4>
 <div class="er-diagram" role="group" aria-label="Un evento tiene de cero a muchas inscripciones. Un usuario tiene de cero a muchas inscripciones. Cada inscripción vincula un evento y un usuario.">
   <section><h4>EVENTO</h4><code>eventId</code><span>Título</span></section>
   <div class="er-edge" aria-hidden="true"><b>1</b><i></i><b>0..N</b></div>
@@ -64,8 +65,36 @@
   <div class="er-edge" aria-hidden="true"><b>0..N</b><i></i><b>1</b></div>
   <section><h4>USUARIO</h4><code>userId</code><span>Identificador del usuario</span></section>
 </div>
-<div class="lesson-note"><strong>Prueba el modelo.</strong> El usuario <code>usuario-02</code> puede tener una inscripción en <code>evt-001</code> y otra en <code>evt-002</code>. La fecha de entrada de cada inscripción pertenece a su evento. Para probar la API del laboratorio usarás <code>evt-001</code>.</div>
-<p class="checkpoint"><strong>Antes de avanzar</strong> Escribe las dos parejas de identificadores. Comprueba que comparten <code>userId</code> y tienen distintos <code>eventId</code>.</p>
+<h4 class="design-label" id="dynamo-mapping">Cómo se guardan en DynamoDB · Equipo 01</h4>
+<div class="dynamo-map" role="group" aria-labelledby="dynamo-mapping">
+  <section class="dynamo-map-card">
+    <p class="dynamo-map-origin"><span aria-hidden="true">↓</span> EVENTO se convierte en tabla</p>
+    <h5><code>EVENTO_01</code></h5>
+    <dl>
+      <div><dt><abbr class="dynamo-pk" title="Clave de partición">PK</abbr> <code>eventId</code></dt><dd><code>evt-001</code></dd></div>
+      <div><dt><code>title</code></dt><dd>Festival de otoño</dd></div>
+    </dl>
+    <p>Con <code>eventId</code> encuentras el evento y lees su título.</p>
+  </section>
+  <section class="dynamo-map-card">
+    <p class="dynamo-map-origin"><span aria-hidden="true">↓</span> INSCRIPCION se convierte en tabla</p>
+    <h5><code>INSCRIPCION_01</code></h5>
+    <dl>
+      <div><dt><abbr class="dynamo-pk" title="Clave de partición">PK</abbr> <code>eventId</code></dt><dd><code>evt-001</code></dd></div>
+      <div><dt><abbr class="dynamo-sk" title="Clave de ordenación">SK</abbr> <code>userId</code></dt><dd><code>usuario-02</code></dd></div>
+      <div><dt><code>registeredAt</code></dt><dd>Fecha de inscripción</dd></div>
+      <div><dt><code>checkedInAt</code></dt><dd>Fecha de entrada, opcional</dd></div>
+    </dl>
+    <p><strong>PK</strong> agrupa a los inscritos del evento. <strong>SK</strong> distingue a cada usuario dentro de ese grupo.</p>
+  </section>
+  <section class="dynamo-map-card dynamo-map-reference">
+    <p class="dynamo-map-origin"><span aria-hidden="true">↓</span> De USUARIO guardas su referencia</p>
+    <h5><abbr class="dynamo-sk" title="Clave de ordenación">SK</abbr> <code>userId</code></h5>
+    <p class="dynamo-map-target">En <code>INSCRIPCION_01</code></p>
+    <p>El pase recibe <code>usuario-02</code> y guarda ese código en la inscripción. Crearías una tabla <code>USUARIO</code> si el festival necesitara guardar perfiles.</p>
+  </section>
+</div>
+<p class="checkpoint"><strong>Antes de avanzar</strong> Imagina que <code>usuario-02</code> también se inscribe en <code>evt-002</code>. Compara las dos claves de inscripción. Verás el mismo <code>userId</code> y un <code>eventId</code> distinto para cada pase.</p>
 </article>
 <article id="patrones-acceso" class="guide-step" data-step="Preguntas y claves">
 <h3>De las preguntas a las claves de DynamoDB</h3>
