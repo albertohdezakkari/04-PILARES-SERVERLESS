@@ -1,0 +1,52 @@
+{
+  "ModelName": "Festival Check-in",
+  "ModelMetadata": {
+    "Author": "Festival Check-in",
+    "Description": "Modelo de aula con registros ficticios para comparar inscripción y asistencia.",
+    "AWSService": "Amazon DynamoDB",
+    "Version": "2.0"
+  },
+  "DataModel": [
+    {
+      "TableName": "equipo-01-events",
+      "KeyAttributes": {
+        "PartitionKey": { "AttributeName": "eventId", "AttributeType": "S" },
+        "SortKey": { "AttributeName": "", "AttributeType": "S" }
+      },
+      "NonKeyAttributes": [
+        { "AttributeName": "title", "AttributeType": "S" }
+      ],
+      "GlobalSecondaryIndexes": [],
+      "DataAccess": {},
+      "TableData": [
+        { "eventId": { "S": "evt-001" }, "title": { "S": "Festival de otoño" } }
+      ]
+    },
+    {
+      "TableName": "equipo-01-registrations",
+      "KeyAttributes": {
+        "PartitionKey": { "AttributeName": "eventId", "AttributeType": "S" },
+        "SortKey": { "AttributeName": "userId", "AttributeType": "S" }
+      },
+      "NonKeyAttributes": [
+        { "AttributeName": "registeredAt", "AttributeType": "S" },
+        { "AttributeName": "checkedInAt", "AttributeType": "S" }
+      ],
+      "GlobalSecondaryIndexes": [],
+      "DataAccess": {},
+      "TableData": [
+        {
+          "eventId": { "S": "evt-001" },
+          "userId": { "S": "equipo-01" },
+          "registeredAt": { "S": "2026-11-12T09:05:00Z" }
+        },
+        {
+          "eventId": { "S": "evt-001" },
+          "userId": { "S": "equipo-02" },
+          "registeredAt": { "S": "2026-11-12T09:06:00Z" },
+          "checkedInAt": { "S": "2026-11-12T09:12:00Z" }
+        }
+      ]
+    }
+  ]
+}

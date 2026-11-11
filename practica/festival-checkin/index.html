@@ -44,6 +44,17 @@
   <span aria-hidden="true">1 ─── 0..N</span>
   <div><strong>Registrations</strong><br><code>eventId</code> · PK<br><code>userId</code> · SK<br><code>registeredAt</code> · texto<br><code>checkedInAt</code> · opcional</div>
 </div>
+<details>
+<summary>Ver y explorar las tablas en el diseñador</summary>
+<p>Descargad el <a href="modelo-dynamodb.json" download>modelo de Festival Check-in</a> y abrid <a href="https://amazondynamodblabs.com/static/visualizer/index.html" target="_blank" rel="noopener">DynamoDB Data Modeler</a>. En <strong>☰ → Load from File</strong>, elegid el JSON. Usad el icono de cambiar tabla para pasar de Events a Registrations.</p>
+<p>En Registrations, pulsad los prismáticos y seleccionad <strong>Define new query</strong>. Dadle un nombre, elegid la tabla Registrations y escribid <code>evt-001</code> en <strong>Partition Key Value</strong>. Los dos registros comparten PK y tienen distinto <code>userId</code>. El atributo <code>checkedInAt</code> aparece en el registro con entrada. Para buscar por usuario en todos los eventos haría falta otro patrón de acceso.</p>
+<p>El diseñador muestra la clave de Events, pero su visor omite las filas de tablas sin SK. Este es el registro de Events incluido en el modelo.</p>
+<table>
+  <thead><tr><th scope="col">eventId · PK</th><th scope="col">title</th></tr></thead>
+  <tbody><tr><td><code>evt-001</code></td><td>Festival de otoño</td></tr></tbody>
+</table>
+<p>Los registros del diseñador son ejemplos. En el laboratorio empezamos con el evento y la tabla de inscripciones vacía.</p>
+</details>
 <ol>
   <li>En <strong>DynamoDB → Tables → Create table</strong>, cread <code>equipo-01-events</code>. Escribid <code>eventId</code> en <strong>Partition key</strong> y elegid <strong>String</strong>. Dejad <strong>Sort key</strong> vacío y conservad la configuración predeterminada.</li>
   <li>Repetid con <code>equipo-01-registrations</code>. Usad <code>eventId</code> como <strong>Partition key</strong> y <code>userId</code> como <strong>Sort key</strong>, ambos <strong>String</strong>. Cambiad <code>equipo-01</code> en ambos nombres por vuestro prefijo. Anotad los nombres exactos para la fase Lectura.</li>
@@ -56,6 +67,15 @@
   "eventId": { "S": "evt-001" },
   "title": { "S": "Festival de otoño" }
 }</code></pre>
+</details>
+<details>
+<summary>Repetir la preparación con AWS CloudShell</summary>
+<p>Elegid el formulario de DynamoDB o este script para preparar las tablas. Podéis leer el <a href="https://github.com/albertohdezakkari/04-PILARES-SERVERLESS/blob/main/practica/festival-checkin/preparar-tablas.sh">script completo en GitHub</a>. En la consola AWS, abrid <strong>CloudShell</strong> si el laboratorio lo tiene habilitado.</p>
+<p>Descargad el script desde CloudShell y cambiad la región de ejemplo y el prefijo por los que estéis usando. <code>--plan</code> muestra el destino. <code>--apply</code> crea las tablas, espera a que estén activas y carga el evento. Si ya existen, comprueba las claves y conserva el evento guardado.</p>
+<pre><code>curl -fsSLO https://albertohdezakkari.github.io/04-PILARES-SERVERLESS/practica/festival-checkin/preparar-tablas.sh
+bash preparar-tablas.sh us-east-1 equipo-01 --plan
+bash preparar-tablas.sh us-east-1 equipo-01 --apply</code></pre>
+<p>Volved a <strong>DynamoDB → Tables</strong> para comprobar las claves y el registro con la interfaz web.</p>
 </details>
 <p><strong>Antes de avanzar:</strong> ambas tablas están activas, el evento aparece en Events y Registrations está vacía.</p>
 </section>
