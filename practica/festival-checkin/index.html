@@ -104,15 +104,16 @@
     <button type="button" data-access="evento" aria-pressed="true">¿Cuál es el título del evento?</button>
     <button type="button" data-access="grupo" aria-pressed="false">¿Quién se ha inscrito al evento?</button>
     <button type="button" data-access="pase" aria-pressed="false">¿Está inscrito usuario-02?</button>
+    <button type="button" data-access="usuario" aria-pressed="false">¿En qué eventos está inscrito usuario-02?</button>
   </div>
   <div class="access-results" aria-live="polite">
     <section data-access-panel="evento"><h4>Un evento</h4><p>En <code>EVENTO</code>, <code>eventId</code> es la clave de partición (<strong>PK</strong>). Como cada evento tiene un identificador único, con <code>evt-001</code> ya puedes recuperar su título.</p><code>EVENTO → PK evt-001 → Festival de otoño</code></section>
     <section data-access-panel="grupo" hidden><h4>Todas las inscripciones de un evento</h4><p>En <code>INSCRIPCION</code>, la PK sigue siendo <code>eventId</code>. Una consulta por <code>evt-001</code> recupera su grupo de inscripciones.</p><code>INSCRIPCION → PK evt-001 → usuario-01, usuario-02</code></section>
-    <section data-access-panel="pase" hidden><h4>Una inscripción concreta</h4><p>Dentro del grupo, <code>userId</code> es la clave de ordenación (<strong>SK</strong>). La pareja completa identifica la inscripción. Su atributo <code>checkedInAt</code> indica si ya se registró la entrada.</p><code>INSCRIPCION → PK evt-001 + SK usuario-02 → una fila</code></section>
+    <section data-access-panel="pase" hidden><h4>Una inscripción concreta</h4><p>Dentro del grupo, <code>userId</code> es la clave de ordenación (<strong>SK</strong>). La pareja <code>eventId</code> + <code>userId</code> es la clave primaria compuesta. Su atributo <code>checkedInAt</code> indica si ya se registró la entrada.</p><code>INSCRIPCION → PK evt-001 + SK usuario-02 → una fila</code></section>
+    <section data-access-panel="usuario" hidden><h4>Los eventos de un usuario</h4><p>Guardas cada inscripción una vez. DynamoDB mantiene el índice <code>PorUsuario</code>, que agrupa esas inscripciones por <code>userId</code> (PK) y las ordena por <code>eventId</code> (SK).</p><code>PorUsuario → PK usuario-02 → evt-001, evt-002</code></section>
   </div>
 </div>
-<div class="lesson-note"><strong>Truco de diseño.</strong> Pregunta qué dato tienes al buscar. Si más adelante necesitas todos los eventos de un usuario y solo recibes <code>userId</code>, plantéate un índice con <code>userId</code> como clave de partición.</div>
-<p class="checkpoint"><strong>Antes de avanzar</strong> Abre las dos preguntas sobre inscripciones. En ambas tienes <code>evt-001</code>. La búsqueda de un pase añade <code>usuario-02</code>.</p>
+<p class="checkpoint"><strong>Antes de avanzar</strong> Compara «¿Quién se ha inscrito al evento?» con «¿En qué eventos está inscrito usuario-02?». En la primera, entra por <code>eventId</code> en la tabla. En la segunda, entra por <code>userId</code> en el índice. Probarás ambas búsquedas en <a href="#consultar-indice">Validar → Consultar índice</a>.</p>
 </article>
 <article id="modelo-titulo" class="guide-step" data-step="Probar el diseño">
 <h3>Convierte el modelo en dos tablas y pruébalo</h3>
@@ -296,6 +297,7 @@ LAMBDA_ROLE_ARN=$(aws iam get-role --role-name LabRole --profile "$perfil" --reg
                     <ul>
                       <li><button type="button" data-yaml-block="Inscripciones" data-yaml-line="AttributeDefinitions:" aria-pressed="false"><code>AttributeDefinitions</code></button></li>
                       <li><button type="button" data-yaml-block="Inscripciones" data-yaml-line="KeySchema:" aria-pressed="false"><code>KeySchema</code></button></li>
+                      <li><button type="button" data-yaml-block="Índice" data-yaml-line="GlobalSecondaryIndexes:" aria-pressed="false"><code>GlobalSecondaryIndexes</code></button></li>
                     </ul>
                   </li>
               </ul>
@@ -436,6 +438,18 @@ LAMBDA_ROLE_ARN=$(aws iam get-role --role-name LabRole --profile "$perfil" --reg
       <p class="yaml-feedback" role="status"></p>
     </div>
   </section>
+  <section data-code-start="        GlobalSecondaryIndexes:" data-label="Índice" hidden>
+    <p class="yaml-outcome" hidden>Puedes encontrar los eventos de un usuario con solo su código.</p>
+    <h4>Cómo se crea el índice PorUsuario</h4>
+    <dl class="yaml-terms">
+      <div><dt><code>GlobalSecondaryIndexes:</code></dt><dd>Declara los índices de <code>RegistrationsTable</code>. Este índice añade otra forma de buscar las inscripciones de esa tabla.</dd></div>
+      <div><dt><code>IndexName:</code></dt><dd>Identifica el índice. Usa <code>PorUsuario</code> al hacer la consulta.</dd></div>
+      <div><dt data-lines="KeySchema:|AttributeName:"><code>KeySchema:</code></dt><dd>Define las claves del índice. Usa los dos atributos de texto ya declarados en <code>AttributeDefinitions</code>.</dd></div>
+      <div><dt><code>KeyType: HASH</code></dt><dd><code>userId</code> es la clave de partición del índice. Con <code>usuario-02</code> localizas su grupo de inscripciones.</dd></div>
+      <div><dt><code>KeyType: RANGE</code></dt><dd><code>eventId</code> es la clave de ordenación del índice. Ordena los eventos dentro de cada usuario.</dd></div>
+      <div><dt data-lines="Projection:|ProjectionType:"><code>ProjectionType: KEYS_ONLY</code></dt><dd>El índice conserva las claves. Si necesitas el título de un evento, usa el <code>eventId</code> para leerlo en <code>EVENTO</code>.</dd></div>
+    </dl>
+  </section>
   <section data-code-start="  Outputs:" data-label="Salidas" hidden>
     <p class="yaml-outcome" hidden>La terminal puede recuperar los nombres de las tablas para consultarlas.</p>
     <h4>Qué devuelve el despliegue a la terminal</h4>
@@ -532,6 +546,15 @@ resources:
             KeyType: HASH
           - AttributeName: userId
             KeyType: RANGE
+        GlobalSecondaryIndexes:
+          - IndexName: PorUsuario
+            KeySchema:
+              - AttributeName: userId
+                KeyType: HASH
+              - AttributeName: eventId
+                KeyType: RANGE
+            Projection:
+              ProjectionType: KEYS_ONLY
   Outputs:
     EventsTableName:
       Value:
@@ -540,7 +563,7 @@ resources:
       Value:
         Ref: RegistrationsTable</code></pre>
 </div>
-<p class="checkpoint"><strong>Antes de avanzar</strong> En el árbol, abre <strong>RegistrationsTable</strong> y localiza <code>eventId</code> como <code>HASH</code> y <code>userId</code> como <code>RANGE</code>. Responde la pregunta y comprueba que el mensaje confirma que los dos usuarios tienen filas distintas.</p>
+<p class="checkpoint"><strong>Antes de avanzar</strong> En el árbol, abre <strong>RegistrationsTable → Properties</strong>. Compara <strong>KeySchema</strong> con <strong>GlobalSecondaryIndexes</strong>. Localiza <code>eventId</code> como <code>HASH</code> de la tabla y <code>userId</code> como <code>HASH</code> del índice.</p>
 </article>
 <article id="escribir-yaml" class="guide-step" data-step="Crear el YAML">
 <h3>Crea serverless.yml y comprueba lo que has guardado</h3>
@@ -549,8 +572,8 @@ resources:
 <p>En la caja del YAML, pulsa <strong>Copiar archivo completo</strong>. En <code>vi</code>, escribe <code>:set paste</code> y pulsa Intro. Si el archivo está vacío, pulsa <kbd>i</kbd> y pega el contenido. Si ya contiene el archivo de este paso, compruébalo y sigue. Para guardar, pulsa <kbd>Esc</kbd>, escribe <code>:wq</code> y pulsa Intro.</p>
 <pre data-file="serverless.yml" data-copy-from="infraestructura"><code></code></pre>
 <p>Ya en la terminal, busca en tu archivo los bloques que acabas de revisar.</p>
-<pre><code>grep -nE '^(service:|functions:|resources:|[[:space:]]+KeyType:)' serverless.yml</code></pre>
-<p class="checkpoint"><strong>Antes de avanzar</strong> La terminal muestra <code>service:</code>, <code>functions:</code> y <code>resources:</code>, seguidos de tres líneas <code>KeyType</code> con <code>HASH</code>, <code>HASH</code> y <code>RANGE</code>.</p>
+<pre><code>grep -nE '^(service:|functions:|resources:|[[:space:]]+(KeyType:|IndexName:))' serverless.yml</code></pre>
+<p class="checkpoint"><strong>Antes de avanzar</strong> La terminal muestra <code>IndexName: PorUsuario</code> seguido de <code>HASH</code> y <code>RANGE</code>. Si ya tenías el YAML de esta práctica y falta el índice, copia solo el bloque <code>GlobalSecondaryIndexes</code> del archivo completo y pégalo debajo del <code>KeySchema</code> de <code>RegistrationsTable</code>. Alinea ambas etiquetas con la misma sangría.</p>
 </article>
 <article id="archivo-lambda" class="guide-step" data-step="Archivos Lambda">
 <div class="lambda-hero">
@@ -766,7 +789,14 @@ printf '%s\n' "$tabla_eventos" "$tabla_inscripciones" "$api_url"</code></pre><p 
   aws dynamodb describe-table \
     --profile "$perfil" --region "$region" --table-name "$tabla" \
     --query 'Table.{Nombre:TableName,Estado:TableStatus,Claves:KeySchema}' || break
-done</code></pre><p class="checkpoint"><strong>Antes de avanzar</strong> Ambas están ACTIVE. EVENTO tiene eventId como HASH. INSCRIPCION añade userId como RANGE.</p>
+done</code></pre>
+<p>Comprueba también el índice de <code>INSCRIPCION</code>. Una tabla ya desplegada puede estar activa mientras DynamoDB prepara un índice nuevo.</p>
+<pre><code>aws dynamodb describe-table \
+  --profile "$perfil" --region "$region" --table-name "$tabla_inscripciones" \
+  --query "Table.GlobalSecondaryIndexes[?IndexName=='PorUsuario'].{Estado:IndexStatus,Claves:KeySchema}" \
+  --output json</code></pre>
+<p>Si ves <code>CREATING</code>, repite este último comando hasta ver <code>ACTIVE</code>. Si ves <code>[]</code> o <code>null</code>, comprueba que el YAML incluye <code>PorUsuario</code> y despliega de nuevo.</p>
+<p class="checkpoint"><strong>Antes de avanzar</strong> Las dos tablas y el índice están <code>ACTIVE</code>. La tabla de inscripciones tiene <code>eventId</code> como <code>HASH</code> y <code>userId</code> como <code>RANGE</code>. En <code>PorUsuario</code> los papeles se invierten.</p>
 </article>
 <article id="guardar-evento" class="guide-step" data-step="INSERT">
 <h3>Guarda el primer evento</h3>
@@ -1000,6 +1030,37 @@ aws dynamodb execute-statement \
 <p>Si usas la <a href="#pantalla">Pantalla de prueba</a>, selecciona AWS, indica la misma URL y el mismo usuario y pulsa <strong>Consultar</strong>.</p>
 <p class="checkpoint"><strong>Antes de avanzar</strong> DynamoDB devuelve un ítem y sus dos horas coinciden con la respuesta del GET. En la pantalla ves «Entrada registrada».</p>
 </article>
+<article id="consultar-indice" class="guide-step" data-step="Consultar índice">
+<h3>Busca por evento y por usuario</h3>
+<p>Después de <a href="#otro-equipo">Recorrido</a>, usa el mismo código de usuario que inscribiste en <code>evt-001</code>. Trabaja desde <code>festival-checkin</code> con el perfil y la región del laboratorio. Si cambiaste de terminal, recupera los nombres en <a href="#salidas-stack">Salidas</a>. Comprueba en <a href="#estado-tablas">Estado</a> que <code>PorUsuario</code> esté <code>ACTIVE</code>.</p>
+<h4>Guarda una segunda inscripción del mismo usuario</h4>
+<p>Cambia <code>usuario-03</code> si usaste otro código en el recorrido. El segundo evento sirve para probar las consultas directas en DynamoDB. La pantalla de puerta trabaja con <code>evt-001</code>. Si al repetir un <code>INSERT</code> aparece <code>DuplicateItemException</code>, el registro ya existe.</p>
+<pre><code>codigo_prueba=usuario-03
+aws dynamodb execute-statement \
+  --profile "$perfil" --region "$region" \
+  --statement "INSERT INTO \"$tabla_eventos\" VALUE {'eventId': 'evt-002', 'title': 'Feria de invierno'}"
+
+aws dynamodb execute-statement \
+  --profile "$perfil" --region "$region" \
+  --statement "INSERT INTO \"$tabla_inscripciones\" VALUE {'eventId': 'evt-002', 'userId': ?, 'registeredAt': ?}" \
+  --parameters "[{\"S\":\"$codigo_prueba\"},{\"S\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}]"</code></pre>
+<h4>¿Quién se apuntó a <code>evt-001</code>?</h4>
+<p>Consulta la tabla con <code>eventId</code>. Verás <code>usuario-03</code> (o el código que elegiste) junto con los demás inscritos en ese evento.</p>
+<pre><code>aws dynamodb query \
+  --profile "$perfil" --region "$region" --table-name "$tabla_inscripciones" \
+  --key-condition-expression 'eventId = :evento' \
+  --expression-attribute-values '{":evento":{"S":"evt-001"}}' \
+  --query 'Items[].userId.S' --output json</code></pre>
+<h4>¿A qué eventos se apuntó ese usuario?</h4>
+<p>Consulta la misma tabla indicando <code>--index-name PorUsuario</code>. Ahora la condición usa <code>userId</code> y la salida muestra los identificadores de los eventos.</p>
+<pre><code>aws dynamodb query \
+  --profile "$perfil" --region "$region" --table-name "$tabla_inscripciones" \
+  --index-name PorUsuario \
+  --key-condition-expression 'userId = :usuario' \
+  --expression-attribute-values "{\":usuario\":{\"S\":\"$codigo_prueba\"}}" \
+  --query 'Items[].eventId.S' --output json</code></pre>
+<p class="checkpoint"><strong>Antes de avanzar</strong> La primera consulta incluye tu usuario. La segunda incluye <code>evt-001</code> y <code>evt-002</code>. Si acabas de escribir la segunda inscripción, dale unos segundos al índice y vuelve a consultar. Si sigue faltando un evento, comprueba el resultado de su <code>INSERT</code> y el código que usaste en Recorrido.</p>
+</article>
 </section>
 <section id="referencias" class="phase" hidden>
 <h2>Referencias de la práctica</h2>
@@ -1012,6 +1073,7 @@ aws dynamodb execute-statement \
     <li><a href="#desplegar-stack">Despliega en AWS</a><span>Serverless Framework → CloudFormation → recursos del laboratorio</span></li>
     <li><a href="#guardar-evento">Carga el primer evento</a><span>AWS CLI → PartiQL INSERT → evt-001</span></li>
     <li><a href="#entrenar-dynamo">Entrena la lectura</a><span>Clave → ítem → objeto JavaScript → respuesta HTTP</span></li>
+    <li><a href="#consultar-indice">Busca en las dos direcciones</a><span>Tabla → inscritos de un evento<br>PorUsuario → eventos de un usuario</span></li>
   </ol>
   <figcaption><a href="../../ayuda/dynamodb/">Ver la infografía del modelo completo ↗</a></figcaption>
 </figure>
@@ -1027,7 +1089,7 @@ aws dynamodb execute-statement \
     <dt><code>TableData</code></dt>
     <dd>Las filas ficticias. <code>{ "S": "evt-001" }</code> guarda el texto <code>evt-001</code>. La vista de tabla muestra directamente ese valor.</dd>
   </dl>
-  <p><code>NonKeyAttributes</code> enumera campos como <code>title</code> y <code>registeredAt</code>. Para esta primera lectura podéis pasar por alto los metadatos, <code>DataAccess</code> y la lista vacía de índices.</p>
+  <p><code>NonKeyAttributes</code> enumera campos como <code>title</code> y <code>registeredAt</code>. En <code>GlobalSecondaryIndexes</code> de <code>INSCRIPCION</code> puedes comparar las claves del índice <code>PorUsuario</code> con las de la tabla.</p>
   <label for="model-json">JSON del modelo</label>
   <textarea id="model-json" rows="5" spellcheck="false" placeholder="Pega aquí el contenido de modelo-dynamodb.json"></textarea>
   <div class="actions">

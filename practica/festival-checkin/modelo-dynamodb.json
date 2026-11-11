@@ -32,7 +32,16 @@
         { "AttributeName": "registeredAt", "AttributeType": "S" },
         { "AttributeName": "checkedInAt", "AttributeType": "S" }
       ],
-      "GlobalSecondaryIndexes": [],
+      "GlobalSecondaryIndexes": [
+        {
+          "IndexName": "PorUsuario",
+          "KeyAttributes": {
+            "PartitionKey": { "AttributeName": "userId", "AttributeType": "S" },
+            "SortKey": { "AttributeName": "eventId", "AttributeType": "S" }
+          },
+          "Projection": { "ProjectionType": "KEYS_ONLY" }
+        }
+      ],
       "DataAccess": {},
       "TableData": [
         {
