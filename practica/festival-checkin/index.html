@@ -39,7 +39,7 @@
 <h3>El festival abre puertas</h3>
 <p>Construid una aplicación que permita consultar un evento, apuntarse y registrar la entrada. Trabajad por parejas y turnaos para escribir y comprobar.</p>
 <p>Abrid la <a href="#pantalla">Pantalla de prueba</a> en modo Ensayo. Pulsad <strong>Consultar</strong>, luego <strong>Registrar entrada</strong>. ¿Qué ocurre si la persona aún no se ha inscrito?</p>
-<p class="checkpoint"><strong>Antes de avanzar</strong> Habéis visto el 409 al intentar entrar y podéis explicar por qué.</p>
+<p class="checkpoint"><strong>Antes de avanzar</strong> Al pulsar <strong>Registrar entrada</strong> sin inscribirte, el mensaje de estado muestra <code>PATCH → 409</code> y el pase sigue en <strong>Sin inscripción</strong>.</p>
 </article>
 </section>
 <section id="conexion" class="phase" hidden>
@@ -70,7 +70,7 @@ open -e ~/.aws/credentials</code></pre></div>
 aws_access_key_id = VALOR_DE_LA_SESION
 aws_secret_access_key = VALOR_DE_LA_SESION
 aws_session_token = VALOR_DE_LA_SESION</code></pre><p>Si ya usas <code>[default]</code> para otra cuenta, guarda el bloque del laboratorio con la cabecera <code>[academy]</code>. Si ya tienes un perfil del laboratorio, reemplaza sus tres valores juntos.</p>
-<p class="checkpoint"><strong>Antes de avanzar</strong> El archivo está guardado y sabes si tu cabecera es default o academy.</p>
+<p class="checkpoint"><strong>Antes de avanzar</strong> Comprueba que el archivo guardado contiene una cabecera (<code>[default]</code> o <code>[academy]</code>) y los tres campos del laboratorio debajo.</p>
 </article>
 <article id="probar-aws" class="guide-step" data-step="Comprobación">
 <h3>Comprueba identidad y región</h3>
@@ -79,7 +79,7 @@ perfil=default
 region=us-east-1
 export AWS_PAGER=""
 aws sts get-caller-identity --profile "$perfil" --region "$region"
-aws dynamodb list-tables --profile "$perfil" --region "$region"</code></pre><p><strong>Si falla:</strong> si el perfil no existe, usa un nombre que aparezca en la lista. Si el token caducó, vuelve a AWS Details y copia los tres valores vigentes. Si STS funciona y DynamoDB da <code>AccessDenied</code>, revisad los permisos con el profesor.</p>
+aws dynamodb list-tables --profile "$perfil" --region "$region"</code></pre><p><strong>Si falla:</strong> si el perfil no existe, usa un nombre que aparezca en la lista. Si el token caducó, vuelve a AWS Details y copia los tres valores vigentes. Si STS funciona y DynamoDB devuelve <code>AccessDenied</code>, guarda el mensaje de error para revisar los permisos del laboratorio.</p>
 <p class="checkpoint"><strong>Antes de avanzar</strong> STS devuelve la identidad y DynamoDB muestra TableNames. Puede estar vacía.</p>
 </article>
 </section>
@@ -96,7 +96,7 @@ aws dynamodb list-tables --profile "$perfil" --region "$region"</code></pre><p><
 <div id="model-result">
 </div>
 <p>En el ejemplo, <code>checkedInAt</code> indica que la persona ya entró. En AWS, la tabla de inscripciones empezará vacía.</p>
-<p class="checkpoint"><strong>Antes de avanzar</strong> Puedes explicar por qué las dos inscripciones tienen el mismo eventId y distinto userId.</p>
+<p class="checkpoint"><strong>Antes de avanzar</strong> Pulsa <strong>Ver inscritos del evento</strong>. Aparecen dos filas con <code>eventId = evt-001</code> y dos <code>userId</code> distintos. Pulsa <strong>Buscar a equipo-02</strong>. Ahora solo aparece la fila de <code>equipo-02</code>.</p>
 </article>
 <article id="nombres-tablas" class="guide-step" data-step="Proyecto">
 <h3>Prepara la carpeta de trabajo</h3>
@@ -110,12 +110,12 @@ npx serverless --version</code></pre><p class="checkpoint"><strong>Antes de avan
 </article>
 <article id="rol-laboratorio" class="guide-step" data-step="Rol">
 <h3>Selecciona el equipo y el rol de Lambda</h3>
-<p>Cambia <code>equipo-01</code> por el código que te ha asignado el profesor. El último comando localiza el ARN de <code>LabRole</code>, el rol existente que usará Lambda para leer y escribir en DynamoDB.</p><pre><code>export AWS_PROFILE="$perfil"
+<p>Cambia <code>equipo-01</code> por el código asignado a tu equipo. El último comando localiza el ARN de <code>LabRole</code>, el rol existente que usará Lambda para leer y escribir en DynamoDB.</p><pre><code>export AWS_PROFILE="$perfil"
 export AWS_REGION="$region"
 export STUDENT_CODE=equipo-01
 LAMBDA_ROLE_ARN=$(aws iam get-role --role-name LabRole --profile "$perfil" --region "$region" --query 'Role.Arn' --output text) &amp;&amp;
   export LAMBDA_ROLE_ARN &amp;&amp;
-  printf '%s\n' "$LAMBDA_ROLE_ARN"</code></pre><p>Si el laboratorio deniega <code>iam:GetRole</code>, usa el ARN autorizado de tu cuenta que indica el laboratorio o el profesor. Escríbelo con <code>export LAMBDA_ROLE_ARN="ARN_DEL_LAB"</code>, sustituyendo el valor entre comillas.</p><p class="checkpoint"><strong>Antes de avanzar</strong> Tienes el ARN del rol del laboratorio y sigues usando el perfil y la región que comprobaste en Conexión.</p>
+  printf '%s\n' "$LAMBDA_ROLE_ARN"</code></pre><p>Si el laboratorio deniega <code>iam:GetRole</code>, consulta las instrucciones del laboratorio o solicita el ARN autorizado para tu cuenta. Escríbelo con <code>export LAMBDA_ROLE_ARN="ARN_DEL_LAB"</code>, sustituyendo el valor entre comillas.</p><p class="checkpoint"><strong>Antes de avanzar</strong> Tienes el ARN del rol del laboratorio y sigues usando el perfil y la región que comprobaste en Conexión.</p>
 </article>
 <article id="infraestructura" class="guide-step" data-step="serverless.yml">
 <h3>Describe la infraestructura en serverless.yml</h3>
@@ -195,7 +195,7 @@ resources:
         Ref: EventsTable
     RegistrationsTableName:
       Value:
-        Ref: RegistrationsTable</code></pre><p>En <code>provider.environment</code>, cada <code>Ref</code> pasa a Lambda el nombre real de la tabla que crea CloudFormation. En <code>Outputs</code> vuelves a usar esas referencias para obtener los nombres desde la terminal.</p><p class="checkpoint"><strong>Antes de avanzar</strong> Puedes señalar dónde se define la clave de cada tabla y cómo recibe Lambda sus nombres.</p>
+        Ref: RegistrationsTable</code></pre><p>En <code>provider.environment</code>, cada <code>Ref</code> pasa a Lambda el nombre real de la tabla que crea CloudFormation. En <code>Outputs</code> vuelves a usar esas referencias para obtener los nombres desde la terminal.</p><p class="checkpoint"><strong>Antes de avanzar</strong> En <code>KeySchema</code>, comprueba que las dos tablas tienen <code>eventId</code> como <code>HASH</code> y que solo <code>RegistrationsTable</code> añade <code>userId</code> como <code>RANGE</code>. En <code>environment</code>, comprueba que cada <code>Ref</code> apunta a su tabla.</p>
 </article>
 <article id="archivo-lambda" class="guide-step" data-step="Archivo base">
 <h3>Prepara el archivo index.mjs</h3>
@@ -299,14 +299,14 @@ done</code></pre><p class="checkpoint"><strong>Antes de avanzar</strong> Ambas e
 <section id="lectura" class="phase" hidden>
 <h2>Leer desde Lambda</h2>
 <article id="leer-pase" class="guide-step" data-step="Lectura">
-<h3>Construye getPass con el profesor</h3>
-<p>Abre <code>index.mjs</code> en VS Code. Trabaja dentro de <code>getPass(key)</code> y sustituye su respuesta <code>501</code> con el profesor.</p>
+<h3>Lee el evento y la inscripción con getPass</h3>
+<p>Abre <code>index.mjs</code> en VS Code. Sustituye la respuesta <code>501</code> de <code>getPass(key)</code> siguiendo estos pasos.</p>
 <ol>
   <li>Usa <code>GetCommand</code> sobre <code>eventsTable</code> con la clave <code>{ eventId: key.eventId }</code>. Si el resultado carece de <code>Item</code>, devuelve <code>404</code>.</li>
   <li>Usa otro <code>GetCommand</code> sobre <code>registrationsTable</code> con <code>key</code> completa. Activa <code>ConsistentRead</code> en ambas lecturas.</li>
   <li>Devuelve <code>200</code> con el identificador y el título del evento. En <code>registration</code>, incluye el ítem de inscripción si existe, o <code>null</code>.</li>
 </ol><pre><code>{ "eventId": "evt-001", "title": "Festival de otoño", "registration": null }</code></pre><p>Cuando exista la inscripción, <code>registration</code> contiene el registro con <code>userId</code>, <code>registeredAt</code> y la hora de entrada si ya se guardó.</p>
-<p class="checkpoint"><strong>Antes de avanzar</strong> Has guardado getPass en index.mjs y puedes explicar qué clave usa cada GetCommand.</p>
+<p class="checkpoint"><strong>Antes de avanzar</strong> En <code>index.mjs</code>, el primer <code>GetCommand</code> usa <code>eventId</code> y el segundo usa <code>eventId</code> y <code>userId</code>. Guarda el archivo.</p>
 </article>
 <article id="conectar-api" class="guide-step" data-step="Probar GET">
 <h3>Despliega la lectura y prueba la pantalla</h3>
@@ -348,11 +348,11 @@ done</code></pre><p class="checkpoint"><strong>Antes de avanzar</strong> Ambas e
 <li>Inscríbete: 201. Repite: 409.</li>
 <li>Registra la entrada: 200. Repite: 409.</li>
 </ol>
-<p class="checkpoint"><strong>Antes de avanzar</strong> Puedes explicar qué operación creó la fila y cuál solo añadió la hora de entrada.</p>
+<p class="checkpoint"><strong>Antes de avanzar</strong> Consulta el mismo código. La respuesta conserva el <code>registeredAt</code> de la inscripción y contiene el <code>checkedInAt</code> de la primera entrada.</p>
 </article>
 <article id="persistencia" class="guide-step" data-step="Persistencia">
 <h3>Recarga y lee las dos horas</h3>
-<p>Recarga, introduce de nuevo la URL y el código y pulsa <strong>Consultar</strong>. En la terminal, repite el <a href="#comprobar-datos">SELECT de inscripciones</a> y compara las horas. Retirad los recursos según las indicaciones del profesor.</p>
+<p>Recarga, introduce de nuevo la URL y el código y pulsa <strong>Consultar</strong>. En la terminal, repite el <a href="#comprobar-datos">SELECT de inscripciones</a> y compara las horas.</p>
 <p class="checkpoint"><strong>Antes de avanzar</strong> El registro sigue en DynamoDB y las dos horas coinciden con la pantalla.</p>
 </article>
 </section>
