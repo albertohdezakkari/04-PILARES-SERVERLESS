@@ -32,6 +32,10 @@ li + li { margin-top: .65rem; }
 .phases, .actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .phases, #guide-steps { flex-wrap: nowrap; overflow-x: auto; padding: 3px; }
 .phases button, #guide-steps button { flex: 0 0 auto; }
+@media (min-width: 900px) {
+  .phases { flex-wrap: wrap; gap: 6px; }
+  .phases button { padding-inline: 9px; }
+}
 #guide-progress { margin: 0 3px 5px; color: var(--muted); }
 #guide-steps button { min-height: 40px; padding: 6px 10px; }
 .course-content {
