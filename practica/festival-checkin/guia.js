@@ -274,6 +274,22 @@ for (const question of document.querySelectorAll('.yaml-question')) {
   }
 }
 
+for (const explainer of document.querySelectorAll('[data-explainer]')) {
+  const choices = [...explainer.querySelectorAll('[data-explain]')];
+  const explanations = explainer.querySelectorAll('[data-explanation]');
+  for (const choice of choices) {
+    const reveal = () => {
+      for (const option of choices) option.setAttribute('aria-pressed', String(option === choice));
+      for (const explanation of explanations) explanation.hidden = explanation.id !== choice.dataset.explain;
+    };
+    choice.addEventListener('pointerenter', event => {
+      if (event.pointerType === 'mouse') reveal();
+    });
+    choice.addEventListener('focus', reveal);
+    choice.addEventListener('click', reveal);
+  }
+}
+
 const accessButtons = [...document.querySelectorAll('[data-access]')];
 const accessPanels = document.querySelectorAll('[data-access-panel]');
 for (const choice of accessButtons) {

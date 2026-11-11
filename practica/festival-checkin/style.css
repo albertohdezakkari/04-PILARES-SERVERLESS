@@ -195,6 +195,51 @@ button:disabled { opacity: .65; cursor: wait; }
 .command-reasons > div { padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; }
 .command-reasons dt { color: #9ee4d8; font-weight: 750; }
 .command-reasons dd { margin: 4px 0 0; color: var(--muted); }
+.guided-explainer {
+  min-width: 0;
+  padding: 12px;
+  margin: 12px 0;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+}
+.guided-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.guided-options button { min-height: 40px; text-align: left; }
+.guided-notes {
+  border-left: 3px solid #9ee4d8;
+  padding: 8px 10px;
+  background: var(--background);
+}
+.guided-notes h4, .guided-notes p { margin: 0; }
+.guided-notes h4 + p { margin-top: 4px; }
+.guided-notes h4, .file-checks h5 { color: #9ee4d8; }
+.file-checks {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 400px), 1fr));
+  gap: 12px;
+}
+.file-checks .guided-explainer { margin: 0; }
+.file-checks h5 { font-size: 1rem; margin: 0; }
+.file-checks pre { white-space: pre-wrap; }
+.file-checks pre button {
+  min-height: 32px;
+  margin-block: 2px;
+  padding: 2px 5px;
+  font: inherit;
+  color: #9ee4d8;
+  border-color: var(--border);
+}
+.file-checks pre button[aria-pressed="true"] {
+  color: #142628;
+  background: #9ee4d8;
+  border-color: #9ee4d8;
+}
+.check-result { margin: 8px 0 0; }
 .checkpoint { padding: 10px 12px; border-left: 3px solid var(--accent); background: var(--surface); }
 .checkpoint > strong:first-child { display: block; }
 .code-toolbar { align-items: center; margin-top: 10px; }

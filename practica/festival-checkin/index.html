@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Festival Check-in · práctica guiada</title>
-<link rel="stylesheet" href="style.css?v=recorrido-festival">
+<link rel="stylesheet" href="style.css?v=aprender-lambda">
 <script type="module" src="app.js?v=usuario"></script>
-<script type="module" src="guia.js?v=caso-completo"></script>
+<script type="module" src="guia.js?v=aprender-lambda"></script>
 <script type="module" src="visor-modelo.js?v=usuario"></script>
 </head>
 <body>
@@ -507,7 +507,23 @@ resources:
 <p class="checkpoint"><strong>Antes de avanzar</strong> La terminal muestra <code>service:</code>, <code>functions:</code> y <code>resources:</code>, seguidos de tres líneas <code>KeyType</code> con <code>HASH</code>, <code>HASH</code> y <code>RANGE</code>.</p>
 </article>
 <article id="archivo-lambda" class="guide-step" data-step="Archivo base">
-<h3>Prepara el archivo index.mjs</h3>
+<h3>Entiende y comprueba el archivo de Lambda</h3>
+<p>Imagina que <strong>usuario-02</strong> pulsa <strong>Consultar</strong> para <strong>evt-001</strong>. Sigue la petición por <code>index.mjs</code>. Pasa el ratón, pulsa o usa Tab para ver la explicación de cada paso.</p>
+<section class="guided-explainer" data-explainer aria-label="Recorrido de una petición en Lambda">
+  <div class="guided-options" role="group" aria-label="Pasos de la petición">
+    <button type="button" data-explain="lambda-recibir" aria-controls="lambda-recibir" aria-pressed="true">1 · Recibir la petición</button>
+    <button type="button" data-explain="lambda-elegir" aria-controls="lambda-elegir" aria-pressed="false">2 · Elegir la operación</button>
+    <button type="button" data-explain="lambda-tablas" aria-controls="lambda-tablas" aria-pressed="false">3 · Encontrar las tablas</button>
+    <button type="button" data-explain="lambda-responder" aria-controls="lambda-responder" aria-pressed="false">4 · Responder a la web</button>
+  </div>
+  <div class="guided-notes" aria-live="polite">
+    <div id="lambda-recibir" data-explanation><h4>API Gateway llama a <code>handler(event)</code></h4><p><code>event.pathParameters</code> contiene los dos valores de la ruta. Aquí llegan <code>eventId = evt-001</code> y <code>userId = usuario-02</code>. Si el formato es incorrecto, la función responde <code>400</code>.</p></div>
+    <div id="lambda-elegir" data-explanation hidden><h4>El método HTTP indica qué acción hacer</h4><p><code>GET → getPass</code> consulta el pase, <code>POST → register</code> inscribe y <code>PATCH → checkIn</code> registra la entrada. Las tres funciones reciben la misma pareja <code>{ eventId, userId }</code>.</p></div>
+    <div id="lambda-tablas" data-explanation hidden><h4>El YAML conecta el código con DynamoDB</h4><p><code>process.env.EVENTS_TABLE</code> y <code>process.env.REGISTRATIONS_TABLE</code> contienen los nombres que fijaste en <a href="#infraestructura">Leer el YAML</a>. El SDK se usará en las siguientes fases para consultar o guardar ítems en esas tablas.</p></div>
+    <div id="lambda-responder" data-explanation hidden><h4><code>json()</code> prepara la respuesta HTTP</h4><p>Devuelve un <code>statusCode</code> y convierte el cuerpo a JSON. En este archivo base, un método válido devuelve <code>501</code> hasta que completes su función. La respuesta de <strong>Consultar</strong> se construye en la fase GET.</p></div>
+  </div>
+</section>
+<h4>Crea el archivo base</h4>
 <p>Desde la carpeta <code>festival-checkin</code>, ejecuta este comando para crear y abrir <code>index.mjs</code>.</p>
 <pre><code>touch index.mjs &amp;&amp; vi index.mjs</code></pre>
 <p>En la caja de abajo, pulsa <strong>Copiar archivo completo</strong>. En <code>vi</code>, escribe <code>:set paste</code> y pulsa Intro. Si el archivo está vacío, pulsa <kbd>i</kbd> y pega el contenido. Si ya contiene el archivo de este paso, compruébalo y sigue. Para guardar, pulsa <kbd>Esc</kbd>, escribe <code>:wq</code> y pulsa Intro.</p>
@@ -565,8 +581,40 @@ export async function handler(event) {
     console.error(error.name, error.message);
     return json(500, { message: 'Revisa los logs de la función' });
   }
-}</code></pre><pre><code>ls -l index.mjs serverless.yml package.json
-node --check index.mjs</code></pre><p class="checkpoint"><strong>Antes de avanzar</strong> <code>ls</code> muestra los tres archivos y <code>node --check</code> vuelve a la terminal sin errores.</p>
+}</code></pre>
+<h4>Comprueba los archivos antes de desplegar</h4>
+<p>Ejecuta los comandos en la carpeta <code>festival-checkin</code>. Pasa el ratón sobre cada parte resaltada o tócala para recordar qué hace.</p>
+<div class="file-checks">
+  <section class="guided-explainer" data-explainer>
+    <h5>1 · Localiza los tres archivos</h5>
+    <pre><code><button type="button" data-explain="check-list" aria-controls="check-list" aria-pressed="true">ls -l</button> <button type="button" data-explain="check-index" aria-controls="check-index" aria-pressed="false">index.mjs</button> <button type="button" data-explain="check-yaml" aria-controls="check-yaml" aria-pressed="false">serverless.yml</button> <button type="button" data-explain="check-package" aria-controls="check-package" aria-pressed="false">package.json</button></code></pre>
+    <div class="guided-notes" aria-live="polite">
+      <p id="check-list" data-explanation><code>ls</code> lista los archivos indicados. <code>-l</code> muestra detalles como el tamaño. Comprueba que aparecen los tres nombres.</p>
+      <p id="check-index" data-explanation hidden><code>index.mjs</code> contiene el <code>handler</code> que ejecuta Lambda.</p>
+      <p id="check-yaml" data-explanation hidden><code>serverless.yml</code> declara qué recursos y rutas va a desplegar Serverless.</p>
+      <p id="check-package" data-explanation hidden><code>package.json</code> enumera las dependencias del proyecto, como Serverless Framework y el SDK de DynamoDB.</p>
+    </div>
+    <p class="check-result"><strong>Si falta uno.</strong> Comprueba la carpeta con <code>pwd</code> y vuelve al paso donde lo creaste.</p>
+  </section>
+  <section class="guided-explainer" data-explainer>
+    <h5>2 · Comprueba la sintaxis de JavaScript</h5>
+    <pre><code><button type="button" data-explain="check-syntax" aria-controls="check-syntax" aria-pressed="true">node --check</button> <button type="button" data-explain="check-target" aria-controls="check-target" aria-pressed="false">index.mjs</button></code></pre>
+    <div class="guided-notes" aria-live="polite">
+      <p id="check-syntax" data-explanation><code>node --check</code> analiza la sintaxis. Si el código es válido, vuelve a la terminal en silencio. Si hay un error, muestra su ubicación.</p>
+      <p id="check-target" data-explanation hidden><code>index.mjs</code> es el archivo que Node lee para detectar errores como una llave sin cerrar.</p>
+    </div>
+    <p class="check-result"><strong>Prueba siguiente.</strong> El despliegue y la petición a la API comprobarán la configuración y el comportamiento de Lambda.</p>
+  </section>
+</div>
+<div class="yaml-question" role="group" aria-labelledby="lambda-recall">
+  <p id="lambda-recall"><strong>Ves los tres archivos y <code>node --check</code> vuelve en silencio. ¿Qué has comprobado?</strong></p>
+  <div class="actions">
+    <button type="button" aria-pressed="false" data-feedback="Correcto. El siguiente paso es desplegar el servicio y hacer una petición.">Que existen los archivos y que JavaScript tiene sintaxis válida</button>
+    <button type="button" aria-pressed="false" data-feedback="Para comprobar los permisos hay que desplegar y hacer una petición que acceda a DynamoDB.">Que Lambda ya puede leer DynamoDB</button>
+  </div>
+  <p class="yaml-feedback" role="status"></p>
+</div>
+<p class="checkpoint"><strong>Antes de avanzar</strong> En la terminal aparecen los tres nombres y <code>node --check index.mjs</code> termina sin errores.</p>
 </article>
 <article id="desplegar-stack" class="guide-step" data-step="Desplegar">
 <h3>Despliega el servicio desde la terminal</h3>
