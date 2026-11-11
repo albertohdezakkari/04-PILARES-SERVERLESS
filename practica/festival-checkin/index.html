@@ -6,7 +6,7 @@
 <title>Festival Check-in · práctica guiada</title>
 <link rel="stylesheet" href="style.css?v=pase-movil">
 <script type="module" src="app.js?v=identificadores"></script>
-<script type="module" src="guia.js?v=leer-get-pass"></script>
+<script type="module" src="guia.js?v=ensayo-en-diseno"></script>
 <script type="module" src="visor-modelo.js?v=usuario"></script>
 <script type="module" src="entrenamiento-dynamo.js"></script>
 </head>
@@ -107,7 +107,13 @@
     <p>Busca por <code>userId</code>, la clave de partición del índice. En este ejemplo, <code>usuario-02</code> devuelve <code>evt-001</code> y <code>evt-002</code>.</p>
   </li>
 </ul>
-<p class="checkpoint"><strong>Antes de avanzar</strong> Abre <a href="#patrones-acceso">Preguntas y claves</a> y selecciona las dos preguntas de arriba. Comprueba en cuál empiezas por <code>evt-001</code> y en cuál por <code>usuario-02</code>. Puedes ejecutar ambas consultas en <a href="#consultar-indice">Validar → Consultar índice</a>.</p>
+<p class="checkpoint"><strong>Antes de avanzar</strong> Comprueba en cuál de las dos consultas empiezas por <code>evt-001</code> y en cuál por <code>usuario-02</code>. Después <a href="#ensayar-pase">prueba el pase en el móvil</a>. Puedes ejecutar ambas consultas en <a href="#consultar-indice">Validar → Consultar índice</a>.</p>
+</article>
+<article id="ensayar-pase" class="guide-step" data-step="Ensayar el pase">
+<h3>Prueba el pase que vas a construir</h3>
+<p>Selecciona <strong>Ensayo</strong> y usa un código nuevo, por ejemplo <code>usuario-02</code>. Pulsa <strong>Consultar → Inscribirse → Registrar entrada</strong> y fíjate en cómo cambia el estado del pase.</p>
+<div id="ensayo-pantalla"></div>
+<p class="checkpoint"><strong>Antes de avanzar</strong> El pase pasa por <strong>Sin inscripción → Inscrito → Entrada registrada</strong>. Pulsa <strong>Consultar</strong> otra vez y localiza <code>registeredAt</code> y <code>checkedInAt</code> en la respuesta. En <strong>Preguntas y claves</strong> verás qué datos necesita cada búsqueda.</p>
 </article>
 <article id="patrones-acceso" class="guide-step" data-step="Preguntas y claves">
 <h3>De las preguntas a las claves de DynamoDB</h3>

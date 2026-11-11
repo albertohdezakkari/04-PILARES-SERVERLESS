@@ -4,6 +4,9 @@ const progress = document.querySelector('#guide-progress');
 const tabs = document.querySelector('#guide-steps');
 const back = document.querySelector('#guide-back');
 const next = document.querySelector('#guide-next');
+const phoneLayout = document.querySelector('.phone-layout');
+const testScreen = document.querySelector('#pantalla');
+const previewScreen = document.querySelector('#ensayo-pantalla');
 const steps = [...document.querySelectorAll('.guide-step')];
 const courseSteps = steps.filter(step => step.closest('.phase').id !== 'referencias');
 let activeStep = courseSteps[0];
@@ -37,6 +40,9 @@ function showRoute() {
   const phaseSteps = [...phase.querySelectorAll('.guide-step')];
   activeStep = target.closest('.guide-step') ?? phaseSteps[0];
   if (courseSteps.includes(activeStep)) lastCourseStep = activeStep;
+
+  const phoneDestination = activeStep?.id === 'ensayar-pase' ? previewScreen : testScreen;
+  if (phoneLayout.parentElement !== phoneDestination) phoneDestination.append(phoneLayout);
 
   for (const section of phases) section.hidden = section !== phase;
   for (const step of steps) step.hidden = step !== activeStep;
