@@ -220,8 +220,16 @@ function addCodeControls(pre) {
     fileName ? 'Pulsa Ver archivo entero para copiarlo manualmente.' : 'Selecciona el texto y cópialo con el teclado.'));
   if (fileName) {
     const lines = fullText.split('\n');
-    const pageSize = 17;
-    const count = Math.ceil(lines.length / pageSize);
+    const indexNote = pre.parentElement.querySelector('.index-note');
+    if (indexNote) indexNote.before(toolbar);
+    const explanations = indexNote
+      ? [...document.querySelector('#index-explanations').content.children]
+      : [];
+    const starts = indexNote
+      ? [0, ...['function json(', 'async function getPass(', 'export async function handler(', '  const key =']
+        .map(prefix => lines.findIndex(line => line.startsWith(prefix)))]
+      : Array.from({length: Math.ceil(lines.length / 17)}, (_, index) => index * 17);
+    const count = starts.length;
     const pageLabel = document.createElement('span');
     let page = 0;
     let full = false;
@@ -229,14 +237,33 @@ function addCodeControls(pre) {
     const following = button('Página siguiente', () => { page++; render(); });
     const toggle = button('Ver archivo entero', () => { full = !full; render(); });
     function render() {
-      const visibleLines = full ? lines : lines.slice(page * pageSize, (page + 1) * pageSize);
+      const visibleLines = full ? lines : lines.slice(starts[page], starts[page + 1]);
       const focus = fileName === 'serverless.yml'
         ? /^\s*(service:|region:|role:|Ref:|payload:|handler:|method:|KeyType:|Outputs:)/
         : /process\.env|async function (getPass|register|checkIn|handler)/;
       code.replaceChildren();
+      const lineChoices = [];
+      function explain(choice, note) {
+        for (const item of lineChoices) item.setAttribute('aria-pressed', String(item === choice));
+        indexNote.replaceChildren(...[...note.childNodes].map(child => child.cloneNode(true)));
+      }
       for (const [index, line] of visibleLines.entries()) {
         if (index > 0) code.append('\n');
-        if (focus.test(line)) {
+        const note = explanations.find(item => line.trimStart().startsWith(item.dataset.prefix));
+        if (note) {
+          const choice = button(line, () => {
+            explain(choice, note);
+            if (matchMedia('(max-width: 899px)').matches) indexNote.scrollIntoView({block: 'nearest'});
+          });
+          choice.className = 'yaml-line index-line';
+          choice.addEventListener('pointerenter', event => {
+            if (event.pointerType === 'mouse') explain(choice, note);
+          });
+          choice.addEventListener('focus', () => explain(choice, note));
+          lineChoices.push(choice);
+          code.append(choice);
+          if (lineChoices.length === 1) explain(choice, note);
+        } else if (focus.test(line)) {
           const marked = document.createElement('span');
           marked.className = 'code-focus';
           marked.textContent = line;

@@ -239,6 +239,17 @@ button:disabled { opacity: .65; cursor: wait; }
   background: #9ee4d8;
   border-color: #9ee4d8;
 }
+.index-reader { display: grid; gap: 12px; min-width: 0; }
+.index-reader pre { margin: 0; min-width: 0; }
+.index-reader .code-toolbar { margin: 0; }
+.index-note p { margin: 5px 0 0; }
+.index-line { text-align: left; }
+@media (min-width: 900px) {
+  .index-reader { grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr); align-items: start; }
+  .index-reader .code-toolbar { grid-column: 1 / -1; }
+  .index-reader pre { grid-column: 1; grid-row: 2; }
+  .index-note { grid-column: 2; grid-row: 2; position: sticky; top: 10px; }
+}
 .check-result { margin: 8px 0 0; }
 .checkpoint { padding: 10px 12px; border-left: 3px solid var(--accent); background: var(--surface); }
 .checkpoint > strong:first-child { display: block; }

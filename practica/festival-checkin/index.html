@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Festival Check-in · práctica guiada</title>
-<link rel="stylesheet" href="style.css?v=aprender-lambda">
+<link rel="stylesheet" href="style.css?v=leer-index">
 <script type="module" src="app.js?v=usuario"></script>
-<script type="module" src="guia.js?v=aprender-lambda"></script>
+<script type="module" src="guia.js?v=leer-index"></script>
 <script type="module" src="visor-modelo.js?v=usuario"></script>
 </head>
 <body>
@@ -529,6 +529,34 @@ resources:
 <p>En la caja de abajo, pulsa <strong>Copiar archivo completo</strong>. En <code>vi</code>, escribe <code>:set paste</code> y pulsa Intro. Si el archivo está vacío, pulsa <kbd>i</kbd> y pega el contenido. Si ya contiene el archivo de este paso, compruébalo y sigue. Para guardar, pulsa <kbd>Esc</kbd>, escribe <code>:wq</code> y pulsa Intro.</p>
 <p>El <code>handler</code> recibe la petición y elige la operación. Por ahora cada operación responde <code>501</code> hasta que la construyas.</p>
 
+<p>En el visor, pasa el ratón por una línea resaltada, selecciónala con Tab o tócala para leer qué hace.</p>
+<template id="index-explanations">
+  <div data-prefix="import { DynamoDBClient"><strong>Conexión con DynamoDB</strong><p>Importa el cliente que comunica Lambda con DynamoDB. El paquete se instaló al preparar el proyecto.</p></div>
+  <div data-prefix="DynamoDBDocumentClient, GetCommand"><strong>Tres operaciones sobre ítems</strong><p>GetCommand lee un ítem, PutCommand guarda uno y UpdateCommand modifica sus atributos. En las siguientes fases los usarás para consultar, inscribir y dar entrada.</p></div>
+  <div data-prefix="const db ="><strong>Cliente de documentos</strong><p>Permite pasar objetos de JavaScript al SDK, por ejemplo una clave con eventId y userId.</p></div>
+  <div data-prefix="const eventsTable ="><strong>Tabla de eventos</strong><p>EVENTS_TABLE llega del YAML. Si tu sufijo es 01, contiene el nombre de la tabla EVENTO_01.</p></div>
+  <div data-prefix="const registrationsTable ="><strong>Tabla de inscripciones</strong><p>REGISTRATIONS_TABLE apunta a la tabla INSCRIPCION_01 para el equipo 01. Ahí se guardan la inscripción y la hora de entrada.</p></div>
+  <div data-prefix="function json("><strong>Una respuesta para la API</strong><p>Esta función reúne el código HTTP, la cabecera y el cuerpo que API Gateway devuelve al navegador.</p></div>
+  <div data-prefix="headers: {"><strong>Tipo de contenido</strong><p>La cabecera indica al navegador que el cuerpo de la respuesta es JSON.</p></div>
+  <div data-prefix="body: JSON.stringify"><strong>De objeto a texto</strong><p>JSON.stringify convierte el objeto de JavaScript en el texto que se envía en la respuesta.</p></div>
+  <div data-prefix="async function getPass"><strong>Consultar el pase</strong><p>Esta función atenderá GET. Usará eventId para buscar el evento y la pareja eventId + userId para buscar una inscripción.</p></div>
+  <div data-prefix="async function register"><strong>Crear una inscripción</strong><p>Esta función atenderá POST. Usará la pareja de claves para guardar la inscripción de un usuario en un evento.</p></div>
+  <div data-prefix="async function checkIn"><strong>Registrar la entrada</strong><p>Esta función atenderá PATCH. Buscará la inscripción por su clave completa y añadirá checkedInAt.</p></div>
+  <div data-prefix="return json(501"><strong>Operación pendiente</strong><p>El archivo base responde 501 hasta que escribas la operación. Esta respuesta te permite distinguir una ruta conectada de una operación ya implementada.</p></div>
+  <div data-prefix="export async function handler"><strong>Punto de entrada de Lambda</strong><p>El YAML declara index.handler. API Gateway invoca esta función y le entrega la petición en event.</p></div>
+  <div data-prefix="const { eventId, userId }"><strong>Los identificadores de la ruta</strong><p>En /events/evt-001/registrations/usuario-02, eventId es evt-001 y userId es usuario-02.</p></div>
+  <div data-prefix="const method ="><strong>El verbo de la petición</strong><p>API Gateway incluye el método en requestContext.http.method. Al pulsar Consultar, el método es GET.</p></div>
+  <div data-prefix="if (eventId !=="><strong>Validar los identificadores</strong><p>La práctica usa evt-001 y códigos ficticios de dos cifras, como usuario-02. Una petición inválida devuelve 400.</p></div>
+  <div data-prefix="const key ="><strong>La clave compuesta</strong><p>Con eventId localizas el grupo de inscripciones. Con userId eliges un ítem dentro de ese grupo.</p></div>
+  <div data-prefix="if (method === &#x27;GET&#x27;)"><strong>GET consulta el pase</strong><p>Al pulsar Consultar se llama a getPass con los dos identificadores de la ruta.</p></div>
+  <div data-prefix="if (method === &#x27;POST&#x27;)"><strong>POST inscribe al usuario</strong><p>Al pulsar Inscribirse se llama a register con la clave del nuevo ítem.</p></div>
+  <div data-prefix="if (method === &#x27;PATCH&#x27;)"><strong>PATCH registra la entrada</strong><p>Al pulsar Registrar entrada se llama a checkIn con la clave de la inscripción existente.</p></div>
+  <div data-prefix="return json(405"><strong>Método fuera de este recorrido</strong><p>Si el handler recibe otro método, devuelve 405 para indicar que esa operación queda fuera de las previstas.</p></div>
+  <div data-prefix="if (error.name ==="><strong>Una condición impide escribir</strong><p>Cuando DynamoDB rechaza una condición, el handler devuelve 409. Por ejemplo, al intentar inscribir dos veces al mismo usuario.</p></div>
+  <div data-prefix="console.error("><strong>Dónde mirar un fallo</strong><p>El detalle técnico se escribe en el registro de Lambda. La respuesta 500 indica a quien llama que ocurrió un fallo interno.</p></div>
+</template>
+<div class="index-reader">
+<aside class="guided-notes index-note" aria-live="polite"></aside>
 <pre data-file="index.mjs"><code>import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import {
   DynamoDBDocumentClient, GetCommand, PutCommand, UpdateCommand
@@ -582,6 +610,7 @@ export async function handler(event) {
     return json(500, { message: 'Revisa los logs de la función' });
   }
 }</code></pre>
+</div>
 <h4>Comprueba los archivos antes de desplegar</h4>
 <p>Ejecuta los comandos en la carpeta <code>festival-checkin</code>. Pasa el ratón sobre cada parte resaltada o tócala para recordar qué hace.</p>
 <div class="file-checks">
