@@ -1,6 +1,7 @@
 const input = document.querySelector('#model-json');
 const result = document.querySelector('#model-result');
 const status = document.querySelector('#model-status');
+const feedback = document.querySelector('#model-feedback');
 const example = document.querySelector('#model-example');
 
 function element(tag, text, className) {
@@ -67,39 +68,44 @@ function renderTable(model) {
   return section;
 }
 
-function showModel() {
-  result.replaceChildren();
-  status.textContent = '';
+function showModel(message = status) {
+  message.textContent = '';
   let model;
   try {
     model = JSON.parse(input.value);
   } catch {
-    status.textContent = 'El texto no es JSON válido. Pega el contenido completo del modelo.';
+    message.textContent = 'El texto no es JSON válido. Pega el contenido completo del modelo.';
     return;
   }
   if (!Array.isArray(model?.DataModel) || model.DataModel.length === 0) {
-    status.textContent = 'Falta DataModel con las definiciones de las tablas. Prueba con «Cargar ejemplo».';
+    message.textContent = 'Falta DataModel con las definiciones de las tablas. Prueba con «Cargar ejemplo».';
     return;
   }
   try {
     result.replaceChildren(...model.DataModel.map(renderTable));
     status.textContent = 'Tablas del modelo: ' + model.DataModel.length + '. PK = partición, SK = ordenación, S = texto.';
+    if (message === feedback) feedback.textContent = 'Tablas actualizadas arriba.';
   } catch (error) {
-    status.textContent = error.message;
+    message.textContent = error.message;
   }
 }
 
-document.querySelector('#model-view').addEventListener('click', showModel);
-example.addEventListener('click', async () => {
+async function loadExample(message, onlyIfEmpty = false) {
   example.disabled = true;
   try {
     const response = await fetch('modelo-dynamodb.json');
     if (!response.ok) throw new Error('El ejemplo no está disponible en este momento.');
-    input.value = await response.text();
-    showModel();
+    const source = await response.text();
+    if (onlyIfEmpty && input.value.trim()) return;
+    input.value = source;
+    showModel(message);
   } catch (error) {
-    status.textContent = error.message;
+    message.textContent = error.message;
   } finally {
     example.disabled = false;
   }
-});
+}
+
+document.querySelector('#model-view').addEventListener('click', () => showModel(feedback));
+example.addEventListener('click', () => loadExample(feedback));
+loadExample(status, true);

@@ -95,24 +95,44 @@ aws dynamodb list-tables --profile "$perfil" --region "$region"</code></pre>
   <span aria-hidden="true">1 ─── 0..N</span>
   <div><strong>Registrations</strong><br><code>eventId</code> · PK<br><code>userId</code> · SK<br><code>registeredAt</code> · texto<br><code>checkedInAt</code> · opcional</div>
 </div>
+<section aria-labelledby="modelo-titulo">
+<h3 id="modelo-titulo">Lee las filas antes de abrir el JSON</h3>
+<p>En <strong>Events</strong>, una fila es un evento. En <strong>Registrations</strong>, una fila es la inscripción de una persona a un evento. Estas filas son ejemplos para entender el modelo.</p>
+<p id="model-status" role="status">Cargando el ejemplo…</p>
+<div id="model-result"></div>
+<p><strong>Fíjate en <code>evt-001</code>.</strong> En Events identifica «Festival de otoño». En Registrations agrupa a las dos personas inscritas. La pareja <code>evt-001</code> + <code>equipo-02</code> identifica una sola inscripción. Esa fila tiene <code>checkedInAt</code>, así que esa persona ya ha entrado. En la otra fila, el guion indica que aún no hay hora de entrada.</p>
+<details>
+  <summary>Compruébalo · ¿qué pasa si equipo-01 se apunta a otro evento?</summary>
+  <p>La nueva inscripción tendría <code>eventId = evt-002</code> y <code>userId = equipo-01</code>. Es una pareja de claves distinta. Si buscas por <code>evt-001</code>, siguen saliendo solo las dos filas del primer evento.</p>
+</details>
+<details>
+  <summary>Ver cómo se escribe el modelo en JSON</summary>
+  <p>Buscad <code>DataModel</code>. Ahí hay una definición por tabla. Dentro de cada una, buscad estas tres partes.</p>
+  <dl class="model-reading">
+    <dt><code>TableName</code></dt>
+    <dd>El nombre que veis encima de cada tabla.</dd>
+    <dt><code>KeyAttributes</code></dt>
+    <dd>Las claves que el visor marca como PK y SK. <code>AttributeName</code> es el nombre del campo y <code>S</code> significa texto. En Events, el nombre de <code>SortKey</code> está vacío porque esa tabla solo tiene PK.</dd>
+    <dt><code>TableData</code></dt>
+    <dd>Las filas ficticias. <code>{ "S": "evt-001" }</code> guarda el texto <code>evt-001</code>. La vista de tabla muestra directamente ese valor.</dd>
+  </dl>
+  <p><code>NonKeyAttributes</code> enumera campos como <code>title</code> y <code>registeredAt</code>. Para esta primera lectura podéis pasar por alto los metadatos, <code>DataAccess</code> y la lista vacía de índices.</p>
+  <label for="model-json">JSON del modelo</label>
+  <textarea id="model-json" rows="5" spellcheck="false" placeholder="Pega aquí el contenido de modelo-dynamodb.json"></textarea>
+  <div class="actions">
+    <button type="button" id="model-example">Cargar ejemplo</button>
+    <button type="button" id="model-view">Ver tablas</button>
+  </div>
+  <p id="model-feedback" role="status"></p>
+  <p>Prueba a cambiar <code>Festival de otoño</code> por otro título y pulsa <strong>Ver tablas</strong>. Cambiará la celda de Events en esta página.</p>
+</details>
+</section>
 <figure class="guide-poster" id="infografia-terminal">
   <figcaption><strong>Del modelo al primer registro</strong> · <a href="infografia-terminal.png" target="_blank" rel="noopener">Ampliar infografía ↗</a></figcaption>
   <a href="infografia-terminal.png" target="_blank" rel="noopener" aria-label="Ampliar la infografía del recorrido por terminal">
     <img src="infografia-terminal.png" alt="Del modelo DynamoDB a AWS CLI: elegir las claves, comprobar la identidad, crear las tablas, esperar a que estén activas, cargar el evento y verificarlo con PartiQL. Los pasos con comandos aparecen debajo.">
   </a>
 </figure>
-<details open>
-<summary>Pegar JSON y ver las tablas</summary>
-<p>Pega un modelo con <code>DataModel</code>, <code>KeyAttributes</code> y <code>TableData</code> de DynamoDB. Puedes cargar el ejemplo para ver qué parte del JSON define cada clave y cada registro.</p>
-<label for="model-json">JSON del modelo</label>
-<textarea id="model-json" rows="5" spellcheck="false" placeholder="Pega aquí el contenido de modelo-dynamodb.json"></textarea>
-<div class="actions">
-  <button type="button" id="model-example">Cargar ejemplo</button>
-  <button type="button" id="model-view">Ver tablas</button>
-</div>
-<p id="model-status" role="status"></p>
-<div id="model-result"></div>
-</details>
 <details>
 <summary>Ver y explorar las tablas en el diseñador</summary>
 <p>Descargad el <a href="modelo-dynamodb.json" download>modelo de Festival Check-in</a> y abrid <a href="https://amazondynamodblabs.com/static/visualizer/index.html" target="_blank" rel="noopener">DynamoDB Data Modeler</a>. En <strong>☰ → Load from File</strong>, elegid el JSON. Usad el icono de cambiar tabla para pasar de Events a Registrations.</p>
