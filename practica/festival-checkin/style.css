@@ -307,6 +307,26 @@ button:disabled { opacity: .65; cursor: wait; }
 }
 .lambda-flow .guided-options { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .lambda-flow .guided-notes { padding: 12px 14px; }
+.lambda-env-flow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr));
+  gap: 8px;
+  list-style: none;
+  padding: 0;
+  margin: 10px 0 14px;
+}
+.lambda-env-flow li {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  min-width: 0;
+  margin: 0;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+.lambda-env-flow li > code { color: #9ee4d8; }
 .lambda-setup { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .lambda-terminal, .lambda-editor {
   min-width: 0;

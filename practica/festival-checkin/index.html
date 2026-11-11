@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Festival Check-in · práctica guiada</title>
-<link rel="stylesheet" href="style.css?v=lambda-visual">
+<link rel="stylesheet" href="style.css?v=lambda-entorno">
 <script type="module" src="app.js?v=usuario"></script>
 <script type="module" src="guia.js?v=lambda-visual"></script>
 <script type="module" src="visor-modelo.js?v=usuario"></script>
@@ -534,7 +534,15 @@ resources:
   <div class="guided-notes" aria-live="polite">
     <div id="lambda-recibir" data-explanation><h4>API Gateway llama a <code>handler(event)</code></h4><p><code>event.pathParameters</code> contiene los dos valores de la ruta. Aquí llegan <code>eventId = evt-001</code> y <code>userId = usuario-02</code>. Si el formato es incorrecto, la función responde <code>400</code>.</p></div>
     <div id="lambda-elegir" data-explanation hidden><h4>El método HTTP indica qué acción hacer</h4><p><code>GET → getPass</code> consulta el pase, <code>POST → register</code> inscribe y <code>PATCH → checkIn</code> registra la entrada. Las tres funciones reciben la misma pareja <code>{ eventId, userId }</code>.</p></div>
-    <div id="lambda-tablas" data-explanation hidden><h4>El YAML conecta el código con DynamoDB</h4><p><code>process.env.EVENTS_TABLE</code> y <code>process.env.REGISTRATIONS_TABLE</code> contienen los nombres que fijaste en <a href="#infraestructura">Leer el YAML</a>. El SDK se usará en las siguientes fases para consultar o guardar ítems en esas tablas.</p></div>
+    <div id="lambda-tablas" data-explanation hidden>
+      <h4>Del YAML a <code>process.env</code></h4>
+      <ol class="lambda-env-flow">
+        <li><strong>Declaras la referencia</strong><code>provider.environment</code><span>En <code>serverless.yml</code>, <code>EVENTS_TABLE</code> apunta a <code>Ref: EventsTable</code>.</span></li>
+        <li><strong>CloudFormation resuelve el nombre</strong><code>EVENTS_TABLE=EVENTO_01</code><span>El despliegue configura esta variable en Lambda con el nombre de la tabla del equipo 01.</span></li>
+        <li><strong>Lambda lee el valor</strong><code>process.env.EVENTS_TABLE</code><span>En <code>index.mjs</code>, <code>eventsTable</code> recibe <code>EVENTO_01</code>. El mismo recorrido da <code>INSCRIPCION_01</code> a <code>registrationsTable</code>.</span></li>
+      </ol>
+      <p><strong>¿Y el archivo <code>.env</code>?</strong> Es una forma de cargar variables al ejecutar en local. Aquí el bloque <code>environment</code> del YAML las configura en AWS. <a href="#infraestructura">Ver el bloque en el YAML</a>.</p>
+    </div>
     <div id="lambda-responder" data-explanation hidden><h4><code>json()</code> prepara la respuesta HTTP</h4><p>Devuelve un <code>statusCode</code> y convierte el cuerpo a JSON. En este archivo base, un método válido devuelve <code>501</code> hasta que completes su función. La respuesta de <strong>Consultar</strong> se construye en la fase GET.</p></div>
   </div>
 </div>
@@ -567,8 +575,8 @@ resources:
   <div data-prefix="import { DynamoDBClient"><strong>Conexión con DynamoDB</strong><p>Importa el cliente que comunica Lambda con DynamoDB. El paquete se instaló al preparar el proyecto.</p></div>
   <div data-prefix="DynamoDBDocumentClient, GetCommand"><strong>Tres operaciones sobre ítems</strong><p>GetCommand lee un ítem, PutCommand guarda uno y UpdateCommand modifica sus atributos. En las siguientes fases los usarás para consultar, inscribir y dar entrada.</p></div>
   <div data-prefix="const db ="><strong>Cliente de documentos</strong><p>Permite pasar objetos de JavaScript al SDK, por ejemplo una clave con eventId y userId.</p></div>
-  <div data-prefix="const eventsTable ="><strong>Tabla de eventos</strong><p>EVENTS_TABLE llega del YAML. Si tu sufijo es 01, contiene el nombre de la tabla EVENTO_01.</p></div>
-  <div data-prefix="const registrationsTable ="><strong>Tabla de inscripciones</strong><p>REGISTRATIONS_TABLE apunta a la tabla INSCRIPCION_01 para el equipo 01. Ahí se guardan la inscripción y la hora de entrada.</p></div>
+  <div data-prefix="const eventsTable ="><strong>Tabla de eventos</strong><p>El despliegue configura EVENTS_TABLE en Lambda a partir de Ref: EventsTable. Si tu sufijo es 01, process.env.EVENTS_TABLE devuelve EVENTO_01.</p></div>
+  <div data-prefix="const registrationsTable ="><strong>Tabla de inscripciones</strong><p>El despliegue configura REGISTRATIONS_TABLE en Lambda a partir de Ref: RegistrationsTable. Para el equipo 01, process.env devuelve INSCRIPCION_01, donde se guardan la inscripción y la hora de entrada.</p></div>
   <div data-prefix="function json("><strong>Una respuesta para la API</strong><p>Esta función reúne el código HTTP, la cabecera y el cuerpo que API Gateway devuelve al navegador.</p></div>
   <div data-prefix="headers: {"><strong>Tipo de contenido</strong><p>La cabecera indica al navegador que el cuerpo de la respuesta es JSON.</p></div>
   <div data-prefix="body: JSON.stringify"><strong>De objeto a texto</strong><p>JSON.stringify convierte el objeto de JavaScript en el texto que se envía en la respuesta.</p></div>
