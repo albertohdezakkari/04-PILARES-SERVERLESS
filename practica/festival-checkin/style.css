@@ -64,7 +64,7 @@ button:disabled { opacity: .65; cursor: wait; }
 .console { background: var(--surface); }
 .guide-step > p { margin: 8px 0 12px; }
 .checkpoint { padding: 10px 12px; border-left: 3px solid var(--accent); background: var(--surface); }
-.checkpoint strong { display: block; }
+.checkpoint > strong:first-child { display: block; }
 .code-toolbar { align-items: center; margin-top: 10px; }
 .code-toolbar button { min-height: 40px; }
 .code-notes {
@@ -102,7 +102,11 @@ button:disabled { opacity: .65; cursor: wait; }
   .yaml-line { min-height: 40px; }
 }
 .yaml-line:hover { background: var(--surface); text-decoration: underline; }
-.yaml-line[aria-pressed="true"] { font-weight: 400; }
+.yaml-line[aria-pressed="true"] {
+  color: #25131b;
+  background: var(--accent);
+  font-weight: 400;
+}
 .yaml-terms { margin: 8px 0 12px; }
 .yaml-terms dt { color: var(--accent); font-weight: 700; }
 .yaml-terms dd { margin: 4px 0 8px; line-height: 1.55; }
@@ -113,7 +117,14 @@ button:disabled { opacity: .65; cursor: wait; }
     align-items: start;
     column-gap: 14px;
   }
-  .yaml-reader > .yaml-blocks, .yaml-reader > .yaml-outcome { grid-column: 1 / -1; }
+  .yaml-reader-header {
+    grid-column: 1 / -1;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: #191323;
+    padding-top: 2px;
+  }
   .yaml-reader .code-notes { margin-top: 0; }
 }
 .yaml-question { margin-top: 10px; }

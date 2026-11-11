@@ -99,7 +99,10 @@ function addYamlReader(pre, toolbar, lines) {
   outcome.setAttribute('role', 'status');
   const tabs = sections.map((section, index) => button(section.dataset.label, () => render(index)));
   blocks.append(...tabs);
-  toolbar.replaceWith(blocks, outcome);
+  const header = document.createElement('div');
+  header.className = 'yaml-reader-header';
+  header.append(blocks, outcome);
+  toolbar.replaceWith(header);
   pre.after(notes);
 
   function render(page) {
