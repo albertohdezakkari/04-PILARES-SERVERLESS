@@ -75,18 +75,46 @@ button:disabled { opacity: .65; cursor: wait; }
 }
 .code-notes h4 { margin: 0 0 4px; }
 .code-notes p { margin: 4px 0; }
-.yaml-terms { margin: 6px 0 12px; }
+.yaml-blocks { gap: 5px; margin: 8px 0 0; }
+.yaml-blocks button { min-height: 40px; padding: 5px 10px; }
+.yaml-outcome {
+  margin: 8px 0;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  font-weight: 650;
+}
+.yaml-reader pre { margin-top: 0; }
+.yaml-line {
+  color: var(--accent);
+  background: transparent;
+  border: 0;
+  border-radius: 4px;
+  min-height: 28px;
+  padding: 0 3px;
+  font: inherit;
+  text-align: left;
+  white-space: pre;
+}
+.yaml-line:focus-visible { outline-offset: -2px; }
+@media (pointer: coarse) {
+  .yaml-line { min-height: 40px; }
+}
+.yaml-line:hover { background: var(--surface); text-decoration: underline; }
+.yaml-line[aria-pressed="true"] { font-weight: 400; }
+.yaml-terms { margin: 8px 0 12px; }
 .yaml-terms dt { color: var(--accent); font-weight: 700; }
-.yaml-terms dd { margin: 2px 0 8px; }
+.yaml-terms dd { margin: 4px 0 8px; line-height: 1.55; }
 @media (min-width: 800px) {
   .yaml-reader {
     display: grid;
-    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     align-items: start;
     column-gap: 14px;
   }
-  .yaml-reader .code-toolbar { grid-column: 1 / -1; }
-  .yaml-reader pre { position: sticky; top: 6px; max-height: 68dvh; }
+  .yaml-reader > .yaml-blocks, .yaml-reader > .yaml-outcome { grid-column: 1 / -1; }
+  .yaml-reader .code-notes { margin-top: 0; }
 }
 .yaml-question { margin-top: 10px; }
 .yaml-question button { min-height: 40px; }

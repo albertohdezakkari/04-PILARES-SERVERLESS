@@ -86,6 +86,65 @@ next.addEventListener('click', () => {
 });
 window.addEventListener('hashchange', showRoute);
 
+function addYamlReader(pre, toolbar, lines) {
+  const code = pre.querySelector('code');
+  const notes = pre.parentElement.querySelector('.code-notes');
+  const sections = [...notes.querySelectorAll('[data-code-start]')];
+  const starts = sections.map(section => lines.findIndex(line => line.startsWith(section.dataset.codeStart)));
+  const blocks = document.createElement('nav');
+  blocks.className = 'yaml-blocks actions';
+  blocks.setAttribute('aria-label', 'Bloques del YAML');
+  const outcome = document.createElement('p');
+  outcome.className = 'yaml-outcome';
+  outcome.setAttribute('role', 'status');
+  const tabs = sections.map((section, index) => button(section.dataset.label, () => render(index)));
+  blocks.append(...tabs);
+  toolbar.replaceWith(blocks, outcome);
+  pre.after(notes);
+
+  function render(page) {
+    const section = sections[page];
+    sections.forEach((item, index) => { item.hidden = index !== page; });
+    tabs.forEach((tab, index) => tab.setAttribute('aria-pressed', String(index === page)));
+    outcome.textContent = section.querySelector('.yaml-outcome').textContent;
+    const definitions = [...section.querySelectorAll('.yaml-terms > div')];
+    const interactiveLines = [];
+    code.replaceChildren();
+    for (const [index, line] of lines.slice(starts[page], starts[page + 1]).entries()) {
+      if (index > 0) code.append('\n');
+      const text = line.trimStart().replace(/^- /, '');
+      const term = definitions.find(item => {
+        const heading = item.querySelector('dt');
+        const keys = (heading.dataset.lines ?? heading.textContent).split('|');
+        return keys.some(key => key.endsWith(':') ? text.startsWith(key) : text === key);
+      });
+      if (!term) {
+        code.append(line);
+        continue;
+      }
+      const lineButton = button(line, () => {
+        select(term, lineButton);
+        if (matchMedia('(max-width: 799px)').matches) {
+          term.scrollIntoView({block: 'nearest'});
+        }
+      });
+      lineButton.className = 'yaml-line';
+      lineButton.setAttribute('aria-label', 'Explicar ' + text);
+      interactiveLines.push({lineButton, term});
+      code.append(lineButton);
+    }
+    function select(term, activeButton) {
+      definitions.forEach(item => { item.hidden = item !== term; });
+      interactiveLines.forEach(({lineButton}) =>
+        lineButton.setAttribute('aria-pressed', String(lineButton === activeButton)));
+    }
+    select(definitions[0], interactiveLines[0]?.lineButton);
+    pre.scrollTop = 0;
+    pre.scrollLeft = 0;
+  }
+  render(0);
+}
+
 function addCodeControls(pre) {
   pre.tabIndex = 0;
   const code = pre.querySelector('code');
@@ -106,20 +165,17 @@ function addCodeControls(pre) {
       }
     });
   }
-  if (!reading) {
-    toolbar.append(copyButton(fileName ? 'Copiar archivo completo' : 'Copiar comando', fullText,
-      fileName ? 'Pulsa Ver archivo entero para copiarlo manualmente.' : 'Selecciona el texto y cópialo con el teclado.'));
-  }
   pre.before(toolbar);
+  if (reading) {
+    addYamlReader(pre, toolbar, fullText.split('\n'));
+    return;
+  }
+  toolbar.append(copyButton(fileName ? 'Copiar archivo completo' : 'Copiar comando', fullText,
+    fileName ? 'Pulsa Ver archivo entero para copiarlo manualmente.' : 'Selecciona el texto y cópialo con el teclado.'));
   if (fileName) {
     const lines = fullText.split('\n');
-    const notes = pre.parentElement.querySelector('.code-notes');
-    const sections = [...(notes?.querySelectorAll('[data-code-start]') ?? [])];
-    const starts = sections.length
-      ? sections.map(section => lines.findIndex(line => line.startsWith(section.dataset.codeStart)))
-      : lines.filter((_, index) => index % 17 === 0).map((_, pageIndex) => pageIndex * 17);
-    const count = starts.length;
-    if (notes) pre.after(notes);
+    const pageSize = 17;
+    const count = Math.ceil(lines.length / pageSize);
     const pageLabel = document.createElement('span');
     let page = 0;
     let full = false;
@@ -127,11 +183,7 @@ function addCodeControls(pre) {
     const following = button('Página siguiente', () => { page++; render(); });
     const toggle = button('Ver archivo entero', () => { full = !full; render(); });
     function render() {
-      const visibleLines = full ? lines : lines.slice(starts[page], starts[page + 1]);
-      if (notes) {
-        notes.hidden = full;
-        sections.forEach((section, index) => { section.hidden = index !== page; });
-      }
+      const visibleLines = full ? lines : lines.slice(page * pageSize, (page + 1) * pageSize);
       const focus = fileName === 'serverless.yml'
         ? /^\s*(service:|region:|role:|Ref:|payload:|handler:|method:|KeyType:|Outputs:)/
         : /process\.env|async function (getPass|register|checkIn|handler)/;
@@ -155,8 +207,7 @@ function addCodeControls(pre) {
       pre.scrollTop = 0;
       pre.scrollLeft = 0;
     }
-    if (!reading) toolbar.append(toggle);
-    toolbar.append(previous, following, pageLabel);
+    toolbar.append(toggle, previous, following, pageLabel);
     render();
   }
   toolbar.append(feedback);
