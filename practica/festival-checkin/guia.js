@@ -218,18 +218,18 @@ function addCodeControls(pre) {
   }
   toolbar.append(copyButton(fileName ? 'Copiar archivo completo' : pre.hasAttribute('data-example') ? 'Copiar código' : 'Copiar comando', fullText,
     fileName ? 'Pulsa Ver archivo entero para copiarlo manualmente.' : 'Selecciona el texto y cópialo con el teclado.'));
-  if (fileName) {
+  const indexNote = pre.parentElement.querySelector(':scope > .index-note');
+  if (fileName || indexNote) {
     const lines = fullText.split('\n');
-    const indexNote = pre.parentElement.querySelector('.index-note');
     if (indexNote) indexNote.before(toolbar);
     const explanations = indexNote
-      ? [...document.querySelector('#index-explanations').content.children]
+      ? [...document.getElementById(pre.dataset.explanations ?? 'index-explanations').content.children]
       : [];
     const starts = Array.from({length: Math.ceil(lines.length / 17)}, (_, index) => index * 17);
     const count = starts.length;
     const pageLabel = document.createElement('span');
     let page = 0;
-    let full = false;
+    let full = !fileName;
     const previous = button('Página anterior', () => { page--; render(); });
     const following = button('Página siguiente', () => { page++; render(); });
     const toggle = button('Ver archivo entero', () => { full = !full; render(); });
@@ -276,7 +276,7 @@ function addCodeControls(pre) {
       toggle.textContent = full ? 'Volver a páginas' : 'Ver archivo entero';
       pre.scrollLeft = 0;
     }
-    toolbar.append(toggle, previous, following, pageLabel);
+    if (fileName) toolbar.append(toggle, previous, following, pageLabel);
     render();
   }
   toolbar.append(feedback);

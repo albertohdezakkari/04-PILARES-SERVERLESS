@@ -6,7 +6,7 @@
 <title>Festival Check-in · práctica guiada</title>
 <link rel="stylesheet" href="style.css?v=capas-get-pass">
 <script type="module" src="app.js?v=prueba-rutas"></script>
-<script type="module" src="guia.js?v=modulos-pases"></script>
+<script type="module" src="guia.js?v=leer-get-pass"></script>
 <script type="module" src="visor-modelo.js?v=usuario"></script>
 <script type="module" src="entrenamiento-dynamo.js"></script>
 </head>
@@ -903,11 +903,27 @@ done</code></pre>
   </ol>
 </figure>
 <p>Desde la raíz de <code>festival-checkin</code>, abre el archivo de la ruta GET y localiza <code>getPass</code>.</p><pre data-command><code>vi '+/async function getPass(' src/pases/consultar.mjs</code></pre><p>Implementa la función <code>getPass(key)</code> que devuelve <code>501</code>. Mantén los imports y el <code>handler</code> que ya preparaste.</p>
-<p>Al leer la función, fíjate en <code>await</code>. Lambda espera a que termine cada lectura antes de usar su <code>Item</code>. Con <code>ConsistentRead: true</code>, cada lectura refleja las escrituras confirmadas antes de esa operación. Puedes <a href="#entrenar-dynamo">simular los tres resultados</a> antes de desplegar.</p>
+<p>Puedes <a href="#entrenar-dynamo">simular los tres resultados</a> antes de desplegar.</p>
 <section class="lesson-example" aria-labelledby="ejemplo-getPass">
   <h4 id="ejemplo-getPass">Función completa <code>getPass</code></h4>
+  <p>Selecciona una línea resaltada para ver quién le da significado y qué valor toma en este ejemplo. Puedes usar el ratón, el teclado o tocarla.</p>
   <p>Puedes copiar esta función y reemplazar la versión de <code>getPass</code> que devuelve <code>501</code> en <code>src/pases/consultar.mjs</code>.</p>
-  <pre data-example><code>async function getPass(key) {
+  <template id="get-pass-explanations">
+    <div data-prefix="async function getPass("><strong>JavaScript declara la función. Tú eliges los nombres.</strong><p><code>async</code> permite usar <code>await</code>. <code>getPass</code> es el nombre que eliges y <code>key</code> recibe el objeto que le pasa <code>handleRequest</code>, por ejemplo <code>{ eventId: 'evt-001', userId: 'usuario-02' }</code>.</p></div>
+    <div data-prefix="const { Item: event }"><strong>El SDK devuelve Item. JavaScript lo guarda como event.</strong><p>Lee de dentro hacia fuera. <code>new GetCommand(...)</code>, del SDK de AWS, prepara la lectura. <code>db.send(...)</code> la envía y <code>await</code> espera el resultado. <code>{ Item: event }</code> equivale a guardar <code>respuesta.Item</code> en una variable local llamada <code>event</code>.</p></div>
+    <div data-prefix="TableName: eventsTable"><strong>TableName lo exige AWS. eventsTable sale de tu proyecto.</strong><p><code>dynamo.mjs</code> lee el nombre desde <code>process.env.EVENTS_TABLE</code>. Serverless configura esa variable con la tabla creada, por ejemplo <code>EVENTO_01</code>.</p></div>
+    <div data-prefix="Key: { eventId: key.eventId }"><strong>Key contiene la clave primaria de la tabla elegida.</strong><p>A la izquierda, <code>eventId</code> es el nombre del atributo que configuraste en DynamoDB. A la derecha, <code>key.eventId</code> lee el valor que llegó en la ruta. El comando envía <code>{ eventId: 'evt-001' }</code>.</p></div>
+    <div data-prefix="ConsistentRead: true"><strong>ConsistentRead es una opción de DynamoDB.</strong><p>Con <code>true</code>, la lectura refleja las escrituras confirmadas antes de esa operación. <code>await</code> controla cuándo sigue el código. <code>ConsistentRead</code> controla qué versión de los datos puede leer.</p></div>
+    <div data-prefix="if (!event)"><strong>JavaScript comprueba si apareció el evento.</strong><p>Si DynamoDB no encuentra el ítem, <code>event</code> vale <code>undefined</code>. <code>!event</code> se cumple y <code>return</code> termina la función con <code>404</code>, antes de buscar la inscripción.</p></div>
+    <div data-prefix="const { Item: registration }"><strong>El SDK vuelve a devolver Item.</strong><p>Esta vez tú llamas <code>registration</code> a la variable porque la respuesta viene de la tabla de inscripciones. Si la pareja no existe, <code>registration</code> vale <code>undefined</code>.</p></div>
+    <div data-prefix="TableName: registrationsTable"><strong>El segundo comando apunta a INSCRIPCION.</strong><p><code>dynamo.mjs</code> obtiene el nombre desde <code>process.env.REGISTRATIONS_TABLE</code>. Para el equipo 01, ese nombre es <code>INSCRIPCION_01</code>.</p></div>
+    <div data-prefix="Key: key,"><strong>La inscripción necesita los dos identificadores.</strong><p>El <code>Key</code> de la izquierda es la opción de AWS. El <code>key</code> de la derecha es el parámetro completo de la función. Contiene <code>eventId</code> y <code>userId</code>.</p></div>
+    <div data-prefix="return json(200"><strong>json es una función de la práctica.</strong><p>La importas de <code>peticion.mjs</code>. Recibe el código HTTP <code>200</code> y convierte el objeto que le pasas en el cuerpo JSON que verá el navegador.</p></div>
+    <div data-prefix="eventId: event.eventId"><strong>El identificador sale del ítem.</strong><p>El primer <code>eventId</code> nombra el campo de la respuesta. <code>event.eventId</code> lee <code>evt-001</code> del objeto devuelto por DynamoDB.</p></div>
+    <div data-prefix="title: event.title"><strong>El título sale del mismo ítem.</strong><p><code>title</code> nombra el campo de la respuesta. <code>event.title</code> lee el valor guardado, por ejemplo «Festival de otoño».</p></div>
+    <div data-prefix="registration: registration ?? null"><strong>JavaScript aplica el operador ??</strong><p>Conserva la inscripción si existe. Si <code>registration</code> vale <code>undefined</code> o <code>null</code>, usa <code>null</code>. Así el navegador recibe un campo <code>registration</code> explícito incluso cuando el usuario aún no se inscribió.</p></div>
+  </template>
+  <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-example data-explanations="get-pass-explanations"><code>async function getPass(key) {
   const { Item: event } = await db.send(new GetCommand({
     TableName: eventsTable,
     Key: { eventId: key.eventId },
@@ -925,7 +941,7 @@ done</code></pre>
     title: event.title,
     registration: registration ?? null
   });
-}</code></pre>
+}</code></pre></div>
 </section>
 <p class="checkpoint"><strong>Antes de avanzar</strong> En <code>src/pases/consultar.mjs</code>, el primer <code>GetCommand</code> usa <code>eventId</code> y el segundo usa <code>eventId</code> y <code>userId</code>. Pulsa <kbd>Esc</kbd>, escribe <code>:wq</code> y pulsa Intro para guardar.</p>
 </article>
