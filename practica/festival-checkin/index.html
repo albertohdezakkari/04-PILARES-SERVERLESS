@@ -524,6 +524,11 @@ resources:
 </div>
 <section class="lambda-stage" aria-labelledby="lambda-stage-follow">
   <h4 id="lambda-stage-follow"><span>01</span> Sigue la petición</h4>
+  <ol class="lambda-env-flow" aria-label="Inicialización e invocación">
+    <li><strong>Al preparar un entorno</strong><code>Init · import, const db, process.env</code><span>Lambda carga <code>index.mjs</code>, prepara el cliente de DynamoDB y lee los nombres de las tablas. Si reutiliza ese entorno, la siguiente petición puede usar el mismo cliente.</span></li>
+    <li><strong>Al llegar cada petición</strong><code>Invoke · handler(event)</code><span>API Gateway recibe la petición HTTP e invoca Lambda. El <code>handler</code> lee el método y llama a una operación. Al pulsar <strong>Consultar</strong>, ejecuta <code>getPass(key)</code> y devuelve su respuesta.</span></li>
+  </ol>
+  <p>Las declaraciones de <code>getPass</code>, <code>register</code> y <code>checkIn</code> preparan tres funciones que el <code>handler</code> puede llamar. El <code>501</code> es la respuesta provisional de la operación elegida hasta que escribas su lógica. <a href="https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtime-environment.html">Ver el ciclo de ejecución de Lambda</a>.</p>
 <div class="guided-explainer lambda-flow" data-explainer aria-label="Recorrido de una petición en Lambda">
   <div class="guided-options" role="group" aria-label="Pasos de la petición">
     <button type="button" data-explain="lambda-recibir" aria-controls="lambda-recibir" aria-pressed="true">1 · Recibir la petición</button>
@@ -574,15 +579,15 @@ resources:
 <template id="index-explanations">
   <div data-prefix="import { DynamoDBClient"><strong>Conexión con DynamoDB</strong><p>Importa el cliente que comunica Lambda con DynamoDB. El paquete se instaló al preparar el proyecto.</p></div>
   <div data-prefix="DynamoDBDocumentClient, GetCommand"><strong>Tres operaciones sobre ítems</strong><p>GetCommand lee un ítem, PutCommand guarda uno y UpdateCommand modifica sus atributos. En las siguientes fases los usarás para consultar, inscribir y dar entrada.</p></div>
-  <div data-prefix="const db ="><strong>Cliente de documentos</strong><p>Permite pasar objetos de JavaScript al SDK, por ejemplo una clave con eventId y userId.</p></div>
+  <div data-prefix="const db ="><strong>Cliente de documentos</strong><p>Lambda prepara este cliente al cargar el archivo. Las operaciones pueden reutilizarlo y pasarle objetos de JavaScript, como la clave con eventId y userId.</p></div>
   <div data-prefix="const eventsTable ="><strong>Tabla de eventos</strong><p>El despliegue configura EVENTS_TABLE en Lambda a partir de Ref: EventsTable. Si tu sufijo es 01, process.env.EVENTS_TABLE devuelve EVENTO_01.</p></div>
   <div data-prefix="const registrationsTable ="><strong>Tabla de inscripciones</strong><p>El despliegue configura REGISTRATIONS_TABLE en Lambda a partir de Ref: RegistrationsTable. Para el equipo 01, process.env devuelve INSCRIPCION_01, donde se guardan la inscripción y la hora de entrada.</p></div>
   <div data-prefix="function json("><strong>Una respuesta para la API</strong><p>Esta función reúne el código HTTP, la cabecera y el cuerpo que API Gateway devuelve al navegador.</p></div>
   <div data-prefix="headers: {"><strong>Tipo de contenido</strong><p>La cabecera indica al navegador que el cuerpo de la respuesta es JSON.</p></div>
   <div data-prefix="body: JSON.stringify"><strong>De objeto a texto</strong><p>JSON.stringify convierte el objeto de JavaScript en el texto que se envía en la respuesta.</p></div>
-  <div data-prefix="async function getPass"><strong>Consultar el pase</strong><p>Esta función atenderá GET. Usará eventId para buscar el evento y la pareja eventId + userId para buscar una inscripción.</p></div>
-  <div data-prefix="async function register"><strong>Crear una inscripción</strong><p>Esta función atenderá POST. Usará la pareja de claves para guardar la inscripción de un usuario en un evento.</p></div>
-  <div data-prefix="async function checkIn"><strong>Registrar la entrada</strong><p>Esta función atenderá PATCH. Buscará la inscripción por su clave completa y añadirá checkedInAt.</p></div>
+  <div data-prefix="async function getPass"><strong>Consultar el pase</strong><p>El handler llama a esta función al recibir GET. Usará eventId para buscar el evento y la pareja eventId + userId para buscar una inscripción.</p></div>
+  <div data-prefix="async function register"><strong>Crear una inscripción</strong><p>El handler llama a esta función al recibir POST. Usará la pareja de claves para guardar la inscripción de un usuario en un evento.</p></div>
+  <div data-prefix="async function checkIn"><strong>Registrar la entrada</strong><p>El handler llama a esta función al recibir PATCH. Buscará la inscripción por su clave completa y añadirá checkedInAt.</p></div>
   <div data-prefix="return json(501"><strong>Operación pendiente</strong><p>El archivo base responde 501 hasta que escribas la operación. Esta respuesta te permite distinguir una ruta conectada de una operación ya implementada.</p></div>
   <div data-prefix="export async function handler"><strong>Punto de entrada de Lambda</strong><p>El YAML declara index.handler. API Gateway invoca esta función y le entrega la petición en event.</p></div>
   <div data-prefix="const { eventId, userId }"><strong>Los identificadores de la ruta</strong><p>En /events/evt-001/registrations/usuario-02, eventId es evt-001 y userId es usuario-02.</p></div>
