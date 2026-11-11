@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Festival Check-in · práctica guiada</title>
+<link rel="stylesheet" href="style.css">
+<script type="module" src="app.js"></script>
+</head>
+<body>
+<main>
+<header>
+  <a href="../../">← Cuaderno Serverless</a>
+  <p class="eyebrow">Práctica guiada · 180 minutos</p>
+  <h1>Festival<br><em>Check-in</em></h1>
+  <p>El festival abre puertas. Construye el registro de entrada y comprueba que se conserva al volver a cargar la pantalla.</p>
+  <a href="../../ayuda/dynamodb/">Consultar la infografía de DynamoDB ↗</a>
+</header>
+<nav class="phases" aria-label="Fases de la práctica">
+  <button data-phase="mision" aria-pressed="true">Misión</button>
+  <button data-phase="datos" aria-pressed="false">Datos</button>
+  <button data-phase="lectura" aria-pressed="false">Lectura</button>
+  <button data-phase="inscripcion" aria-pressed="false">Inscripción</button>
+  <button data-phase="entrada" aria-pressed="false">Entrada</button>
+  <button data-phase="prueba" aria-pressed="false">Prueba final</button>
+</nav>
+
+<section id="mision" class="phase">
+<h2>La puerta del festival</h2>
+<p>Trabajad en parejas. Una persona construye y la otra prueba. Cambiad de papel después de la lectura y de la inscripción.</p>
+<ol>
+  <li>Ensayad con <strong>equipo-01</strong> en la pantalla de abajo. Consultad, inscribíos y registrad la entrada.</li>
+  <li>En AWS Academy, abrid el laboratorio y confirmad con el profesor la región y el rol autorizado.</li>
+  <li>Conservad una sola función y el mismo archivo <code>index.mjs</code> durante toda la práctica.</li>
+</ol>
+<p><strong>Antes de avanzar:</strong> cada persona puede explicar la diferencia entre reservar y entrar.</p>
+</section>
+
+<section id="datos" class="phase" hidden>
+<h2>Dos tablas, un evento</h2>
+<p>En DynamoDB, cread dos tablas con un prefijo propio del equipo. Usad claves de tipo String.</p>
+<div class="relation" aria-label="Un evento tiene cero o muchas inscripciones">
+  <div><strong>Events</strong><br><code>eventId</code> · PK<br><code>title</code> · texto</div>
+  <span aria-hidden="true">1 ─── 0..N</span>
+  <div><strong>Registrations</strong><br><code>eventId</code> · PK<br><code>userId</code> · SK<br><code>registeredAt</code> · texto<br><code>checkedInAt</code> · opcional</div>
+</div>
+<p>En <strong>Explore table items</strong>, cread este ítem en Events con el editor JSON de DynamoDB. Los códigos <code>equipo-01</code>, <code>equipo-02</code>… representan a usuarios ficticios.</p>
+<pre><code>{
+  "eventId": { "S": "evt-001" },
+  "title": { "S": "Festival de otoño" }
+}</code></pre>
+<p><strong>Antes de avanzar:</strong> ambas tablas están activas, el evento aparece en Events y Registrations está vacía.</p>
+</section>
+
+<section id="lectura" class="phase" hidden>
+<h2>Leer antes de escribir</h2>
+<ol>
+<li>Cread una Lambda Node.js 22 en la misma región. Elegid el rol de ejecución autorizado por el laboratorio. Configurad las variables <code>EVENTS_TABLE</code> y <code>REGISTRATIONS_TABLE</code> con los nombres exactos.</li>
+<li>En <code>index.mjs</code>, añadid los imports y el esqueleto de trabajo que aparece abajo. Guardad y pulsad <strong>Deploy</strong> después de cada fase.</li>
+<li>Completad <code>getPass</code> con el profesor. Leed Events por <code>eventId</code> y Registrations por la pareja <code>eventId</code> + <code>userId</code>. Para estas pruebas, usad lectura consistente. Devolved <code>404</code> si no existe el evento.</li>
+<li>Cread una <strong>HTTP API</strong> con etapa <code>$default</code>, integración Lambda y formato de carga <code>2.0</code>. Añadid <code>GET /events/{eventId}/registrations/{userId}</code> y conectad la integración.</li>
+<li>En CORS configurad el origen <code>https://albertohdezakkari.github.io</code>, métodos <code>GET, POST, PATCH</code> y cabecera <code>Content-Type</code>. Copiad la URL de invocación en la pantalla.</li>
+</ol>
+<details><summary>Archivo completo de partida · index.mjs</summary>
+<pre><code>import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
+import {
+  DynamoDBDocumentClient, GetCommand, PutCommand, UpdateCommand
+} from '@aws-sdk/lib-dynamodb';
+
+const db = DynamoDBDocumentClient.from(new DynamoDBClient({}));
+const eventsTable = process.env.EVENTS_TABLE;
+const registrationsTable = process.env.REGISTRATIONS_TABLE;
+
+function json(statusCode, body) {
+  return {
+    statusCode,
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body)
+  };
+}
+
+async function getPass(key) {
+  // Fase Lectura: consulta el evento y la inscripción.
+  return json(501, { message: 'Lectura por construir' });
+}
+
+async function register(key) {
+  // Fase Inscripción: crea un registro con una condición.
+  return json(501, { message: 'Inscripción por construir' });
+}
+
+async function checkIn(key) {
+  // Fase Entrada: actualiza una inscripción existente.
+  return json(501, { message: 'Entrada por construir' });
+}
+
+export async function handler(event) {
+  const { eventId, userId } = event.pathParameters ?? {};
+  const method = event.requestContext?.http?.method;
+  if (eventId !== 'evt-001' || !/^equipo-\d{2}$/.test(userId ?? '')) {
+    return json(400, { message: 'Usa evt-001 y un código equipo-00 a equipo-99' });
+  }
+
+  const key = { eventId, userId };
+  try {
+    if (method === 'GET') return await getPass(key);
+    if (method === 'POST') return await register(key);
+    if (method === 'PATCH') return await checkIn(key);
+    return json(405, { message: 'Método no permitido' });
+  } catch (error) {
+    if (error.name === 'ConditionalCheckFailedException') {
+      return json(409, { message: 'La operación no se puede aplicar a este estado' });
+    }
+    console.error(error.name, error.message);
+    return json(500, { message: 'Revisa los logs de la función' });
+  }
+}</code></pre></details>
+<p><strong>Contrato GET 200:</strong> <code>{ "eventId": "evt-001", "title": "Festival de otoño", "registration": null }</code>. Si hay inscripción, sustituye <code>null</code> por un objeto con <code>userId</code>, <code>registeredAt</code> y, si existe, <code>checkedInAt</code>.</p>
+<p><strong>Antes de avanzar:</strong> la pantalla muestra el título real y «Sin inscripción».</p>
+</section>
+
+<section id="inscripcion" class="phase" hidden>
+<h2>Una inscripción por pareja de claves</h2>
+<ol>
+<li>Completad <code>register</code>. Comprobad que existe el evento y guardad un ítem con ambas claves y <code>registeredAt</code> en UTC, asignado en Lambda.</li>
+<li>Condicionad el <code>PutCommand</code> a que no exista el ítem. Devolved <code>201</code> con un JSON de confirmación. La condición fallida se transforma en <code>409</code> en el esqueleto.</li>
+<li>Añadid <code>POST /events/{eventId}/registrations/{userId}</code> a la misma integración.</li>
+</ol>
+<p><strong>Antes de avanzar:</strong> pulsad Inscribirse dos veces. La primera devuelve <code>201</code> y la segunda <code>409</code>. En DynamoDB hay un solo ítem para el equipo y la hora original se conserva.</p>
+</section>
+
+<section id="entrada" class="phase" hidden>
+<h2>Registrar la entrada</h2>
+<ol>
+<li>Completad <code>checkIn</code> con <code>UpdateCommand</code>. Añadid <code>checkedInAt</code> en UTC. La condición exige una inscripción existente y que todavía no tenga <code>checkedInAt</code>.</li>
+<li>Devolved <code>200</code> con un JSON de confirmación. Añadid <code>PATCH /events/{eventId}/registrations/{userId}</code> a la API.</li>
+<li>Probad con un código nuevo y después con el código que sí se inscribió.</li>
+</ol>
+<p><strong>Antes de avanzar:</strong> un código nuevo recibe <code>409</code> y no crea un ítem. El inscrito recibe <code>200</code> y conserva ambas horas. Repetir la entrada devuelve <code>409</code>.</p>
+</section>
+
+<section id="prueba" class="phase" hidden>
+<h2>Demostración cruzada</h2>
+<p>Intercambiad el papel de quien prueba. Usad un código nuevo y explicad en voz alta dónde queda cada dato.</p>
+<ol>
+<li>Consultad → sin inscripción.</li>
+<li>Intentad entrar → <code>409</code>.</li>
+<li>Inscribíos → <code>201</code>. Repetid → <code>409</code>.</li>
+<li>Registrad la entrada → <code>200</code>. Repetid → <code>409</code>.</li>
+<li>Recargad, volved a indicar la URL y el código, y pulsad Consultar. Comparad las dos horas con el ítem de DynamoDB.</li>
+</ol>
+<p>Al terminar, seguid las indicaciones del profesor para retirar los recursos de prueba.</p>
+</section>
+
+<section class="console" aria-labelledby="screen-title">
+  <div class="screen-head">
+    <div><p class="eyebrow">Control de acceso</p><h2 id="screen-title">Festival de otoño</h2></div>
+    <output id="pass-state">Sin inscripción</output>
+  </div>
+  <div class="settings">
+    <label>Conexión<select id="mode"><option value="demo">Ensayo · datos en memoria</option><option value="aws">AWS · API del equipo</option></select></label>
+    <label>Código ficticio<input id="user" value="equipo-01" maxlength="9" autocomplete="off" pattern="equipo-[0-9]{2}"></label>
+    <label id="endpoint-field" hidden>URL de invocación<input id="endpoint" type="url" placeholder="https://…execute-api.…amazonaws.com" autocomplete="off"></label>
+  </div>
+  <div class="actions">
+    <button data-method="GET">Consultar</button>
+    <button data-method="POST">Inscribirse</button>
+    <button data-method="PATCH">Registrar entrada</button>
+  </div>
+  <p id="feedback" role="status">Ensayo listo. Usa los botones para recorrer los estados.</p>
+  <details><summary>Ver la respuesta</summary><pre id="response">Pulsa Consultar para empezar.</pre></details>
+</section>
+<footer><a href="https://github.com/albertohdezakkari/04-PILARES-SERVERLESS/tree/main/practica/festival-checkin">Código de la pantalla en GitHub</a></footer>
+</main>
+</body>
+</html>

@@ -1,0 +1,54 @@
+:root {
+  color-scheme: dark;
+  --ink: #f6f3fb;
+  --muted: #c7bdd5;
+  --background: #14101d;
+  --surface: #20182d;
+  --border: #544563;
+  --accent: #ff9cba;
+  font-family: system-ui, sans-serif;
+  color: var(--ink);
+  background: var(--background);
+}
+* { box-sizing: border-box; }
+body { margin: 0; }
+main { max-width: 920px; margin: auto; padding: clamp(16px, 4vw, 40px); }
+header { padding: 12px 0 28px; }
+a { color: var(--accent); text-underline-offset: .2em; }
+h1 { font-size: clamp(3.1rem, 11vw, 7rem); line-height: .88; letter-spacing: -.075em; margin: .15em 0 .26em; }
+h1 em { font-style: normal; color: var(--accent); }
+h2 { margin: 0 0 .7rem; }
+p, li { line-height: 1.55; }
+li + li { margin-top: .65rem; }
+.eyebrow { color: var(--muted); font-size: .8rem; letter-spacing: .12em; text-transform: uppercase; margin: 1.5em 0 .65em; }
+.phases, .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+button, input, select {
+  font: inherit;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  min-height: 44px;
+  padding: 8px 12px;
+}
+button, summary { cursor: pointer; }
+button[aria-pressed="true"], [data-method="POST"] { color: #25131b; background: var(--accent); border-color: var(--accent); font-weight: 650; }
+button:disabled { opacity: .65; cursor: wait; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.phase, .console { border: 1px solid var(--border); border-radius: 16px; padding: clamp(14px, 3vw, 24px); margin-top: 16px; }
+.phase { background: #191323; }
+.console { background: var(--surface); }
+.relation, .screen-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.relation { justify-content: flex-start; }
+.relation div { padding: 12px; border: 1px solid var(--border); border-radius: 8px; }
+.relation span { color: var(--accent); font-weight: 700; }
+.screen-head .eyebrow { margin-top: 0; }
+#pass-state { color: #1d1428; background: #e1c9fc; padding: 7px 12px; border-radius: 8px; font-weight: 650; }
+.settings { display: flex; gap: 12px; flex-wrap: wrap; margin: 14px 0; }
+label { min-width: 0; display: grid; gap: 5px; color: var(--muted); flex: 1 1 180px; }
+#endpoint-field { flex-basis: 100%; }
+input, select { width: 100%; min-width: 0; }
+pre { background: var(--background); border-radius: 8px; padding: 12px; overflow: auto; max-height: 45vh; }
+code { overflow-wrap: anywhere; }
+footer { margin: 24px 0; }
+[hidden] { display: none !important; }
