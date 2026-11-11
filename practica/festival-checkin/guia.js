@@ -216,7 +216,7 @@ function addCodeControls(pre) {
     addYamlReader(pre, toolbar, fullText.split('\n'));
     return;
   }
-  toolbar.append(copyButton(fileName ? 'Copiar archivo completo' : 'Copiar comando', fullText,
+  toolbar.append(copyButton(fileName ? 'Copiar archivo completo' : pre.hasAttribute('data-example') ? 'Copiar código' : 'Copiar comando', fullText,
     fileName ? 'Pulsa Ver archivo entero para copiarlo manualmente.' : 'Selecciona el texto y cópialo con el teclado.'));
   if (fileName) {
     const lines = fullText.split('\n');
@@ -274,6 +274,15 @@ for (const question of document.querySelectorAll('.yaml-question')) {
   }
 }
 
-const commands = '#conexion .guide-step:not(#pegar-aws) pre, #datos pre, #lectura pre[data-command], #conectar-api pre, #inscripcion pre, #entrada pre, #prueba pre';
+const accessButtons = [...document.querySelectorAll('[data-access]')];
+const accessPanels = document.querySelectorAll('[data-access-panel]');
+for (const choice of accessButtons) {
+  choice.addEventListener('click', () => {
+    for (const item of accessButtons) item.setAttribute('aria-pressed', String(item === choice));
+    for (const panel of accessPanels) panel.hidden = panel.dataset.accessPanel !== choice.dataset.access;
+  });
+}
+
+const commands = '#conexion .guide-step:not(#pegar-aws) pre, #infra pre, #datos pre, #lectura pre[data-command], #lectura pre[data-example], #conectar-api pre, #inscripcion pre, #entrada pre, #prueba pre';
 for (const pre of document.querySelectorAll(commands)) addCodeControls(pre);
 showRoute();

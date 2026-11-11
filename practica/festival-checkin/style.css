@@ -59,6 +59,138 @@ button:disabled { opacity: .65; cursor: wait; }
 .phase > h2:first-child { font-size: 1rem; color: var(--muted); margin-bottom: 10px; }
 .console { background: var(--surface); }
 .guide-step > p { margin: 8px 0 12px; }
+.phase-number {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.35em;
+  margin-right: 3px;
+  font-size: .8em;
+  font-weight: 750;
+  color: var(--accent);
+}
+.phases button[aria-pressed="true"] .phase-number { color: inherit; }
+.lesson-intro {
+  padding: clamp(18px, 4vw, 42px);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: linear-gradient(115deg, #382039, var(--surface) 60%, #183136);
+}
+.lesson-intro h3 {
+  max-width: 19ch;
+  font-size: clamp(2rem, 5.5vw, 4.1rem);
+  line-height: 1.04;
+  letter-spacing: -.045em;
+}
+.lesson-intro p { max-width: 65ch; color: var(--ink); }
+.lesson-action {
+  display: inline-block;
+  padding: 10px 14px;
+  border-radius: 8px;
+  color: #25131b;
+  background: var(--accent);
+  font-weight: 750;
+  text-decoration: none;
+}
+.lesson-flow {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap: 12px;
+  padding: 0;
+  margin: 14px 0;
+}
+.lesson-flow li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-content: start;
+  gap: 8px 10px;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+}
+.lesson-flow li > span {
+  display: grid;
+  place-items: center;
+  width: 1.7rem;
+  height: 1.7rem;
+  border-radius: 50%;
+  background: #9ee4d8;
+  color: #142628;
+  font-weight: 750;
+}
+.lesson-flow h4, .er-diagram h4, .access-results h4 { margin: 0 0 4px; }
+.lesson-flow p { margin: 0; }
+.lesson-flow li > code { grid-column: 2; color: #9ee4d8; }
+.er-diagram {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(62px, .45fr) minmax(0, 1.35fr) minmax(62px, .45fr) minmax(0, 1fr);
+  align-items: center;
+  padding: 16px 0;
+}
+.er-diagram section {
+  display: grid;
+  gap: 4px;
+  align-content: start;
+  padding: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.er-diagram section:nth-of-type(2) { border-color: #9ee4d8; }
+.er-diagram section > code { color: #9ee4d8; }
+.er-diagram section > span { color: var(--muted); }
+.er-edge { display: flex; align-items: center; gap: 3px; color: var(--accent); font-size: .78rem; }
+.er-edge i { flex: 1; border-top: 1px solid currentColor; }
+@media (max-width: 620px) {
+  .er-diagram { grid-template-columns: minmax(0, 1fr); justify-items: center; }
+  .er-diagram section { width: min(100%, 320px); }
+  .er-edge { flex-direction: column; min-height: 54px; }
+  .er-edge i { border-top: 0; border-left: 1px solid currentColor; }
+}
+.access-lab {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr);
+  gap: 12px;
+  padding: 12px;
+  margin: 12px 0;
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.access-options { display: grid; gap: 6px; }
+.access-options button { text-align: left; }
+.access-results {
+  min-width: 0;
+  padding: 12px;
+  background: var(--surface);
+  border-radius: 8px;
+}
+.access-results p { margin: 6px 0; }
+.access-results section > code { color: #9ee4d8; }
+@media (max-width: 640px) {
+  .access-lab { grid-template-columns: minmax(0, 1fr); }
+}
+.lesson-note, .lesson-example {
+  padding: 10px 12px;
+  margin: 12px 0;
+  border: 1px solid var(--border);
+  border-left: 3px solid #9ee4d8;
+  border-radius: 8px;
+  background: var(--surface);
+}
+.lesson-note strong, .lesson-example summary { color: #9ee4d8; }
+.lesson-example summary { cursor: pointer; font-weight: 750; }
+.command-reasons {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr));
+  gap: 8px;
+  margin: 10px 0;
+}
+.command-reasons > div { padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; }
+.command-reasons dt { color: #9ee4d8; font-weight: 750; }
+.command-reasons dd { margin: 4px 0 0; color: var(--muted); }
 .checkpoint { padding: 10px 12px; border-left: 3px solid var(--accent); background: var(--surface); }
 .checkpoint > strong:first-child { display: block; }
 .code-toolbar { align-items: center; margin-top: 10px; }

@@ -4,10 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Festival Check-in · práctica guiada</title>
-<link rel="stylesheet" href="style.css?v=yaml-variables">
+<link rel="stylesheet" href="style.css?v=caso-completo">
 <script type="module" src="app.js"></script>
-<script type="module" src="guia.js?v=yaml-columnas"></script>
-<script type="module" src="visor-modelo.js"></script>
+<script type="module" src="guia.js?v=caso-completo"></script>
+<script type="module" src="visor-modelo.js?v=caso-completo"></script>
 </head>
 <body>
 <main>
@@ -18,13 +18,15 @@
 </div>
 </header>
 <nav class="phases" aria-label="Fases de la práctica">
-  <button type="button" data-phase="mision" aria-pressed="true">Misión</button>
-  <button type="button" data-phase="conexion" aria-pressed="false">Conexión</button>
-  <button type="button" data-phase="datos" aria-pressed="false">Datos</button>
-  <button type="button" data-phase="lectura" aria-pressed="false">Lectura</button>
-  <button type="button" data-phase="inscripcion" aria-pressed="false">Inscripción</button>
-  <button type="button" data-phase="entrada" aria-pressed="false">Entrada</button>
-  <button type="button" data-phase="prueba" aria-pressed="false">Prueba final</button>
+  <button type="button" data-phase="mision" aria-pressed="true"><span class="phase-number">1</span> Caso</button>
+  <button type="button" data-phase="diseno" aria-pressed="false"><span class="phase-number">2</span> Diseñar</button>
+  <button type="button" data-phase="conexion" aria-pressed="false"><span class="phase-number">3</span> Conectar</button>
+  <button type="button" data-phase="infra" aria-pressed="false"><span class="phase-number">4</span> Configurar</button>
+  <button type="button" data-phase="datos" aria-pressed="false"><span class="phase-number">5</span> Sembrar datos</button>
+  <button type="button" data-phase="lectura" aria-pressed="false"><span class="phase-number">6</span> Consultar</button>
+  <button type="button" data-phase="inscripcion" aria-pressed="false"><span class="phase-number">7</span> Inscribir</button>
+  <button type="button" data-phase="entrada" aria-pressed="false"><span class="phase-number">8</span> Dar entrada</button>
+  <button type="button" data-phase="prueba" aria-pressed="false"><span class="phase-number">9</span> Validar</button>
   <button type="button" data-phase="pantalla" aria-pressed="false">Pantalla de prueba</button>
 </nav>
 <div id="guide-toolbar">
@@ -35,17 +37,73 @@
 <div class="course-content" id="course-content">
 <section id="mision" class="phase" hidden>
 <h2>La puerta del festival</h2>
-<article id="objetivo" class="guide-step" data-step="Reto">
-<h3>El festival abre puertas</h3>
-<p>Construid una aplicación que permita consultar un evento, apuntarse y registrar la entrada. Trabajad por parejas y turnaos para escribir y comprobar.</p>
-<p>Abrid la <a href="#pantalla">Pantalla de prueba</a> en modo Ensayo. Pulsad <strong>Consultar</strong>, luego <strong>Registrar entrada</strong>. ¿Qué ocurre si la persona aún no se ha inscrito?</p>
-<p class="checkpoint"><strong>Antes de avanzar</strong> Al pulsar <strong>Registrar entrada</strong> sin inscribirte, el mensaje de estado muestra <code>PATCH → 409</code> y el pase sigue en <strong>Sin inscripción</strong>.</p>
+<article id="objetivo" class="guide-step" data-step="Caso de uso">
+<div class="lesson-intro">
+  <h3>Un pase para el Festival de otoño</h3>
+  <p>El <strong>equipo-02</strong> quiere asistir al <strong>Festival de otoño</strong>. En la puerta debemos saber si se inscribió y si ya entró. Construirás el pase y podrás demostrarlo desde la web, la API y DynamoDB.</p>
+  <a class="lesson-action" href="#pantalla">Abrir pantalla de ensayo →</a>
+</div>
+<ol class="lesson-flow">
+  <li><span>1</span><div><h4>Consultar el pase</h4><p>Pulsa <strong>Consultar</strong>. Con un código nuevo, ves el título del evento y <strong>Sin inscripción</strong>.</p></div><code>GET · 200</code></li>
+  <li><span>2</span><div><h4>Inscribirse</h4><p>Pulsa <strong>Inscribirse</strong>. El pase pasa a <strong>Inscrito</strong>. Repite la acción para comprobar que la primera inscripción se conserva.</p></div><code>POST · 201 → 409</code></li>
+  <li><span>3</span><div><h4>Registrar la entrada</h4><p>Pulsa <strong>Registrar entrada</strong>. El pase muestra <strong>Entrada registrada</strong>. Usa un código nuevo para probar qué ocurre si alguien intenta entrar sin inscripción.</p></div><code>PATCH · 200 / 409</code></li>
+</ol>
+<p class="checkpoint"><strong>Antes de avanzar</strong> En modo Ensayo, el mismo código pasa por los tres estados. En la siguiente fase diseñarás qué debe guardar la base de datos para distinguirlos.</p>
+</article>
+</section>
+<section id="diseno" class="phase" hidden>
+<h2>Del caso de uso al diseño de datos</h2>
+<article id="entidad-relacion" class="guide-step" data-step="Entidad–relación">
+<h3>Dibuja las entidades y sus relaciones</h3>
+<p>En el festival, un equipo puede inscribirse en varios eventos y un evento puede recibir varios equipos. <strong>Inscripción</strong> representa ese vínculo y guarda dos hechos propios: cuándo se inscribió el equipo y cuándo entró.</p>
+<div class="er-diagram" role="group" aria-label="Un evento tiene de cero a muchas inscripciones. Un equipo tiene de cero a muchas inscripciones. Cada inscripción pertenece a un evento y un equipo.">
+  <section><h4>Evento</h4><code>eventId</code><span>Título</span></section>
+  <div class="er-edge" aria-hidden="true"><b>1</b><i></i><b>0..N</b></div>
+  <section><h4>Inscripción</h4><code>eventId + userId</code><span>Fecha de inscripción</span><span>Fecha de entrada, opcional</span></section>
+  <div class="er-edge" aria-hidden="true"><b>0..N</b><i></i><b>1</b></div>
+  <section><h4>Equipo</h4><code>userId</code><span>Código recibido en el pase</span></section>
+</div>
+<div class="lesson-note"><strong>Prueba el modelo.</strong> El equipo <code>equipo-02</code> puede tener una inscripción en <code>evt-001</code> y otra en <code>evt-002</code>. La fecha de entrada de cada inscripción pertenece a su evento. Para probar la API del laboratorio usarás <code>evt-001</code>.</div>
+<p class="checkpoint"><strong>Antes de avanzar</strong> Escribe las dos parejas de identificadores. Comprueba que comparten <code>userId</code> y tienen distintos <code>eventId</code>.</p>
+</article>
+<article id="patrones-acceso" class="guide-step" data-step="Preguntas y claves">
+<h3>De las preguntas a las claves de DynamoDB</h3>
+<p>Elige una pregunta. Fíjate en el dato que llega con la petición y en la clave que te permite localizar la respuesta.</p>
+<div class="access-lab">
+  <div class="access-options" role="group" aria-label="Preguntas del festival">
+    <button type="button" data-access="evento" aria-pressed="true">¿Cuál es el título del evento?</button>
+    <button type="button" data-access="grupo" aria-pressed="false">¿Quién se ha inscrito al evento?</button>
+    <button type="button" data-access="pase" aria-pressed="false">¿Está inscrito el equipo 02?</button>
+  </div>
+  <div class="access-results" aria-live="polite">
+    <section data-access-panel="evento"><h4>Un evento</h4><p>En <code>Events</code>, <code>eventId</code> es la clave de partición (<strong>PK</strong>). Como cada evento tiene un identificador único, con <code>evt-001</code> ya puedes recuperar su título.</p><code>Events → PK evt-001 → Festival de otoño</code></section>
+    <section data-access-panel="grupo" hidden><h4>Todas las inscripciones de un evento</h4><p>En <code>Registrations</code>, la PK sigue siendo <code>eventId</code>. Una consulta por <code>evt-001</code> recupera su grupo de inscripciones.</p><code>Registrations → PK evt-001 → equipo-01, equipo-02</code></section>
+    <section data-access-panel="pase" hidden><h4>Una inscripción concreta</h4><p>Dentro del grupo, <code>userId</code> es la clave de ordenación (<strong>SK</strong>). La pareja completa identifica la inscripción. Su atributo <code>checkedInAt</code> indica si ya se registró la entrada.</p><code>Registrations → PK evt-001 + SK equipo-02 → una fila</code></section>
+  </div>
+</div>
+<div class="lesson-note"><strong>Truco de diseño.</strong> Pregunta qué dato tienes al buscar. Si más adelante necesitas todos los eventos de un equipo y solo recibes <code>userId</code>, plantéate un índice con <code>userId</code> como clave de partición.</div>
+<p class="checkpoint"><strong>Antes de avanzar</strong> Abre las dos preguntas sobre inscripciones. En ambas tienes <code>evt-001</code>. La búsqueda de un pase añade <code>equipo-02</code>.</p>
+</article>
+<article id="modelo-titulo" class="guide-step" data-step="Probar el diseño">
+<h3>Convierte el modelo en dos tablas y pruébalo</h3>
+<p><strong>Evento → Events.</strong> Guarda <code>eventId</code> y <code>title</code>. <strong>Inscripción → Registrations.</strong> Guarda la pareja de identificadores, <code>registeredAt</code> y, al entrar, <code>checkedInAt</code>.</p>
+<p>El código del equipo ya llega en la petición. Para este caso basta con guardarlo como <code>userId</code> dentro de la inscripción. En un modelo relacional, la clave foránea de la inscripción referencia al evento y la base de datos puede exigir que exista. Aquí <code>eventId</code> forma parte de la clave de DynamoDB y POST comprueba en la API que el evento existe antes de inscribir al equipo.</p>
+<div class="relation" aria-label="Un evento tiene cero o muchas inscripciones">
+  <div><strong>Events</strong><br><code>eventId</code> · PK</div><span aria-hidden="true">1 ─── 0..N</span>
+  <div><strong>Registrations</strong><br><code>eventId</code> · PK<br><code>userId</code> · SK</div>
+</div>
+<p id="model-status" role="status">Cargando el ejemplo…</p>
+<div id="model-result">
+</div>
+<p><strong>Lee los datos de ejemplo.</strong> Un valor en <code>checkedInAt</code> indica que el equipo ya entró. En el laboratorio, la tabla de inscripciones empezará vacía y se llenará al probar POST.</p>
+<p class="checkpoint"><strong>Antes de avanzar</strong> Pulsa <strong>Ver inscritos del evento</strong>. Aparecen dos filas con <code>eventId = evt-001</code> y dos <code>userId</code> distintos. Pulsa <strong>Buscar a equipo-02</strong>. Ahora solo aparece la fila de <code>equipo-02</code>.</p>
 </article>
 </section>
 <section id="conexion" class="phase" hidden>
 <h2>Conectar con AWS Academy</h2>
 <article id="iniciar-lab" class="guide-step" data-step="Laboratorio">
 <h3>Abre el laboratorio</h3>
+<p class="lesson-note"><strong>Para qué sirve este paso.</strong> AWS Academy abre una sesión temporal. AWS CLI utilizará sus credenciales para identificarte cuando compruebes o despliegues recursos.</p>
 <p>En AWS Academy, pulsa <strong>Learner Lab → Start Lab</strong>. Cuando esté activo, abre <strong>AWS Details → AWS CLI → Show</strong>. Ten ese bloque a mano.</p>
 <p>En <strong>Git Bash</strong> (Windows) o <strong>Terminal</strong> (Mac), comprueba que tienes la herramienta.</p><pre><code>aws --version</code></pre><p>Si el comando no existe, abre la <a href="https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html">instalación de AWS CLI v2</a> y vuelve a abrir la terminal.</p>
 <p class="checkpoint"><strong>Antes de avanzar</strong> La terminal muestra una versión de AWS CLI y tienes el bloque de tu sesión.</p>
@@ -66,6 +124,7 @@ aws_session_token = VALOR_DE_LA_SESION</code></pre><p>Si ya usas <code>[default]
 </article>
 <article id="probar-aws" class="guide-step" data-step="Comprobación">
 <h3>Comprueba identidad y región</h3>
+<dl class="command-reasons"><div><dt><code>perfil</code></dt><dd>Selecciona qué credenciales usa la terminal.</dd></div><div><dt><code>region</code></dt><dd>Selecciona dónde buscas los recursos.</dd></div><div><dt><code>sts get-caller-identity</code></dt><dd>Confirma con qué identidad estás conectado.</dd></div></dl>
 <p>Cambia <code>perfil</code> si has guardado <code>[academy]</code>. Sustituye <code>us-east-1</code> por la región autorizada de tu laboratorio. Conserva esta terminal.</p><pre><code>aws configure list-profiles
 perfil=default
 region=us-east-1
@@ -75,23 +134,11 @@ aws dynamodb list-tables --profile "$perfil" --region "$region"</code></pre><p><
 <p class="checkpoint"><strong>Antes de avanzar</strong> STS devuelve la identidad y DynamoDB muestra TableNames. Puede estar vacía.</p>
 </article>
 </section>
-<section id="datos" class="phase" hidden>
-<h2>Dos tablas, un evento</h2>
-<article id="modelo-titulo" class="guide-step" data-step="Modelo">
-<h3>¿Quién se ha inscrito y quién ha entrado?</h3>
-<p>Para encontrar a los inscritos, primero buscamos el evento. Para encontrar a una persona, añadimos su identificador.</p>
-<div class="relation" aria-label="Un evento tiene cero o muchas inscripciones">
-  <div><strong>Events</strong><br><code>eventId</code> · PK</div><span aria-hidden="true">1 ─── 0..N</span>
-  <div><strong>Registrations</strong><br><code>eventId</code> · PK<br><code>userId</code> · SK</div>
-</div>
-<p id="model-status" role="status">Cargando el ejemplo…</p>
-<div id="model-result">
-</div>
-<p>En el ejemplo, <code>checkedInAt</code> indica que la persona ya entró. En AWS, la tabla de inscripciones empezará vacía.</p>
-<p class="checkpoint"><strong>Antes de avanzar</strong> Pulsa <strong>Ver inscritos del evento</strong>. Aparecen dos filas con <code>eventId = evt-001</code> y dos <code>userId</code> distintos. Pulsa <strong>Buscar a equipo-02</strong>. Ahora solo aparece la fila de <code>equipo-02</code>.</p>
-</article>
+<section id="infra" class="phase" hidden>
+<h2>Configurar y desplegar la aplicación</h2>
 <article id="nombres-tablas" class="guide-step" data-step="Proyecto">
 <h3>Prepara la carpeta de trabajo</h3>
+<dl class="command-reasons"><div><dt><code>npm init -y</code></dt><dd>Crea el manifiesto del proyecto.</dd></div><div><dt><code>serverless</code></dt><dd>Lee el YAML y prepara el despliegue.</dd></div><div><dt>SDK de DynamoDB</dt><dd>Permite que el código de Lambda lea y escriba ítems.</dd></div></dl>
 <p>En la misma terminal de Conexión, abre la carpeta donde guardas tus prácticas. Usarás Node.js 22 y la misma versión de Serverless Framework del entrenamiento. Guarda aquí los dos archivos que crearás en los pasos siguientes.</p><pre><code>node --version
 mkdir -p festival-checkin
 cd festival-checkin
@@ -102,6 +149,7 @@ npx serverless --version</code></pre><p class="checkpoint"><strong>Antes de avan
 </article>
 <article id="rol-laboratorio" class="guide-step" data-step="Rol">
 <h3>Selecciona el equipo y el rol de Lambda</h3>
+<p class="lesson-note"><strong>Quién actúa en cada momento.</strong> Tu perfil ejecuta el despliegue. El rol <code>LabRole</code> da permisos a Lambda cuando atiende una petición y necesita acceder a DynamoDB.</p>
 <p>Cambia <code>equipo-01</code> por el código asignado a tu equipo. El último comando localiza el ARN de <code>LabRole</code>, el rol existente que usará Lambda para leer y escribir en DynamoDB.</p><pre><code>export AWS_PROFILE="$perfil"
 export AWS_REGION="$region"
 export STUDENT_CODE=equipo-01
@@ -512,10 +560,15 @@ node --check index.mjs</code></pre><p class="checkpoint"><strong>Antes de avanza
 </article>
 <article id="desplegar-stack" class="guide-step" data-step="Desplegar">
 <h3>Despliega el servicio desde la terminal</h3>
+<dl class="command-reasons"><div><dt><code>node --check</code></dt><dd>Comprueba la sintaxis de <code>index.mjs</code>.</dd></div><div><dt><code>&amp;&amp;</code></dt><dd>Ejecuta el segundo comando si el primero termina correctamente.</dd></div><div><dt><code>--stage dev</code></dt><dd>Selecciona el entorno de desarrollo de tu servicio.</dd></div></dl>
 <p>Ejecuta el comando en la carpeta <code>festival-checkin</code>. Serverless Framework lee tu YAML y CloudFormation crea las tablas, la función y la HTTP API en el laboratorio.</p><pre><code>node --check index.mjs &amp;&amp; npx serverless deploy --stage dev --aws-profile "$perfil"</code></pre><p>Si Framework pide iniciar sesión, usa el mismo acceso de la lección <a href="../../#primer-serverless">01 · Primer Serverless</a>. Si falla CloudFormation, lee el primer recurso y permiso que aparecen en el error. Si la sesión de AWS caducó, renueva los tres valores y repite la comprobación de Conexión.</p><p class="checkpoint"><strong>Antes de avanzar</strong> La terminal muestra el despliegue terminado y las tres rutas de la API.</p>
 </article>
+</section>
+<section id="datos" class="phase" hidden>
+<h2>Comprobar y sembrar los datos del festival</h2>
 <article id="salidas-stack" class="guide-step" data-step="Salidas">
 <h3>Recupera los nombres reales y la URL</h3>
+<p class="lesson-note"><strong>Del nombre lógico al nombre real.</strong> En el YAML escribiste <code>EventsTable</code>. CloudFormation asigna un nombre físico a la tabla. <code>salida EventsTableName</code> lo obtiene del stack y <code>tabla_eventos</code> lo guarda para que tus comandos apunten a esa tabla. <code>api_url</code> guarda la dirección que usarás con <code>curl</code>.</p>
 <p>Ejecuta el bloque en la misma terminal. Las dos primeras líneas impresas son los nombres de DynamoDB. La tercera es la URL base de la HTTP API. Guarda esa URL para la prueba de lectura.</p><pre><code>stack="festival-checkin-${STUDENT_CODE}-dev"
 salida() {
   aws cloudformation describe-stacks --stack-name "$stack" \
@@ -529,6 +582,7 @@ printf '%s\n' "$tabla_eventos" "$tabla_inscripciones" "$api_url"</code></pre><p 
 </article>
 <article id="estado-tablas" class="guide-step" data-step="Estado">
 <h3>Espera y comprueba las claves</h3>
+<p class="lesson-note"><strong>Comprueba el diseño en AWS.</strong> <code>describe-table</code> muestra el esquema desplegado. Busca el <code>HASH</code> que elegiste para agrupar por evento y el <code>RANGE</code> que distingue las inscripciones.</p>
 <p>Ejecuta el bloque. <code>wait</code> vuelve al prompt sin imprimir nada cuando la tabla está lista. <code>describe-table</code> muestra las claves.</p><pre><code>for tabla in "$tabla_eventos" "$tabla_inscripciones"; do
   aws dynamodb wait table-exists \
     --profile "$perfil" --region "$region" --table-name "$tabla" || break
@@ -539,12 +593,14 @@ done</code></pre><p class="checkpoint"><strong>Antes de avanzar</strong> Ambas e
 </article>
 <article id="guardar-evento" class="guide-step" data-step="INSERT">
 <h3>Guarda el primer evento</h3>
+<p class="lesson-note"><strong>Por qué insertas este dato.</strong> El despliegue crea tablas vacías. La inscripción necesita un evento existente, así que primero guardas su identificador y su título en <code>Events</code>.</p>
 <p>Usa PartiQL para guardar «Festival de otoño» con el identificador <code>evt-001</code>.</p><pre><code>aws dynamodb execute-statement \
   --profile "$perfil" --region "$region" \
   --statement "INSERT INTO \"$tabla_eventos\" VALUE {'eventId': 'evt-001', 'title': 'Festival de otoño'}"</code></pre><p class="checkpoint"><strong>Antes de avanzar</strong> El comando vuelve al prompt sin error. Si ves DuplicateItemException, el evento ya existe y puedes comprobarlo en el siguiente paso.</p>
 </article>
 <article id="comprobar-datos" class="guide-step" data-step="SELECT">
 <h3>Lee lo que se ha guardado</h3>
+<p class="lesson-note"><strong>Lee por la clave que diseñaste.</strong> Ambas consultas usan <code>eventId = 'evt-001'</code>. En <code>Events</code> recupera el evento. En <code>Registrations</code> selecciona el grupo de inscripciones. <code>--consistent-read</code> permite comprobar el estado después de la escritura.</p>
 <p>Ejecuta cada consulta y compara sus salidas.</p><pre><code>aws dynamodb execute-statement \
   --profile "$perfil" --region "$region" --consistent-read \
   --statement "SELECT eventId, title FROM \"$tabla_eventos\" WHERE eventId = 'evt-001'"</code></pre><pre><code>aws dynamodb execute-statement \
@@ -556,12 +612,36 @@ done</code></pre><p class="checkpoint"><strong>Antes de avanzar</strong> Ambas e
 <h2>Leer desde Lambda</h2>
 <article id="leer-pase" class="guide-step" data-step="Lectura">
 <h3>Lee el evento y la inscripción con getPass</h3>
+<p class="lesson-note"><strong>La pregunta que resuelve GET.</strong> El navegador pide el título y el estado del pase en una misma respuesta. La función lee <code>Events</code> con una clave y <code>Registrations</code> con dos. Si existe el evento y aún falta la inscripción, la respuesta incluye <code>registration: null</code>.</p>
 <p>Abre el archivo desde la terminal y localiza <code>getPass</code>.</p><pre data-command><code>vi +/getPass index.mjs</code></pre><p>Pulsa <kbd>i</kbd> para editar y sustituye la respuesta <code>501</code> de <code>getPass(key)</code> siguiendo estos pasos.</p>
 <ol>
   <li>Usa <code>GetCommand</code> sobre <code>eventsTable</code> con la clave <code>{ eventId: key.eventId }</code>. Si el resultado carece de <code>Item</code>, devuelve <code>404</code>.</li>
   <li>Usa otro <code>GetCommand</code> sobre <code>registrationsTable</code> con <code>key</code> completa. Activa <code>ConsistentRead</code> en ambas lecturas.</li>
   <li>Devuelve <code>200</code> con el identificador y el título del evento. En <code>registration</code>, incluye el ítem de inscripción si existe, o <code>null</code>.</li>
 </ol><pre><code>{ "eventId": "evt-001", "title": "Festival de otoño", "registration": null }</code></pre><p>Cuando exista la inscripción, <code>registration</code> contiene el registro con <code>userId</code>, <code>registeredAt</code> y la hora de entrada si ya se guardó.</p>
+<details class="lesson-example">
+  <summary>Ver la función completa <code>getPass</code></summary>
+  <p>Puedes copiar esta función y reemplazar la versión de <code>getPass</code> que devuelve <code>501</code> en <code>index.mjs</code>.</p>
+  <pre data-example><code>async function getPass(key) {
+  const { Item: event } = await db.send(new GetCommand({
+    TableName: eventsTable,
+    Key: { eventId: key.eventId },
+    ConsistentRead: true
+  }));
+  if (!event) return json(404, { message: 'Evento no encontrado' });
+
+  const { Item: registration } = await db.send(new GetCommand({
+    TableName: registrationsTable,
+    Key: key,
+    ConsistentRead: true
+  }));
+  return json(200, {
+    eventId: event.eventId,
+    title: event.title,
+    registration: registration ?? null
+  });
+}</code></pre>
+</details>
 <p class="checkpoint"><strong>Antes de avanzar</strong> En <code>index.mjs</code>, el primer <code>GetCommand</code> usa <code>eventId</code> y el segundo usa <code>eventId</code> y <code>userId</code>. Pulsa <kbd>Esc</kbd>, escribe <code>:wq</code> y pulsa Intro para guardar.</p>
 </article>
 <article id="conectar-api" class="guide-step" data-step="Probar GET">
@@ -573,8 +653,29 @@ done</code></pre><p class="checkpoint"><strong>Antes de avanzar</strong> Ambas e
 <h2>Guardar una inscripción</h2>
 <article id="construir-post" class="guide-step" data-step="Construir">
 <h3>Crea la inscripción con las dos claves</h3>
+<p class="lesson-note"><strong>La regla que protege POST.</strong> DynamoDB evalúa la condición durante la escritura del ítem identificado por la pareja completa. Si llegan dos intentos para el mismo pase, el segundo recibe <code>409</code> y la primera hora queda guardada.</p>
 <pre><code>vi +/register index.mjs</code></pre>
-<p>Pulsa <kbd>i</kbd> para editar. Completa <code>register</code>. Comprueba que el evento existe. Guarda las dos claves y <code>registeredAt</code> en UTC. Condiciona <code>PutCommand</code> a que el ítem no exista. Devuelve <code>201</code>. Guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro. Después, vuelve a desplegar.</p><pre><code>node --check index.mjs &amp;&amp; npx serverless deploy --stage dev --aws-profile "$perfil"</code></pre><p class="checkpoint"><strong>Antes de avanzar</strong> El despliegue ha terminado. La ruta POST ya está lista para probarse.</p>
+<p>Pulsa <kbd>i</kbd> para editar. Completa <code>register</code>. Comprueba que el evento existe. Guarda las dos claves y <code>registeredAt</code> en UTC. Condiciona <code>PutCommand</code> a que el ítem no exista. Devuelve <code>201</code>. Guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro. Después, vuelve a desplegar.</p>
+<details class="lesson-example">
+  <summary>Ver la función completa <code>register</code></summary>
+  <p>Puedes copiar esta función y reemplazar la versión de <code>register</code> que devuelve <code>501</code> en <code>index.mjs</code>.</p>
+  <pre data-example><code>async function register(key) {
+  const { Item: event } = await db.send(new GetCommand({
+    TableName: eventsTable,
+    Key: { eventId: key.eventId },
+    ConsistentRead: true
+  }));
+  if (!event) return json(404, { message: 'Evento no encontrado' });
+
+  await db.send(new PutCommand({
+    TableName: registrationsTable,
+    Item: { ...key, registeredAt: new Date().toISOString() },
+    ConditionExpression: 'attribute_not_exists(eventId)'
+  }));
+  return json(201, { message: 'Inscripción creada' });
+}</code></pre>
+</details>
+<pre><code>node --check index.mjs &amp;&amp; npx serverless deploy --stage dev --aws-profile "$perfil"</code></pre><p class="checkpoint"><strong>Antes de avanzar</strong> El despliegue ha terminado. La ruta POST ya está lista para probarse.</p>
 </article>
 <article id="probar-post" class="guide-step" data-step="Probar">
 <h3>Comprueba que no se inscribe dos veces</h3>
@@ -591,8 +692,23 @@ curl -i "$pase"</code></pre>
 <h2>Registrar la entrada</h2>
 <article id="construir-patch" class="guide-step" data-step="Construir">
 <h3>Añade checkedInAt a una inscripción existente</h3>
+<p class="lesson-note"><strong>La regla que protege PATCH.</strong> La entrada modifica la inscripción que ya existe. La condición evita crear una fila en la puerta y protege la primera hora de entrada si se repite la petición.</p>
 <pre><code>vi +/checkIn index.mjs</code></pre>
-<p>Pulsa <kbd>i</kbd> para editar. Completa <code>checkIn</code> con <code>UpdateCommand</code>. La condición exige que el ítem exista y que aún no tenga <code>checkedInAt</code>. Guarda la hora en UTC, devuelve <code>200</code> y guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro. Después, vuelve a desplegar.</p><pre><code>node --check index.mjs &amp;&amp; npx serverless deploy --stage dev --aws-profile "$perfil"</code></pre><p class="checkpoint"><strong>Antes de avanzar</strong> El despliegue ha terminado. La ruta PATCH ya está lista para probarse.</p>
+<p>Pulsa <kbd>i</kbd> para editar. Completa <code>checkIn</code> con <code>UpdateCommand</code>. La condición exige que el ítem exista y que aún no tenga <code>checkedInAt</code>. Guarda la hora en UTC, devuelve <code>200</code> y guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro. Después, vuelve a desplegar.</p><details class="lesson-example">
+  <summary>Ver la función completa <code>checkIn</code></summary>
+  <p>Puedes copiar esta función y reemplazar la versión de <code>checkIn</code> que devuelve <code>501</code> en <code>index.mjs</code>.</p>
+  <pre data-example><code>async function checkIn(key) {
+  await db.send(new UpdateCommand({
+    TableName: registrationsTable,
+    Key: key,
+    UpdateExpression: 'SET checkedInAt = :hora',
+    ConditionExpression: 'attribute_exists(eventId) AND attribute_not_exists(checkedInAt)',
+    ExpressionAttributeValues: { ':hora': new Date().toISOString() }
+  }));
+  return json(200, { message: 'Entrada registrada' });
+}</code></pre>
+</details>
+<pre><code>node --check index.mjs &amp;&amp; npx serverless deploy --stage dev --aws-profile "$perfil"</code></pre><p class="checkpoint"><strong>Antes de avanzar</strong> El despliegue ha terminado. La ruta PATCH ya está lista para probarse.</p>
 </article>
 <article id="probar-patch" class="guide-step" data-step="Probar">
 <h3>Prueba los tres resultados</h3>
@@ -629,6 +745,7 @@ curl -i "$pase_prueba"</code></pre>
 </article>
 <article id="persistencia" class="guide-step" data-step="Persistencia">
 <h3>Recarga y lee las dos horas</h3>
+<p class="lesson-note"><strong>Qué demuestra la comparación.</strong> El GET y la consulta directa a DynamoDB deben mostrar las mismas marcas de tiempo para la misma pareja <code>eventId + userId</code>.</p>
 <p>Consulta de nuevo el pase y repite el <a href="#comprobar-datos">SELECT de inscripciones</a>. Compara las horas de la respuesta HTTP y de DynamoDB. Si estás usando la pantalla, recárgala, vuelve a introducir la URL y el código y pulsa <strong>Consultar</strong>.</p>
 <pre><code>curl -i "$pase_prueba"</code></pre>
 <p class="checkpoint"><strong>Antes de avanzar</strong> El registro sigue en DynamoDB y las dos horas coinciden con la respuesta del GET.</p>
@@ -670,7 +787,7 @@ curl -i "$pase_prueba"</code></pre>
   <p id="model-feedback" role="status">
 </p>
   <p>Prueba a cambiar <code>Festival de otoño</code> por otro título y pulsa <strong>Ver tablas</strong>. Cambiará la celda de Events en esta página.</p>
-<p><a href="#modelo-titulo">Volver a las tablas de Datos</a>
+<p><a href="#modelo-titulo">Volver a las tablas de «Probar el diseño»</a>
 </p>
 </article>
 </section>
