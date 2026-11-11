@@ -86,18 +86,6 @@ next.addEventListener('click', () => {
 });
 window.addEventListener('hashchange', showRoute);
 
-for (const control of document.querySelectorAll('[data-os]')) {
-  control.addEventListener('click', () => {
-    const os = control.dataset.os;
-    for (const choice of document.querySelectorAll('[data-os]')) {
-      choice.setAttribute('aria-pressed', String(choice.dataset.os === os));
-    }
-    for (const panel of document.querySelectorAll('[data-os-panel]')) {
-      panel.hidden = panel.dataset.osPanel !== os;
-    }
-  });
-}
-
 function addCodeControls(pre) {
   pre.tabIndex = 0;
   const code = pre.querySelector('code');
@@ -106,34 +94,49 @@ function addCodeControls(pre) {
   toolbar.className = 'code-toolbar actions';
   const feedback = document.createElement('span');
   feedback.setAttribute('role', 'status');
-  const isFile = pre.closest('#archivo-lambda, #infraestructura');
-  const copy = button(isFile ? 'Copiar archivo completo' : 'Copiar comando', async () => {
-    try {
-      await navigator.clipboard.writeText(fullText);
-      feedback.textContent = 'Copiado.';
-    } catch {
-      feedback.textContent = 'Selecciona el texto y cópialo con el teclado.';
-    }
-  });
-  toolbar.append(copy);
+  const fileName = pre.dataset.file;
+  function copyButton(label, value, fallback) {
+    return button(label, async () => {
+      try {
+        await navigator.clipboard.writeText(value);
+        feedback.textContent = 'Copiado.';
+      } catch {
+        feedback.textContent = fallback;
+      }
+    });
+  }
+  toolbar.append(copyButton(fileName ? 'Copiar archivo completo' : 'Copiar comando', fullText,
+    fileName ? 'Pulsa Ver archivo entero para copiarlo manualmente.' : 'Selecciona el texto y cópialo con el teclado.'));
   pre.before(toolbar);
-  if (isFile) {
+  if (fileName) {
+    const creationCommand = "(set -C; cat > " + fileName + " <<'FESTIVAL_FILE'\n" +
+      fullText + "\nFESTIVAL_FILE\n)\n";
+    const copyCreation = copyButton('Copiar comando de creación', creationCommand,
+      'Pulsa Ver comando de creación para copiarlo manualmente.');
     const lines = fullText.split('\n');
     const pageSize = 17;
     const count = Math.ceil(lines.length / pageSize);
     const pageLabel = document.createElement('span');
     let page = 0;
-    let full = false;
+    let view = 'pages';
     const previous = button('Página anterior', () => { page--; render(); });
     const following = button('Página siguiente', () => { page++; render(); });
-    const toggle = button('Ver archivo entero', () => { full = !full; render(); });
+    const toggle = button('Ver archivo entero', () => {
+      view = view === 'file' ? 'pages' : 'file';
+      render();
+    });
+    const showCommand = button('Ver comando de creación', () => {
+      view = view === 'command' ? 'pages' : 'command';
+      render();
+    });
     function render() {
-      const visibleLines = full ? lines : lines.slice(page * pageSize, (page + 1) * pageSize);
+      const visibleLines = view === 'pages' ? lines.slice(page * pageSize, (page + 1) * pageSize) : lines;
       const focus = pre.closest('#infraestructura')
         ? /^\s*(EVENTS_TABLE:|REGISTRATIONS_TABLE:|Ref:|handler:|method:|KeyType:)/
         : /process\.env|async function (getPass|register|checkIn|handler)/;
       code.replaceChildren();
-      for (const [index, line] of visibleLines.entries()) {
+      if (view === 'command') code.textContent = creationCommand;
+      for (const [index, line] of (view === 'command' ? [] : visibleLines).entries()) {
         if (index > 0) code.append('\n');
         if (focus.test(line)) {
           const marked = document.createElement('span');
@@ -144,20 +147,23 @@ function addCodeControls(pre) {
           code.append(line);
         }
       }
-      pageLabel.textContent = full ? 'Archivo completo' : 'Página ' + (page + 1) + ' de ' + count;
-      previous.hidden = following.hidden = full;
+      pageLabel.textContent = { file: 'Archivo completo', command: 'Comando de creación' }[view] ??
+        'Página ' + (page + 1) + ' de ' + count;
+      previous.hidden = following.hidden = view !== 'pages';
       previous.disabled = page === 0;
       following.disabled = page === count - 1;
-      toggle.textContent = full ? 'Volver a páginas' : 'Ver archivo entero';
+      toggle.textContent = view === 'file' ? 'Volver a páginas' : 'Ver archivo entero';
+      showCommand.textContent = view === 'command' ? 'Volver al código' : 'Ver comando de creación';
       pre.scrollTop = 0;
       pre.scrollLeft = 0;
     }
+    toolbar.prepend(copyCreation, showCommand);
     toolbar.append(toggle, previous, following, pageLabel);
     render();
   }
   toolbar.append(feedback);
 }
 
-const commands = '#conexion .guide-step:not(#pegar-aws) pre, #datos pre, #conectar-api pre, #construir-post pre, #construir-patch pre';
+const commands = '#conexion .guide-step:not(#pegar-aws) pre, #datos pre, #lectura pre[data-command], #conectar-api pre, #inscripcion pre, #entrada pre, #prueba pre';
 for (const pre of document.querySelectorAll(commands)) addCodeControls(pre);
 showRoute();

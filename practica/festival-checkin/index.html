@@ -6,7 +6,7 @@
 <title>Festival Check-in · práctica guiada</title>
 <link rel="stylesheet" href="style.css">
 <script type="module" src="app.js"></script>
-<script type="module" src="guia.js"></script>
+<script type="module" src="guia.js?v=terminal"></script>
 <script type="module" src="visor-modelo.js"></script>
 </head>
 <body>
@@ -52,21 +52,13 @@
 </article>
 <article id="archivo-aws" class="guide-step" data-step="Archivo">
 <h3>Abre el archivo de credenciales</h3>
-<p>Elige el comando de tu sistema. Se abrirá un editor para el archivo <code>credentials</code>, fuera del repositorio.</p>
-<div class="os-tabs actions" aria-label="Sistema operativo"><button type="button" data-os="windows" aria-pressed="true">Windows · Git Bash</button><button type="button" data-os="mac" aria-pressed="false">Mac · Terminal</button>
-</div>
-<div data-os-panel="windows"><pre><code>mkdir -p ~/.aws
-touch ~/.aws/credentials
-notepad.exe "$(cygpath -w ~/.aws/credentials)"</code></pre></div>
-<div data-os-panel="mac" hidden><pre><code>mkdir -p ~/.aws
-touch ~/.aws/credentials
-chmod 600 ~/.aws/credentials
-open -e ~/.aws/credentials</code></pre></div>
-<p class="checkpoint"><strong>Antes de avanzar</strong> Ves el archivo abierto en el Bloc de notas o en TextEdit.</p>
+<p>En Git Bash (Windows) o Terminal (Mac), abre el archivo <code>credentials</code> con <code>vi</code>. El archivo vive fuera del proyecto.</p>
+<pre><code>mkdir -p ~/.aws &amp;&amp; touch ~/.aws/credentials &amp;&amp; chmod 600 ~/.aws/credentials &amp;&amp; vi ~/.aws/credentials</code></pre>
+<p class="checkpoint"><strong>Antes de avanzar</strong> El archivo <code>~/.aws/credentials</code> está abierto dentro de la terminal.</p>
 </article>
 <article id="pegar-aws" class="guide-step" data-step="Credenciales">
 <h3>Pega el bloque y guarda</h3>
-<p>Copia el bloque completo de <strong>AWS Details</strong> en el editor y guarda con <strong>Ctrl+S</strong> en Windows o <strong>⌘S</strong> en Mac. Estas son las líneas que debes reconocer:</p><pre><code>[default]
+<p>En <code>vi</code>, escribe <code>:set paste</code> y pulsa Intro. Pulsa <kbd>i</kbd> para editar y pega el bloque completo de <strong>AWS Details</strong>. Para guardar y volver a la terminal, pulsa <kbd>Esc</kbd>, escribe <code>:wq</code> y pulsa Intro. Estas son las líneas que debes reconocer:</p><pre><code>[default]
 aws_access_key_id = VALOR_DE_LA_SESION
 aws_secret_access_key = VALOR_DE_LA_SESION
 aws_session_token = VALOR_DE_LA_SESION</code></pre><p>Si ya usas <code>[default]</code> para otra cuenta, guarda el bloque del laboratorio con la cabecera <code>[academy]</code>. Si ya tienes un perfil del laboratorio, reemplaza sus tres valores juntos.</p>
@@ -119,7 +111,7 @@ LAMBDA_ROLE_ARN=$(aws iam get-role --role-name LabRole --profile "$perfil" --reg
 </article>
 <article id="infraestructura" class="guide-step" data-step="serverless.yml">
 <h3>Describe la infraestructura en serverless.yml</h3>
-<p>Crea <code>serverless.yml</code> en la raíz de la carpeta. Copia el archivo completo. En <code>functions</code> están las tres rutas y el archivo que las atiende. En <code>resources</code> busca las dos tablas: <code>S</code> significa texto, <code>HASH</code> es la PK y <code>RANGE</code> es la SK.</p><pre><code>service: festival-checkin-${env:STUDENT_CODE}
+<p>Desde la carpeta <code>festival-checkin</code>, pulsa <strong>Copiar comando de creación</strong>, pégalo en la terminal y pulsa Intro. El bloque escribe <code>serverless.yml</code>. Si ya existe, usa <code>vi serverless.yml</code> para revisarlo. En <code>functions</code> están las tres rutas y el archivo que las atiende. En <code>resources</code> busca las dos tablas: <code>S</code> significa texto, <code>HASH</code> es la PK y <code>RANGE</code> es la SK.</p><pre data-file="serverless.yml"><code>service: festival-checkin-${env:STUDENT_CODE}
 frameworkVersion: ~4.45.0
 
 provider:
@@ -195,12 +187,13 @@ resources:
         Ref: EventsTable
     RegistrationsTableName:
       Value:
-        Ref: RegistrationsTable</code></pre><p>En <code>provider.environment</code>, cada <code>Ref</code> pasa a Lambda el nombre real de la tabla que crea CloudFormation. En <code>Outputs</code> vuelves a usar esas referencias para obtener los nombres desde la terminal.</p><p class="checkpoint"><strong>Antes de avanzar</strong> En <code>KeySchema</code>, comprueba que las dos tablas tienen <code>eventId</code> como <code>HASH</code> y que solo <code>RegistrationsTable</code> añade <code>userId</code> como <code>RANGE</code>. En <code>environment</code>, comprueba que cada <code>Ref</code> apunta a su tabla.</p>
+        Ref: RegistrationsTable</code></pre><p>En <code>provider.environment</code>, cada <code>Ref</code> pasa a Lambda el nombre real de la tabla que crea CloudFormation. En <code>Outputs</code> vuelves a usar esas referencias para obtener los nombres desde la terminal.</p><pre><code>ls -l serverless.yml
+sed -n '1,18p' serverless.yml</code></pre><p class="checkpoint"><strong>Antes de avanzar</strong> <code>ls</code> muestra <code>serverless.yml</code> y su primera línea conserva <code>${env:STUDENT_CODE}</code>. En <code>KeySchema</code>, comprueba que las dos tablas tienen <code>eventId</code> como <code>HASH</code> y que solo <code>RegistrationsTable</code> añade <code>userId</code> como <code>RANGE</code>. En <code>environment</code>, comprueba que cada <code>Ref</code> apunta a su tabla.</p>
 </article>
 <article id="archivo-lambda" class="guide-step" data-step="Archivo base">
 <h3>Prepara el archivo index.mjs</h3>
-<p>Crea <code>index.mjs</code> junto a <code>serverless.yml</code> en VS Code. Copia el archivo completo y guárdalo. El <code>handler</code> recibe la petición y elige la operación. Por ahora cada operación responde <code>501</code> hasta que la construyas.</p>
-<pre><code>import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
+<p>Pulsa <strong>Copiar comando de creación</strong> y ejecútalo en la misma carpeta para crear <code>index.mjs</code>. Si ya existe, ábrelo con <code>vi index.mjs</code>. El <code>handler</code> recibe la petición y elige la operación. Por ahora cada operación responde <code>501</code> hasta que la construyas.</p>
+<pre data-file="index.mjs"><code>import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import {
   DynamoDBDocumentClient, GetCommand, PutCommand, UpdateCommand
 } from '@aws-sdk/lib-dynamodb';
@@ -252,11 +245,12 @@ export async function handler(event) {
     console.error(error.name, error.message);
     return json(500, { message: 'Revisa los logs de la función' });
   }
-}</code></pre><p class="checkpoint"><strong>Antes de avanzar</strong> Tu carpeta contiene index.mjs, serverless.yml y package.json.</p>
+}</code></pre><pre><code>ls -l index.mjs serverless.yml package.json
+node --check index.mjs</code></pre><p class="checkpoint"><strong>Antes de avanzar</strong> <code>ls</code> muestra los tres archivos y <code>node --check</code> vuelve a la terminal sin errores.</p>
 </article>
 <article id="desplegar-stack" class="guide-step" data-step="Desplegar">
 <h3>Despliega el servicio desde la terminal</h3>
-<p>Ejecuta el comando en la carpeta <code>festival-checkin</code>. Serverless Framework lee tu YAML y CloudFormation crea las tablas, la función y la HTTP API en el laboratorio.</p><pre><code>npx serverless deploy --stage dev --aws-profile "$perfil"</code></pre><p>Si Framework pide iniciar sesión, usa el mismo acceso de la lección <a href="../../#primer-serverless">01 · Primer Serverless</a>. Si falla CloudFormation, lee el primer recurso y permiso que aparecen en el error. Si la sesión de AWS caducó, renueva los tres valores y repite la comprobación de Conexión.</p><p class="checkpoint"><strong>Antes de avanzar</strong> La terminal muestra el despliegue terminado y las tres rutas de la API.</p>
+<p>Ejecuta el comando en la carpeta <code>festival-checkin</code>. Serverless Framework lee tu YAML y CloudFormation crea las tablas, la función y la HTTP API en el laboratorio.</p><pre><code>node --check index.mjs &amp;&amp; npx serverless deploy --stage dev --aws-profile "$perfil"</code></pre><p>Si Framework pide iniciar sesión, usa el mismo acceso de la lección <a href="../../#primer-serverless">01 · Primer Serverless</a>. Si falla CloudFormation, lee el primer recurso y permiso que aparecen en el error. Si la sesión de AWS caducó, renueva los tres valores y repite la comprobación de Conexión.</p><p class="checkpoint"><strong>Antes de avanzar</strong> La terminal muestra el despliegue terminado y las tres rutas de la API.</p>
 </article>
 <article id="salidas-stack" class="guide-step" data-step="Salidas">
 <h3>Recupera los nombres reales y la URL</h3>
@@ -300,28 +294,34 @@ done</code></pre><p class="checkpoint"><strong>Antes de avanzar</strong> Ambas e
 <h2>Leer desde Lambda</h2>
 <article id="leer-pase" class="guide-step" data-step="Lectura">
 <h3>Lee el evento y la inscripción con getPass</h3>
-<p>Abre <code>index.mjs</code> en VS Code. Sustituye la respuesta <code>501</code> de <code>getPass(key)</code> siguiendo estos pasos.</p>
+<p>Abre el archivo desde la terminal y localiza <code>getPass</code>.</p><pre data-command><code>vi +/getPass index.mjs</code></pre><p>Pulsa <kbd>i</kbd> para editar y sustituye la respuesta <code>501</code> de <code>getPass(key)</code> siguiendo estos pasos.</p>
 <ol>
   <li>Usa <code>GetCommand</code> sobre <code>eventsTable</code> con la clave <code>{ eventId: key.eventId }</code>. Si el resultado carece de <code>Item</code>, devuelve <code>404</code>.</li>
   <li>Usa otro <code>GetCommand</code> sobre <code>registrationsTable</code> con <code>key</code> completa. Activa <code>ConsistentRead</code> en ambas lecturas.</li>
   <li>Devuelve <code>200</code> con el identificador y el título del evento. En <code>registration</code>, incluye el ítem de inscripción si existe, o <code>null</code>.</li>
 </ol><pre><code>{ "eventId": "evt-001", "title": "Festival de otoño", "registration": null }</code></pre><p>Cuando exista la inscripción, <code>registration</code> contiene el registro con <code>userId</code>, <code>registeredAt</code> y la hora de entrada si ya se guardó.</p>
-<p class="checkpoint"><strong>Antes de avanzar</strong> En <code>index.mjs</code>, el primer <code>GetCommand</code> usa <code>eventId</code> y el segundo usa <code>eventId</code> y <code>userId</code>. Guarda el archivo.</p>
+<p class="checkpoint"><strong>Antes de avanzar</strong> En <code>index.mjs</code>, el primer <code>GetCommand</code> usa <code>eventId</code> y el segundo usa <code>eventId</code> y <code>userId</code>. Pulsa <kbd>Esc</kbd>, escribe <code>:wq</code> y pulsa Intro para guardar.</p>
 </article>
 <article id="conectar-api" class="guide-step" data-step="Probar GET">
 <h3>Despliega la lectura y prueba la pantalla</h3>
-<p>Guarda los cambios en <code>index.mjs</code> y ejecuta el mismo despliegue. Después prueba la ruta GET desde la terminal con un código ficticio nuevo.</p><pre><code>npx serverless deploy --stage dev --aws-profile "$perfil"</code></pre><pre><code>curl -i "$api_url/events/evt-001/registrations/equipo-01"</code></pre><p>En <a href="#pantalla">Pantalla de prueba</a>, elige AWS, pega el valor de <code>api_url</code> en URL de invocación y pulsa Consultar con el mismo código.</p><p class="checkpoint"><strong>Antes de avanzar</strong> curl devuelve 200 y registration: null. La pantalla muestra Festival de otoño y Sin inscripción.</p>
+<p>Guarda los cambios en <code>index.mjs</code> y ejecuta el mismo despliegue. Después prueba la ruta GET desde la terminal con un código ficticio nuevo.</p><pre><code>node --check index.mjs &amp;&amp; npx serverless deploy --stage dev --aws-profile "$perfil"</code></pre><pre><code>curl -i "$api_url/events/evt-001/registrations/equipo-01"</code></pre><p>En <a href="#pantalla">Pantalla de prueba</a>, elige AWS, pega el valor de <code>api_url</code> en URL de invocación y pulsa Consultar con el mismo código.</p><p class="checkpoint"><strong>Antes de avanzar</strong> curl devuelve 200 y registration: null. La pantalla muestra Festival de otoño y Sin inscripción.</p>
 </article>
 </section>
 <section id="inscripcion" class="phase" hidden>
 <h2>Guardar una inscripción</h2>
 <article id="construir-post" class="guide-step" data-step="Construir">
 <h3>Crea la inscripción con las dos claves</h3>
-<p>Completa <code>register</code>. Comprueba que el evento existe. Guarda las dos claves y <code>registeredAt</code> en UTC. Condiciona <code>PutCommand</code> a que el ítem no exista. Devuelve <code>201</code>. Guarda <code>index.mjs</code> y vuelve a desplegar desde la misma carpeta.</p><pre><code>npx serverless deploy --stage dev --aws-profile "$perfil"</code></pre><p class="checkpoint"><strong>Antes de avanzar</strong> El despliegue ha terminado. La ruta POST ya está lista para probarse.</p>
+<pre><code>vi +/register index.mjs</code></pre>
+<p>Pulsa <kbd>i</kbd> para editar. Completa <code>register</code>. Comprueba que el evento existe. Guarda las dos claves y <code>registeredAt</code> en UTC. Condiciona <code>PutCommand</code> a que el ítem no exista. Devuelve <code>201</code>. Guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro. Después, vuelve a desplegar.</p><pre><code>node --check index.mjs &amp;&amp; npx serverless deploy --stage dev --aws-profile "$perfil"</code></pre><p class="checkpoint"><strong>Antes de avanzar</strong> El despliegue ha terminado. La ruta POST ya está lista para probarse.</p>
 </article>
 <article id="probar-post" class="guide-step" data-step="Probar">
 <h3>Comprueba que no se inscribe dos veces</h3>
-<p>Abre la <a href="#pantalla">Pantalla de prueba</a>. Pulsa <strong>Inscribirse</strong> dos veces con el mismo código. Consulta después el registro.</p>
+<p>Elige un código sin inscripción. Cambia <code>equipo-01</code> si ya se ha usado. Ejecuta los dos POST y luego consulta el registro.</p>
+<pre><code>usuario=equipo-01
+pase="$api_url/events/evt-001/registrations/$usuario"
+curl -i -X POST "$pase"
+curl -i -X POST "$pase"
+curl -i "$pase"</code></pre>
 <p class="checkpoint"><strong>Antes de avanzar</strong> La primera respuesta es 201. La segunda es 409 y se conserva la primera hora de registro.</p>
 </article>
 </section>
@@ -329,11 +329,17 @@ done</code></pre><p class="checkpoint"><strong>Antes de avanzar</strong> Ambas e
 <h2>Registrar la entrada</h2>
 <article id="construir-patch" class="guide-step" data-step="Construir">
 <h3>Añade checkedInAt a una inscripción existente</h3>
-<p>Completa <code>checkIn</code> con <code>UpdateCommand</code>. La condición exige que el ítem exista y que aún no tenga <code>checkedInAt</code>. Guarda la hora en UTC, devuelve <code>200</code> y guarda <code>index.mjs</code>. Vuelve a desplegar desde la misma carpeta.</p><pre><code>npx serverless deploy --stage dev --aws-profile "$perfil"</code></pre><p class="checkpoint"><strong>Antes de avanzar</strong> El despliegue ha terminado. La ruta PATCH ya está lista para probarse.</p>
+<pre><code>vi +/checkIn index.mjs</code></pre>
+<p>Pulsa <kbd>i</kbd> para editar. Completa <code>checkIn</code> con <code>UpdateCommand</code>. La condición exige que el ítem exista y que aún no tenga <code>checkedInAt</code>. Guarda la hora en UTC, devuelve <code>200</code> y guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro. Después, vuelve a desplegar.</p><pre><code>node --check index.mjs &amp;&amp; npx serverless deploy --stage dev --aws-profile "$perfil"</code></pre><p class="checkpoint"><strong>Antes de avanzar</strong> El despliegue ha terminado. La ruta PATCH ya está lista para probarse.</p>
 </article>
 <article id="probar-patch" class="guide-step" data-step="Probar">
 <h3>Prueba los tres resultados</h3>
-<p>En la <a href="#pantalla">Pantalla de prueba</a>, pulsa Registrar entrada con un código nuevo. Luego prueba con el código que sí se inscribió y repite la entrada.</p>
+<p>Usa un código sin inscripción en el primer PATCH. <code>$pase</code> conserva la URL del código que inscribiste en el paso anterior.</p>
+<pre><code>sin_inscripcion=equipo-02
+curl -i -X PATCH "$api_url/events/evt-001/registrations/$sin_inscripcion"
+curl -i -X PATCH "$pase"
+curl -i -X PATCH "$pase"
+curl -i "$pase"</code></pre>
 <p class="checkpoint"><strong>Antes de avanzar</strong> Los resultados son 409, 200 y 409. El registro inscrito conserva registeredAt y checkedInAt.</p>
 </article>
 </section>
@@ -341,7 +347,16 @@ done</code></pre><p class="checkpoint"><strong>Antes de avanzar</strong> Ambas e
 <h2>Demostración cruzada</h2>
 <article id="otro-equipo" class="guide-step" data-step="Recorrido">
 <h3>Pasa el control de puerta a tu pareja</h3>
-<p>Con un código nuevo, usa la <a href="#pantalla">Pantalla de prueba</a> y sigue esta secuencia.</p>
+<p>Elige otro código sin inscripción y ejecuta el bloque. Puedes repetir el recorrido desde la <a href="#pantalla">Pantalla de prueba</a> con otro código.</p>
+<pre><code>codigo_prueba=equipo-03
+pase_prueba="$api_url/events/evt-001/registrations/$codigo_prueba"
+curl -i "$pase_prueba"
+curl -i -X PATCH "$pase_prueba"
+curl -i -X POST "$pase_prueba"
+curl -i -X POST "$pase_prueba"
+curl -i -X PATCH "$pase_prueba"
+curl -i -X PATCH "$pase_prueba"
+curl -i "$pase_prueba"</code></pre>
 <ol>
 <li>Consulta: sin inscripción.</li>
 <li>Intenta entrar: 409.</li>
@@ -352,8 +367,9 @@ done</code></pre><p class="checkpoint"><strong>Antes de avanzar</strong> Ambas e
 </article>
 <article id="persistencia" class="guide-step" data-step="Persistencia">
 <h3>Recarga y lee las dos horas</h3>
-<p>Recarga, introduce de nuevo la URL y el código y pulsa <strong>Consultar</strong>. En la terminal, repite el <a href="#comprobar-datos">SELECT de inscripciones</a> y compara las horas.</p>
-<p class="checkpoint"><strong>Antes de avanzar</strong> El registro sigue en DynamoDB y las dos horas coinciden con la pantalla.</p>
+<p>Consulta de nuevo el pase y repite el <a href="#comprobar-datos">SELECT de inscripciones</a>. Compara las horas de la respuesta HTTP y de DynamoDB. Si estás usando la pantalla, recárgala, vuelve a introducir la URL y el código y pulsa <strong>Consultar</strong>.</p>
+<pre><code>curl -i "$pase_prueba"</code></pre>
+<p class="checkpoint"><strong>Antes de avanzar</strong> El registro sigue en DynamoDB y las dos horas coinciden con la respuesta del GET.</p>
 </article>
 </section>
 <section id="referencias" class="phase" hidden>
