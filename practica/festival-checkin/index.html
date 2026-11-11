@@ -98,90 +98,108 @@ aws dynamodb list-tables --profile "$perfil" --region "$region"</code></pre><p><
 <p>En el ejemplo, <code>checkedInAt</code> indica que la persona ya entró. En AWS, la tabla de inscripciones empezará vacía.</p>
 <p class="checkpoint"><strong>Antes de avanzar</strong> Puedes explicar por qué las dos inscripciones tienen el mismo eventId y distinto userId.</p>
 </article>
-<article id="nombres-tablas" class="guide-step" data-step="Nombres">
-<h3>Pon nombre a las tablas</h3>
-<p>Usa la misma terminal de <a href="#conexion">Conexión</a> y cambia <code>equipo-01</code> por tu prefijo.</p><pre><code>equipo=equipo-01
-tabla_eventos="$equipo-events"
-tabla_inscripciones="$equipo-registrations"
-printf "%s\n" "$tabla_eventos" "$tabla_inscripciones"</code></pre><p class="checkpoint"><strong>Antes de avanzar</strong> Ves los dos nombres con tu prefijo. Los usarás también al configurar Lambda.</p>
+<article id="nombres-tablas" class="guide-step" data-step="Proyecto">
+<h3>Prepara la carpeta de trabajo</h3>
+<p>En la misma terminal de Conexión, abre la carpeta donde guardas tus prácticas. Usarás Node.js 22 y la misma versión de Serverless Framework del entrenamiento. Guarda aquí los dos archivos que crearás en los pasos siguientes.</p><pre><code>node --version
+mkdir -p festival-checkin
+cd festival-checkin
+npm init -y
+npm install --save-dev --save-exact serverless@4.45.0
+npm install @aws-sdk/client-dynamodb @aws-sdk/lib-dynamodb
+npx serverless --version</code></pre><p class="checkpoint"><strong>Antes de avanzar</strong> Estás en festival-checkin y tienes package.json con Serverless Framework y el SDK de DynamoDB.</p>
 </article>
-<article id="crear-eventos" class="guide-step" data-step="Events">
-<h3>Crea Events con una sola clave</h3>
-<p>Un evento se encuentra con su <code>eventId</code>. En el comando, <code>S</code> indica texto y <code>HASH</code> marca la clave de partición.</p><pre><code>aws dynamodb create-table \
-  --profile "$perfil" --region "$region" \
-  --table-name "$tabla_eventos" \
-  --attribute-definitions AttributeName=eventId,AttributeType=S \
-  --key-schema AttributeName=eventId,KeyType=HASH \
-  --billing-mode PAY_PER_REQUEST \
-  --query 'TableDescription.TableStatus' --output text</code></pre><p class="checkpoint"><strong>Antes de avanzar</strong> La terminal responde CREATING o ACTIVE. Si la tabla ya existe, revisa sus claves en el paso Estado.</p>
+<article id="rol-laboratorio" class="guide-step" data-step="Rol">
+<h3>Selecciona el equipo y el rol de Lambda</h3>
+<p>Cambia <code>equipo-01</code> por el código que te ha asignado el profesor. El último comando localiza el ARN de <code>LabRole</code>, el rol existente que usará Lambda para leer y escribir en DynamoDB.</p><pre><code>export AWS_PROFILE="$perfil"
+export AWS_REGION="$region"
+export STUDENT_CODE=equipo-01
+LAMBDA_ROLE_ARN=$(aws iam get-role --role-name LabRole --profile "$perfil" --region "$region" --query 'Role.Arn' --output text) &amp;&amp;
+  export LAMBDA_ROLE_ARN &amp;&amp;
+  printf '%s\n' "$LAMBDA_ROLE_ARN"</code></pre><p>Si el laboratorio deniega <code>iam:GetRole</code>, usa el ARN autorizado de tu cuenta que indica el laboratorio o el profesor. Escríbelo con <code>export LAMBDA_ROLE_ARN="ARN_DEL_LAB"</code>, sustituyendo el valor entre comillas.</p><p class="checkpoint"><strong>Antes de avanzar</strong> Tienes el ARN del rol del laboratorio y sigues usando el perfil y la región que comprobaste en Conexión.</p>
 </article>
-<article id="crear-inscripciones" class="guide-step" data-step="Registrations">
-<h3>Crea Registrations con dos claves</h3>
-<p><code>eventId</code> agrupa las inscripciones del evento. <code>userId</code> distingue a cada persona. <code>RANGE</code> marca la clave de ordenación.</p><pre><code>aws dynamodb create-table \
-  --profile "$perfil" --region "$region" \
-  --table-name "$tabla_inscripciones" \
-  --attribute-definitions AttributeName=eventId,AttributeType=S AttributeName=userId,AttributeType=S \
-  --key-schema AttributeName=eventId,KeyType=HASH AttributeName=userId,KeyType=RANGE \
-  --billing-mode PAY_PER_REQUEST \
-  --query 'TableDescription.TableStatus' --output text</code></pre><p class="checkpoint"><strong>Antes de avanzar</strong> La terminal responde CREATING o ACTIVE.</p>
-</article>
-<article id="estado-tablas" class="guide-step" data-step="Estado">
-<h3>Espera y comprueba las claves</h3>
-<p>Ejecuta el bloque. <code>wait</code> vuelve al prompt sin imprimir nada cuando la tabla está lista. <code>describe-table</code> muestra las claves.</p><pre><code>for tabla in "$tabla_eventos" "$tabla_inscripciones"; do
-  aws dynamodb wait table-exists \
-    --profile "$perfil" --region "$region" --table-name "$tabla" || break
-  aws dynamodb describe-table \
-    --profile "$perfil" --region "$region" --table-name "$tabla" \
-    --query 'Table.{Nombre:TableName,Estado:TableStatus,Claves:KeySchema}' || break
-done</code></pre><p class="checkpoint"><strong>Antes de avanzar</strong> Ambas están ACTIVE. Events tiene eventId como HASH. Registrations añade userId como RANGE.</p>
-</article>
-<article id="guardar-evento" class="guide-step" data-step="INSERT">
-<h3>Guarda el primer evento</h3>
-<p>Usa PartiQL para guardar «Festival de otoño» con el identificador <code>evt-001</code>.</p><pre><code>aws dynamodb execute-statement \
-  --profile "$perfil" --region "$region" \
-  --statement "INSERT INTO \"$tabla_eventos\" VALUE {'eventId': 'evt-001', 'title': 'Festival de otoño'}"</code></pre><p class="checkpoint"><strong>Antes de avanzar</strong> El comando vuelve al prompt sin error. Si ves DuplicateItemException, el evento ya existe y puedes comprobarlo en el siguiente paso.</p>
-</article>
-<article id="comprobar-datos" class="guide-step" data-step="SELECT">
-<h3>Lee lo que se ha guardado</h3>
-<p>Ejecuta cada consulta y compara sus salidas.</p><pre><code>aws dynamodb execute-statement \
-  --profile "$perfil" --region "$region" --consistent-read \
-  --statement "SELECT eventId, title FROM \"$tabla_eventos\" WHERE eventId = 'evt-001'"</code></pre><pre><code>aws dynamodb execute-statement \
-  --profile "$perfil" --region "$region" --consistent-read \
-  --statement "SELECT * FROM \"$tabla_inscripciones\" WHERE eventId = 'evt-001'"</code></pre><p class="checkpoint"><strong>Antes de avanzar</strong> Events devuelve evt-001 y Festival de otoño. Registrations devuelve Items: [] si aún no hay inscripciones.</p>
-</article>
-</section>
-<section id="lectura" class="phase" hidden>
-<h2>Leer desde Lambda</h2>
-<article id="crear-lambda" class="guide-step" data-step="Función">
-<h3>Crea la función con el rol del laboratorio</h3>
-<ol>
-  <li>En <strong>AWS Academy → AWS</strong>, comprueba arriba a la derecha que estás en la misma región que tus tablas. En el ensayo usamos <code>us-east-1</code>.</li>
-  <li>Busca <strong>Lambda</strong> y abre <strong>Functions / Event Functions → Create function → Author from scratch</strong>.</li>
-  <li>En <strong>Function name</strong>, escribe <code>equipo-01-festival-checkin</code> con tu prefijo. Elige <strong>Node.js 22.x</strong> y deja la arquitectura en <strong>x86_64</strong>.</li>
-  <li>En <strong>Permissions → Change default execution role</strong>, selecciona <strong>Use an existing role</strong> y, en <strong>Existing role</strong>, elige <strong>LabRole</strong>. Ese rol permite que Lambda actúe con los permisos que le asigna el laboratorio.</li>
-  <li>Pulsa <strong>Create function</strong>. Si la función ya existe, ábrela y revisa su configuración.</li>
-</ol>
-<p>Si <code>LabRole</code> no aparece o la consola muestra <code>iam:PassRole</code>, comprueba que entraste desde el laboratorio y que sigue activo. Si persiste, anota el mensaje para revisar los permisos del aula.</p>
-<p class="checkpoint"><strong>Antes de avanzar</strong> Estás dentro de tu función. En Configuration → Permissions, el rol de ejecución es LabRole.</p>
-</article>
-<article id="tablas-lambda" class="guide-step" data-step="Variables">
-<h3>Dile a Lambda qué tablas debe leer</h3>
-<p>Dentro de la función, abre <strong>Configuration → Environment variables → Edit</strong>. Pulsa <strong>Add environment variable</strong> una vez por cada fila. Cambia <code>equipo-01</code> si usaste otro prefijo.</p>
-<div class="model-table-scroll">
-  <table>
-    <thead><tr><th scope="col">Key</th><th scope="col">Value</th></tr></thead>
-    <tbody>
-      <tr><td><code>EVENTS_TABLE</code></td><td><code>equipo-01-events</code></td></tr>
-      <tr><td><code>REGISTRATIONS_TABLE</code></td><td><code>equipo-01-registrations</code></td></tr>
-    </tbody>
-  </table>
-</div>
-<p>Pulsa <strong>Save</strong>. El código leerá estos nombres mediante <code>process.env</code>. El nombre de cada tabla debe coincidir carácter por carácter con el que viste en <a href="#estado-tablas">Datos → Estado</a>.</p>
-<p class="checkpoint"><strong>Antes de avanzar</strong> La pantalla de Environment variables muestra las dos filas guardadas con los nombres de tus tablas.</p>
+<article id="infraestructura" class="guide-step" data-step="serverless.yml">
+<h3>Describe la infraestructura en serverless.yml</h3>
+<p>Crea <code>serverless.yml</code> en la raíz de la carpeta. Copia el archivo completo. En <code>functions</code> están las tres rutas y el archivo que las atiende. En <code>resources</code> busca las dos tablas: <code>S</code> significa texto, <code>HASH</code> es la PK y <code>RANGE</code> es la SK.</p><pre><code>service: festival-checkin-${env:STUDENT_CODE}
+frameworkVersion: ~4.45.0
+
+provider:
+  name: aws
+  runtime: nodejs22.x
+  region: ${env:AWS_REGION}
+  stage: dev
+  iam:
+    role: ${env:LAMBDA_ROLE_ARN}
+  environment:
+    EVENTS_TABLE:
+      Ref: EventsTable
+    REGISTRATIONS_TABLE:
+      Ref: RegistrationsTable
+  httpApi:
+    payload: '2.0'
+    cors:
+      allowedOrigins:
+        - https://albertohdezakkari.github.io
+      allowedHeaders:
+        - Content-Type
+      allowedMethods:
+        - GET
+        - POST
+        - PATCH
+
+build:
+  esbuild: false
+
+functions:
+  checkin:
+    handler: index.handler
+    events:
+      - httpApi:
+          method: GET
+          path: /events/{eventId}/registrations/{userId}
+      - httpApi:
+          method: POST
+          path: /events/{eventId}/registrations/{userId}
+      - httpApi:
+          method: PATCH
+          path: /events/{eventId}/registrations/{userId}
+
+resources:
+  Resources:
+    EventsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: eventId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: eventId
+            KeyType: HASH
+    RegistrationsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: eventId
+            AttributeType: S
+          - AttributeName: userId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: eventId
+            KeyType: HASH
+          - AttributeName: userId
+            KeyType: RANGE
+  Outputs:
+    EventsTableName:
+      Value:
+        Ref: EventsTable
+    RegistrationsTableName:
+      Value:
+        Ref: RegistrationsTable</code></pre><p>En <code>provider.environment</code>, cada <code>Ref</code> pasa a Lambda el nombre real de la tabla que crea CloudFormation. En <code>Outputs</code> vuelves a usar esas referencias para obtener los nombres desde la terminal.</p><p class="checkpoint"><strong>Antes de avanzar</strong> Puedes señalar dónde se define la clave de cada tabla y cómo recibe Lambda sus nombres.</p>
 </article>
 <article id="archivo-lambda" class="guide-step" data-step="Archivo base">
-<h3>Abre index.mjs y guarda el punto de partida</h3>
-<p>Copia el archivo completo en el editor de Lambda y pulsa <strong>Deploy</strong>. Los tres métodos están señalados para que los construyas en clase.</p>
+<h3>Prepara el archivo index.mjs</h3>
+<p>Crea <code>index.mjs</code> junto a <code>serverless.yml</code> en VS Code. Copia el archivo completo y guárdalo. El <code>handler</code> recibe la petición y elige la operación. Por ahora cada operación responde <code>501</code> hasta que la construyas.</p>
 <pre><code>import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import {
   DynamoDBDocumentClient, GetCommand, PutCommand, UpdateCommand
@@ -234,26 +252,72 @@ export async function handler(event) {
     console.error(error.name, error.message);
     return json(500, { message: 'Revisa los logs de la función' });
   }
-}</code></pre><p class="checkpoint"><strong>Antes de avanzar</strong> Lambda ha guardado el archivo.</p>
+}</code></pre><p class="checkpoint"><strong>Antes de avanzar</strong> Tu carpeta contiene index.mjs, serverless.yml y package.json.</p>
 </article>
+<article id="desplegar-stack" class="guide-step" data-step="Desplegar">
+<h3>Despliega el servicio desde la terminal</h3>
+<p>Ejecuta el comando en la carpeta <code>festival-checkin</code>. Serverless Framework lee tu YAML y CloudFormation crea las tablas, la función y la HTTP API en el laboratorio.</p><pre><code>npx serverless deploy --stage dev --aws-profile "$perfil"</code></pre><p>Si Framework pide iniciar sesión, usa el mismo acceso de la lección <a href="../../#primer-serverless">01 · Primer Serverless</a>. Si falla CloudFormation, lee el primer recurso y permiso que aparecen en el error. Si la sesión de AWS caducó, renueva los tres valores y repite la comprobación de Conexión.</p><p class="checkpoint"><strong>Antes de avanzar</strong> La terminal muestra el despliegue terminado y las tres rutas de la API.</p>
+</article>
+<article id="salidas-stack" class="guide-step" data-step="Salidas">
+<h3>Recupera los nombres reales y la URL</h3>
+<p>Ejecuta el bloque en la misma terminal. Las dos primeras líneas impresas son los nombres de DynamoDB. La tercera es la URL base de la HTTP API. Guarda esa URL para la prueba de lectura.</p><pre><code>stack="festival-checkin-${STUDENT_CODE}-dev"
+salida() {
+  aws cloudformation describe-stacks --stack-name "$stack" \
+    --profile "$perfil" --region "$region" \
+    --query "Stacks[0].Outputs[?OutputKey=='$1'].OutputValue | [0]" --output text
+}
+tabla_eventos=$(salida EventsTableName)
+tabla_inscripciones=$(salida RegistrationsTableName)
+api_url=$(salida HttpApiUrl)
+printf '%s\n' "$tabla_eventos" "$tabla_inscripciones" "$api_url"</code></pre><p class="checkpoint"><strong>Antes de avanzar</strong> Ves dos nombres distintos y una URL https de execute-api. Si ves None, verifica el nombre del stack, el perfil y la región antes del INSERT.</p>
+</article>
+<article id="estado-tablas" class="guide-step" data-step="Estado">
+<h3>Espera y comprueba las claves</h3>
+<p>Ejecuta el bloque. <code>wait</code> vuelve al prompt sin imprimir nada cuando la tabla está lista. <code>describe-table</code> muestra las claves.</p><pre><code>for tabla in "$tabla_eventos" "$tabla_inscripciones"; do
+  aws dynamodb wait table-exists \
+    --profile "$perfil" --region "$region" --table-name "$tabla" || break
+  aws dynamodb describe-table \
+    --profile "$perfil" --region "$region" --table-name "$tabla" \
+    --query 'Table.{Nombre:TableName,Estado:TableStatus,Claves:KeySchema}' || break
+done</code></pre><p class="checkpoint"><strong>Antes de avanzar</strong> Ambas están ACTIVE. Events tiene eventId como HASH. Registrations añade userId como RANGE.</p>
+</article>
+<article id="guardar-evento" class="guide-step" data-step="INSERT">
+<h3>Guarda el primer evento</h3>
+<p>Usa PartiQL para guardar «Festival de otoño» con el identificador <code>evt-001</code>.</p><pre><code>aws dynamodb execute-statement \
+  --profile "$perfil" --region "$region" \
+  --statement "INSERT INTO \"$tabla_eventos\" VALUE {'eventId': 'evt-001', 'title': 'Festival de otoño'}"</code></pre><p class="checkpoint"><strong>Antes de avanzar</strong> El comando vuelve al prompt sin error. Si ves DuplicateItemException, el evento ya existe y puedes comprobarlo en el siguiente paso.</p>
+</article>
+<article id="comprobar-datos" class="guide-step" data-step="SELECT">
+<h3>Lee lo que se ha guardado</h3>
+<p>Ejecuta cada consulta y compara sus salidas.</p><pre><code>aws dynamodb execute-statement \
+  --profile "$perfil" --region "$region" --consistent-read \
+  --statement "SELECT eventId, title FROM \"$tabla_eventos\" WHERE eventId = 'evt-001'"</code></pre><pre><code>aws dynamodb execute-statement \
+  --profile "$perfil" --region "$region" --consistent-read \
+  --statement "SELECT * FROM \"$tabla_inscripciones\" WHERE eventId = 'evt-001'"</code></pre><p class="checkpoint"><strong>Antes de avanzar</strong> Events devuelve evt-001 y Festival de otoño. Registrations devuelve Items: [] si aún no hay inscripciones.</p>
+</article>
+</section>
+<section id="lectura" class="phase" hidden>
+<h2>Leer desde Lambda</h2>
 <article id="leer-pase" class="guide-step" data-step="Lectura">
 <h3>Construye getPass con el profesor</h3>
-<p>Busca el evento con <code>eventId</code> en Events. Si no existe, responde <code>404</code>. Busca la inscripción con <code>eventId</code> y <code>userId</code> en Registrations. Para esta comprobación usa lectura consistente.</p><pre><code>{ "eventId": "evt-001", "title": "Festival de otoño", "registration": null }</code></pre><p>Cuando exista la inscripción, <code>registration</code> contiene el registro con <code>userId</code>, <code>registeredAt</code> y la hora de entrada si ya se guardó.</p>
-<p class="checkpoint"><strong>Antes de avanzar</strong> El cuerpo del GET devuelve el evento y registration: null para un código nuevo.</p>
+<p>Abre <code>index.mjs</code> en VS Code. Trabaja dentro de <code>getPass(key)</code> y sustituye su respuesta <code>501</code> con el profesor.</p>
+<ol>
+  <li>Usa <code>GetCommand</code> sobre <code>eventsTable</code> con la clave <code>{ eventId: key.eventId }</code>. Si el resultado carece de <code>Item</code>, devuelve <code>404</code>.</li>
+  <li>Usa otro <code>GetCommand</code> sobre <code>registrationsTable</code> con <code>key</code> completa. Activa <code>ConsistentRead</code> en ambas lecturas.</li>
+  <li>Devuelve <code>200</code> con el identificador y el título del evento. En <code>registration</code>, incluye el ítem de inscripción si existe, o <code>null</code>.</li>
+</ol><pre><code>{ "eventId": "evt-001", "title": "Festival de otoño", "registration": null }</code></pre><p>Cuando exista la inscripción, <code>registration</code> contiene el registro con <code>userId</code>, <code>registeredAt</code> y la hora de entrada si ya se guardó.</p>
+<p class="checkpoint"><strong>Antes de avanzar</strong> Has guardado getPass en index.mjs y puedes explicar qué clave usa cada GetCommand.</p>
 </article>
-<article id="conectar-api" class="guide-step" data-step="API">
-<h3>Conecta la ruta GET y prueba la pantalla</h3>
-<p>Crea una <strong>HTTP API</strong> con etapa <code>$default</code>, integración Lambda y formato <code>2.0</code>. Añade la ruta <code>GET /events/{eventId}/registrations/{userId}</code>.</p>
-<p>En CORS, usa el origen <code>https://albertohdezakkari.github.io</code>, los métodos GET, POST y PATCH y la cabecera Content-Type. En <a href="#pantalla">Pantalla de prueba</a>, elige AWS y pega la URL de invocación. Pulsa Consultar.</p>
-<p class="checkpoint"><strong>Antes de avanzar</strong> La pantalla muestra el título real y Sin inscripción.</p>
+<article id="conectar-api" class="guide-step" data-step="Probar GET">
+<h3>Despliega la lectura y prueba la pantalla</h3>
+<p>Guarda los cambios en <code>index.mjs</code> y ejecuta el mismo despliegue. Después prueba la ruta GET desde la terminal con un código ficticio nuevo.</p><pre><code>npx serverless deploy --stage dev --aws-profile "$perfil"</code></pre><pre><code>curl -i "$api_url/events/evt-001/registrations/equipo-01"</code></pre><p>En <a href="#pantalla">Pantalla de prueba</a>, elige AWS, pega el valor de <code>api_url</code> en URL de invocación y pulsa Consultar con el mismo código.</p><p class="checkpoint"><strong>Antes de avanzar</strong> curl devuelve 200 y registration: null. La pantalla muestra Festival de otoño y Sin inscripción.</p>
 </article>
 </section>
 <section id="inscripcion" class="phase" hidden>
 <h2>Guardar una inscripción</h2>
 <article id="construir-post" class="guide-step" data-step="Construir">
 <h3>Crea la inscripción con las dos claves</h3>
-<p>Completa <code>register</code>. Comprueba que el evento existe. Guarda las dos claves y <code>registeredAt</code> en UTC. Condiciona <code>PutCommand</code> a que el ítem no exista. Devuelve <code>201</code>. Añade <code>POST /events/{eventId}/registrations/{userId}</code> a la integración.</p>
-<p class="checkpoint"><strong>Antes de avanzar</strong> La ruta POST usa la misma Lambda que GET.</p>
+<p>Completa <code>register</code>. Comprueba que el evento existe. Guarda las dos claves y <code>registeredAt</code> en UTC. Condiciona <code>PutCommand</code> a que el ítem no exista. Devuelve <code>201</code>. Guarda <code>index.mjs</code> y vuelve a desplegar desde la misma carpeta.</p><pre><code>npx serverless deploy --stage dev --aws-profile "$perfil"</code></pre><p class="checkpoint"><strong>Antes de avanzar</strong> El despliegue ha terminado. La ruta POST ya está lista para probarse.</p>
 </article>
 <article id="probar-post" class="guide-step" data-step="Probar">
 <h3>Comprueba que no se inscribe dos veces</h3>
@@ -265,8 +329,7 @@ export async function handler(event) {
 <h2>Registrar la entrada</h2>
 <article id="construir-patch" class="guide-step" data-step="Construir">
 <h3>Añade checkedInAt a una inscripción existente</h3>
-<p>Completa <code>checkIn</code> con <code>UpdateCommand</code>. La condición exige que el ítem exista y que aún no tenga <code>checkedInAt</code>. Guarda la hora en UTC, devuelve <code>200</code> y añade <code>PATCH /events/{eventId}/registrations/{userId}</code>.</p>
-<p class="checkpoint"><strong>Antes de avanzar</strong> La ruta PATCH usa la misma Lambda.</p>
+<p>Completa <code>checkIn</code> con <code>UpdateCommand</code>. La condición exige que el ítem exista y que aún no tenga <code>checkedInAt</code>. Guarda la hora en UTC, devuelve <code>200</code> y guarda <code>index.mjs</code>. Vuelve a desplegar desde la misma carpeta.</p><pre><code>npx serverless deploy --stage dev --aws-profile "$perfil"</code></pre><p class="checkpoint"><strong>Antes de avanzar</strong> El despliegue ha terminado. La ruta PATCH ya está lista para probarse.</p>
 </article>
 <article id="probar-patch" class="guide-step" data-step="Probar">
 <h3>Prueba los tres resultados</h3>
@@ -297,11 +360,15 @@ export async function handler(event) {
 <h2>Referencias de la práctica</h2>
 <article id="infografia-terminal" class="guide-step" data-step="Infografía">
 <h3>Del modelo al primer registro</h3>
-<figure class="guide-poster">
-  <figcaption><a href="infografia-terminal.png" target="_blank" rel="noopener">Ampliar infografía ↗</a> · <a href="../../ayuda/dynamodb/">Ver la infografía del modelo completo ↗</a></figcaption>
-  <a href="infografia-terminal.png" target="_blank" rel="noopener" aria-label="Ampliar la infografía del recorrido por terminal">
-    <img src="infografia-terminal.png" alt="Del modelo DynamoDB a AWS CLI: elegir las claves, comprobar la identidad, crear las tablas, esperar a que estén activas, cargar el evento y verificarlo con PartiQL. Los pasos con comandos aparecen debajo.">
-  </a>
+<figure class="infra-flow">
+  <ol>
+    <li><a href="#modelo-titulo">Elige las claves</a><span>Events · eventId<br>Registrations · eventId + userId</span></li>
+    <li><a href="#infraestructura">Escribe serverless.yml</a><span>Tablas, función, tres rutas y nombres de tabla para Lambda</span></li>
+    <li><a href="#desplegar-stack">Despliega en AWS</a><span>Serverless Framework → CloudFormation → recursos del laboratorio</span></li>
+    <li><a href="#guardar-evento">Carga el primer evento</a><span>AWS CLI → PartiQL INSERT → evt-001</span></li>
+    <li><a href="#conectar-api">Comprueba la lectura</a><span>Pantalla → HTTP API → Lambda → DynamoDB</span></li>
+  </ol>
+  <figcaption><a href="../../ayuda/dynamodb/">Ver la infografía del modelo completo ↗</a></figcaption>
 </figure>
 </article>
 <article id="json-modelo" class="guide-step" data-step="JSON">
@@ -327,15 +394,6 @@ export async function handler(event) {
   <p>Prueba a cambiar <code>Festival de otoño</code> por otro título y pulsa <strong>Ver tablas</strong>. Cambiará la celda de Events en esta página.</p>
 <p><a href="#modelo-titulo">Volver a las tablas de Datos</a>
 </p>
-</article>
-<article id="consola-alternativa" class="guide-step" data-step="Consola web">
-<h3>Preparar los datos en la consola web</h3>
-<p>En <strong>DynamoDB → Tables → Create table</strong>, crea Events con <code>eventId</code> como clave de partición. Crea Registrations con <code>eventId</code> como clave de partición y <code>userId</code> como clave de ordenación. Todas son de tipo String.</p>
-<p>Cuando estén activas, abre <strong>PartiQL editor</strong>. Cambia el prefijo por el tuyo y ejecuta cada sentencia por separado.</p>
-<pre><code>INSERT INTO "equipo-01-events" VALUE {'eventId': 'evt-001', 'title': 'Festival de otoño'}</code></pre>
-<pre><code>SELECT eventId, title FROM "equipo-01-events" WHERE eventId = 'evt-001'</code></pre>
-<pre><code>SELECT * FROM "equipo-01-registrations" WHERE eventId = 'evt-001'</code></pre>
-<p class="checkpoint"><strong>Antes de avanzar</strong> El evento aparece en Events y Registrations está vacía.</p>
 </article>
 </section>
 <section id="pantalla" class="phase console" hidden aria-labelledby="screen-title">

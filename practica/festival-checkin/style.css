@@ -79,25 +79,27 @@ label { min-width: 0; display: grid; gap: 5px; color: var(--muted); flex: 1 1 18
 #endpoint-field { flex-basis: 100%; }
 input, select { width: 100%; min-width: 0; }
 pre { background: var(--background); border-radius: 8px; padding: 12px; overflow: auto; max-height: min(36dvh, 340px); margin: 6px 0 12px; }
-#archivo-lambda pre { max-height: min(47dvh, 480px); }
+#archivo-lambda pre, #infraestructura pre { max-height: min(47dvh, 480px); }
 code { overflow-wrap: anywhere; }
-.guide-poster {
-  margin: 8px 0;
-  padding: 12px;
+.infra-flow { margin: 12px 0; }
+.infra-flow ol { list-style: none; counter-reset: flow; margin: 0 0 14px; padding: 0; display: grid; gap: 6px; }
+.infra-flow li {
+  counter-increment: flow;
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr) minmax(0, 2fr);
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
   border: 1px solid var(--border);
-  border-radius: 12px;
-}
-.guide-poster figcaption { margin-bottom: 10px; }
-.guide-poster figcaption a { margin-left: .6em; }
-.guide-poster img {
-  display: block;
-  margin: auto;
-  max-width: 100%;
-  max-height: min(58dvh, 620px);
-  width: auto;
-  height: auto;
   border-radius: 8px;
 }
+.infra-flow li::before { content: counter(flow); color: var(--accent); font-weight: 750; }
+.infra-flow li span { color: var(--muted); }
+@media (max-width: 580px) {
+  .infra-flow li { grid-template-columns: 1.4rem minmax(0, 1fr); gap: 3px 8px; }
+  .infra-flow li span { grid-column: 2; }
+}
+.code-focus { color: var(--accent); font-weight: 650; }
 #model-json {
   display: block;
   width: 100%;

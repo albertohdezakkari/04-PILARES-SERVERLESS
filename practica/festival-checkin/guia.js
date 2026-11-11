@@ -23,8 +23,17 @@ function navigate(id) {
   location.hash = id;
 }
 
+const previousSteps = new Map([
+  ['crear-eventos', 'infraestructura'],
+  ['crear-inscripciones', 'infraestructura'],
+  ['crear-lambda', 'archivo-lambda'],
+  ['tablas-lambda', 'infraestructura'],
+  ['consola-alternativa', 'infografia-terminal']
+]);
+
 function showRoute() {
-  const target = document.getElementById(location.hash.slice(1)) ?? courseSteps[0];
+  const hash = location.hash.slice(1);
+  const target = document.getElementById(previousSteps.get(hash) ?? hash) ?? courseSteps[0];
   const phase = target.closest('.phase') ?? courseSteps[0].closest('.phase');
   const phaseSteps = [...phase.querySelectorAll('.guide-step')];
   activeStep = target.closest('.guide-step') ?? phaseSteps[0];
@@ -97,7 +106,7 @@ function addCodeControls(pre) {
   toolbar.className = 'code-toolbar actions';
   const feedback = document.createElement('span');
   feedback.setAttribute('role', 'status');
-  const isFile = pre.closest('#archivo-lambda');
+  const isFile = pre.closest('#archivo-lambda, #infraestructura');
   const copy = button(isFile ? 'Copiar archivo completo' : 'Copiar comando', async () => {
     try {
       await navigator.clipboard.writeText(fullText);
@@ -119,7 +128,22 @@ function addCodeControls(pre) {
     const following = button('Página siguiente', () => { page++; render(); });
     const toggle = button('Ver archivo entero', () => { full = !full; render(); });
     function render() {
-      code.textContent = full ? fullText : lines.slice(page * pageSize, (page + 1) * pageSize).join('\n');
+      const visibleLines = full ? lines : lines.slice(page * pageSize, (page + 1) * pageSize);
+      const focus = pre.closest('#infraestructura')
+        ? /^\s*(EVENTS_TABLE:|REGISTRATIONS_TABLE:|Ref:|handler:|method:|KeyType:)/
+        : /process\.env|async function (getPass|register|checkIn|handler)/;
+      code.replaceChildren();
+      for (const [index, line] of visibleLines.entries()) {
+        if (index > 0) code.append('\n');
+        if (focus.test(line)) {
+          const marked = document.createElement('span');
+          marked.className = 'code-focus';
+          marked.textContent = line;
+          code.append(marked);
+        } else {
+          code.append(line);
+        }
+      }
       pageLabel.textContent = full ? 'Archivo completo' : 'Página ' + (page + 1) + ' de ' + count;
       previous.hidden = following.hidden = full;
       previous.disabled = page === 0;
@@ -134,6 +158,6 @@ function addCodeControls(pre) {
   toolbar.append(feedback);
 }
 
-const commands = '#conexion .guide-step:not(#pegar-aws) pre, #datos pre, #archivo-lambda pre, #consola-alternativa pre';
+const commands = '#conexion .guide-step:not(#pegar-aws) pre, #datos pre, #conectar-api pre, #construir-post pre, #construir-patch pre';
 for (const pre of document.querySelectorAll(commands)) addCodeControls(pre);
 showRoute();
