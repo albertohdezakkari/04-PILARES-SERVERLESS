@@ -6,7 +6,7 @@
 <title>Festival Check-in · práctica guiada</title>
 <link rel="stylesheet" href="style.css?v=lambda-entorno">
 <script type="module" src="app.js?v=usuario"></script>
-<script type="module" src="guia.js?v=lambda-visual"></script>
+<script type="module" src="guia.js?v=handlers-por-ruta"></script>
 <script type="module" src="visor-modelo.js?v=usuario"></script>
 </head>
 <body>
@@ -226,16 +226,22 @@ LAMBDA_ROLE_ARN=$(aws iam get-role --role-name LabRole --profile "$perfil" --reg
     </li>
     <li><button type="button" data-yaml-block="Rutas" data-yaml-line="functions:" aria-pressed="false"><code>functions</code></button>
       <ul>
-        <li><button type="button" data-yaml-block="Rutas" data-yaml-line="checkin:" aria-pressed="false"><code>checkin</code></button>
+        <li><button type="button" data-yaml-block="Rutas" data-yaml-line="consultarPase:" aria-pressed="false"><code>consultarPase</code></button>
           <ul>
-            <li><button type="button" data-yaml-block="Rutas" data-yaml-line="handler: index.handler" aria-pressed="false"><code>handler</code></button></li>
-            <li><button type="button" data-yaml-block="Rutas" data-yaml-line="events:" aria-pressed="false"><code>events</code></button>
-              <ul>
-                <li><button type="button" data-yaml-block="Rutas" data-yaml-line="method: GET" aria-pressed="false"><code>httpApi · GET</code></button></li>
-                <li><button type="button" data-yaml-block="Rutas" data-yaml-line="method: POST" aria-pressed="false"><code>httpApi · POST</code></button></li>
-                <li><button type="button" data-yaml-block="Rutas" data-yaml-line="method: PATCH" aria-pressed="false"><code>httpApi · PATCH</code></button></li>
-              </ul>
-            </li>
+            <li><button type="button" data-yaml-block="Rutas" data-yaml-line="handler: index.consultarPase" aria-pressed="false"><code>handler</code></button></li>
+            <li><button type="button" data-yaml-block="Rutas" data-yaml-line="method: GET" aria-pressed="false"><code>httpApi · GET</code></button></li>
+          </ul>
+        </li>
+        <li><button type="button" data-yaml-block="Rutas" data-yaml-line="inscribirUsuario:" aria-pressed="false"><code>inscribirUsuario</code></button>
+          <ul>
+            <li><button type="button" data-yaml-block="Rutas" data-yaml-line="handler: index.inscribirUsuario" aria-pressed="false"><code>handler</code></button></li>
+            <li><button type="button" data-yaml-block="Rutas" data-yaml-line="method: POST" aria-pressed="false"><code>httpApi · POST</code></button></li>
+          </ul>
+        </li>
+        <li><button type="button" data-yaml-block="Rutas" data-yaml-line="registrarEntrada:" aria-pressed="false"><code>registrarEntrada</code></button>
+          <ul>
+            <li><button type="button" data-yaml-block="Rutas" data-yaml-line="handler: index.registrarEntrada" aria-pressed="false"><code>handler</code></button></li>
+            <li><button type="button" data-yaml-block="Rutas" data-yaml-line="method: PATCH" aria-pressed="false"><code>httpApi · PATCH</code></button></li>
           </ul>
         </li>
       </ul>
@@ -333,23 +339,27 @@ LAMBDA_ROLE_ARN=$(aws iam get-role --role-name LabRole --profile "$perfil" --reg
     <p>Busca el guion delante de <code>PATCH</code>. Marca un elemento de la lista <code>allowedMethods</code>.</p>
   </section>
   <section data-code-start="build:" data-label="Rutas" hidden>
-    <p class="yaml-outcome" hidden>Consultar, inscribirse y registrar la entrada activan la misma función Lambda.</p>
+    <p class="yaml-outcome" hidden>Cada operación tiene su propia Lambda. API Gateway la elige por el método HTTP y la ruta.</p>
     <h4>Cómo una ruta llega a index.mjs</h4>
     <dl class="yaml-terms">
       <div><dt><code>build:</code></dt><dd>Abre los ajustes de preparación del código para el despliegue.</dd></div>
       <div><dt><code>esbuild: false</code></dt><dd><code>false</code> es un valor booleano. Aquí desactiva la herramienta integrada esbuild porque desplegamos el JavaScript de <code>index.mjs</code>.</dd></div>
       <div><dt><code>functions:</code></dt><dd>Agrupa las funciones Lambda del servicio.</dd></div>
-      <div><dt><code>checkin:</code></dt><dd>Es el nombre que le damos a nuestra función dentro del proyecto.</dd></div>
-      <div><dt><code>handler: index.handler</code></dt><dd>Une el nombre base del archivo <code>index.mjs</code> con el nombre de la función exportada <code>handler</code>. AWS llama a esa función cuando llega la petición.</dd></div>
+      <div><dt><code>consultarPase:</code></dt><dd>Lambda que consulta el pase cuando API Gateway recibe <code>GET</code> en la ruta del pase.</dd></div>
+      <div><dt><code>handler: index.consultarPase</code></dt><dd><code>index</code> identifica el archivo <code>index.mjs</code>. <code>consultarPase</code> es la función exportada que Lambda ejecuta.</dd></div>
+      <div><dt><code>inscribirUsuario:</code></dt><dd>Lambda que crea la inscripción cuando API Gateway recibe <code>POST</code> en la ruta del pase.</dd></div>
+      <div><dt><code>handler: index.inscribirUsuario</code></dt><dd><code>index</code> identifica el archivo <code>index.mjs</code>. <code>inscribirUsuario</code> es la función exportada que Lambda ejecuta.</dd></div>
+      <div><dt><code>registrarEntrada:</code></dt><dd>Lambda que registra la entrada cuando API Gateway recibe <code>PATCH</code> en la ruta del pase.</dd></div>
+      <div><dt><code>handler: index.registrarEntrada</code></dt><dd><code>index</code> identifica el archivo <code>index.mjs</code>. <code>registrarEntrada</code> es la función exportada que Lambda ejecuta.</dd></div>
       <div><dt data-lines="events:|httpApi:"><code>events:</code></dt><dd>Lista lo que puede activar esa Lambda. Cada <code>- httpApi:</code> añade una ruta HTTP.</dd></div>
-      <div><dt><code>method:</code></dt><dd>Selecciona el método HTTP de la ruta. GET, POST y PATCH activan el mismo <code>handler</code>, que usa el método para elegir la operación.</dd></div>
+      <div><dt><code>method:</code></dt><dd>Selecciona el método HTTP de la ruta. Junto con <code>path</code>, identifica la ruta que activa el handler de ese bloque.</dd></div>
       <div><dt><code>path:</code></dt><dd>Define la dirección que se compara con la petición. En <code>/events/evt-001/registrations/usuario-02</code>, las llaves de la plantilla marcan los huecos: <code>{eventId}</code> recibe <code>evt-001</code> y <code>{userId}</code> recibe <code>usuario-02</code>.</dd></div>
     </dl>
     <div class="yaml-question">
       <p><strong>El usuario ya está inscrito y llega al festival. ¿Qué petición registra su entrada?</strong></p>
       <div class="actions">
       <button type="button" data-feedback="POST crea la inscripción. Aquí el registro ya existe y queremos actualizarlo." aria-pressed="false">POST /events/evt-001/registrations/usuario-02</button>
-      <button type="button" data-feedback="Sí. PATCH actualiza el registro existente. API Gateway envía la petición al mismo handler." aria-pressed="false">PATCH /events/evt-001/registrations/usuario-02</button>
+      <button type="button" data-feedback="Sí. PATCH actualiza el registro existente. API Gateway invoca registrarEntrada." aria-pressed="false">PATCH /events/evt-001/registrations/usuario-02</button>
       </div>
       <p class="yaml-feedback" role="status"></p>
     </div>
@@ -445,15 +455,21 @@ build:
   esbuild: false
 
 functions:
-  checkin:
-    handler: index.handler
+  consultarPase:
+    handler: index.consultarPase
     events:
       - httpApi:
           method: GET
           path: /events/{eventId}/registrations/{userId}
+  inscribirUsuario:
+    handler: index.inscribirUsuario
+    events:
       - httpApi:
           method: POST
           path: /events/{eventId}/registrations/{userId}
+  registrarEntrada:
+    handler: index.registrarEntrada
+    events:
       - httpApi:
           method: PATCH
           path: /events/{eventId}/registrations/{userId}
@@ -511,7 +527,7 @@ resources:
   <div>
     <p class="lambda-kicker">Configurar · Archivo base</p>
     <h3>De una petición a una respuesta</h3>
-    <p>Cuando <strong>usuario-02</strong> pulsa <strong>Consultar</strong>, Lambda recibe dos identificadores y decide qué función debe ejecutar.</p>
+    <p>Cuando <strong>usuario-02</strong> pulsa <strong>Consultar</strong>, API Gateway elige el handler de la ruta. La función recibe los dos identificadores del pase.</p>
   </div>
   <div class="lambda-ticket" aria-label="Petición de ejemplo">
     <strong>Petición de ejemplo</strong>
@@ -526,9 +542,9 @@ resources:
   <h4 id="lambda-stage-follow"><span>01</span> Sigue la petición</h4>
   <ol class="lambda-env-flow" aria-label="Inicialización e invocación">
     <li><strong>Al preparar un entorno</strong><code>Init · import, const db, process.env</code><span>Lambda carga <code>index.mjs</code>, prepara el cliente de DynamoDB y lee los nombres de las tablas. Si reutiliza ese entorno, la siguiente petición puede usar el mismo cliente.</span></li>
-    <li><strong>Al llegar cada petición</strong><code>Invoke · handler(event)</code><span>API Gateway recibe la petición HTTP e invoca Lambda. El <code>handler</code> lee el método y llama a una operación. Al pulsar <strong>Consultar</strong>, ejecuta <code>getPass(key)</code> y devuelve su respuesta.</span></li>
+    <li><strong>Al llegar cada petición</strong><code>Invoke · consultarPase(event)</code><span>API Gateway recibe la petición HTTP e invoca el handler configurado. Al pulsar <strong>Consultar</strong>, <code>consultarPase</code> valida la petición y ejecuta <code>getPass(key)</code>.</span></li>
   </ol>
-  <p>Las declaraciones de <code>getPass</code>, <code>register</code> y <code>checkIn</code> preparan tres funciones que el <code>handler</code> puede llamar. El <code>501</code> es la respuesta provisional de la operación elegida hasta que escribas su lógica. <a href="https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtime-environment.html">Ver el ciclo de ejecución de Lambda</a>.</p>
+  <p>Las declaraciones de <code>getPass</code>, <code>register</code> y <code>checkIn</code> implementan tres casos de uso. Cada handler llama a su operación y comparte <code>handleRequest</code> para validar la entrada y responder ante errores. El <code>501</code> es la respuesta provisional de la operación elegida hasta que escribas su lógica. <a href="https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtime-environment.html">Ver el ciclo de ejecución de Lambda</a>.</p>
 <div class="guided-explainer lambda-flow" data-explainer aria-label="Recorrido de una petición en Lambda">
   <div class="guided-options" role="group" aria-label="Pasos de la petición">
     <button type="button" data-explain="lambda-recibir" aria-controls="lambda-recibir" aria-pressed="true">1 · Recibir la petición</button>
@@ -537,8 +553,8 @@ resources:
     <button type="button" data-explain="lambda-responder" aria-controls="lambda-responder" aria-pressed="false">4 · Responder a la web</button>
   </div>
   <div class="guided-notes" aria-live="polite">
-    <div id="lambda-recibir" data-explanation><h4>API Gateway llama a <code>handler(event)</code></h4><p><code>event.pathParameters</code> contiene los dos valores de la ruta. Aquí llegan <code>eventId = evt-001</code> y <code>userId = usuario-02</code>. Si el formato es incorrecto, la función responde <code>400</code>.</p></div>
-    <div id="lambda-elegir" data-explanation hidden><h4>El método HTTP indica qué acción hacer</h4><p><code>GET → getPass</code> consulta el pase, <code>POST → register</code> inscribe y <code>PATCH → checkIn</code> registra la entrada. Las tres funciones reciben la misma pareja <code>{ eventId, userId }</code>.</p></div>
+    <div id="lambda-recibir" data-explanation><h4>API Gateway invoca <code>consultarPase(event)</code></h4><p><code>event.pathParameters</code> contiene los dos valores de la ruta. Aquí llegan <code>eventId = evt-001</code> y <code>userId = usuario-02</code>. Si el formato es incorrecto, la función responde <code>400</code>.</p></div>
+    <div id="lambda-elegir" data-explanation hidden><h4>El YAML enlaza cada ruta con su handler</h4><p>Para la ruta del pase, <code>GET → consultarPase → getPass</code>, <code>POST → inscribirUsuario → register</code> y <code>PATCH → registrarEntrada → checkIn</code>. Al añadir otra ruta <code>GET</code>, API Gateway también tiene en cuenta el <code>path</code>.</p></div>
     <div id="lambda-tablas" data-explanation hidden>
       <h4>Del YAML a <code>process.env</code></h4>
       <ol class="lambda-env-flow">
@@ -589,15 +605,13 @@ resources:
   <div data-prefix="async function register"><strong>Crear una inscripción</strong><p>El handler llama a esta función al recibir POST. Usará la pareja de claves para guardar la inscripción de un usuario en un evento.</p></div>
   <div data-prefix="async function checkIn"><strong>Registrar la entrada</strong><p>El handler llama a esta función al recibir PATCH. Buscará la inscripción por su clave completa y añadirá checkedInAt.</p></div>
   <div data-prefix="return json(501"><strong>Operación pendiente</strong><p>El archivo base responde 501 hasta que escribas la operación. Esta respuesta te permite distinguir una ruta conectada de una operación ya implementada.</p></div>
-  <div data-prefix="export async function handler"><strong>Punto de entrada de Lambda</strong><p>El YAML declara index.handler. API Gateway invoca esta función y le entrega la petición en event.</p></div>
+  <div data-prefix="export function consultarPase"><strong>Entrada para GET</strong><p>API Gateway invoca consultarPase. Este handler reutiliza handleRequest y pasa getPass como operación.</p></div>
+  <div data-prefix="export function inscribirUsuario"><strong>Entrada para POST</strong><p>API Gateway invoca inscribirUsuario. Este handler reutiliza handleRequest y pasa register como operación.</p></div>
+  <div data-prefix="export function registrarEntrada"><strong>Entrada para PATCH</strong><p>API Gateway invoca registrarEntrada. Este handler reutiliza handleRequest y pasa checkIn como operación.</p></div>
+  <div data-prefix="async function handleRequest"><strong>Validación y errores compartidos</strong><p>Los tres handlers usan esta función. Recibe la petición y la operación elegida, valida los identificadores y convierte los errores en respuestas HTTP.</p></div>
   <div data-prefix="const { eventId, userId }"><strong>Los identificadores de la ruta</strong><p>En /events/evt-001/registrations/usuario-02, eventId es evt-001 y userId es usuario-02.</p></div>
-  <div data-prefix="const method ="><strong>El verbo de la petición</strong><p>API Gateway incluye el método en requestContext.http.method. Al pulsar Consultar, el método es GET.</p></div>
   <div data-prefix="if (eventId !=="><strong>Validar los identificadores</strong><p>La práctica usa evt-001 y códigos ficticios de dos cifras, como usuario-02. Una petición inválida devuelve 400.</p></div>
-  <div data-prefix="const key ="><strong>La clave compuesta</strong><p>Con eventId localizas el grupo de inscripciones. Con userId eliges un ítem dentro de ese grupo.</p></div>
-  <div data-prefix="if (method === &#x27;GET&#x27;)"><strong>GET consulta el pase</strong><p>Al pulsar Consultar se llama a getPass con los dos identificadores de la ruta.</p></div>
-  <div data-prefix="if (method === &#x27;POST&#x27;)"><strong>POST inscribe al usuario</strong><p>Al pulsar Inscribirse se llama a register con la clave del nuevo ítem.</p></div>
-  <div data-prefix="if (method === &#x27;PATCH&#x27;)"><strong>PATCH registra la entrada</strong><p>Al pulsar Registrar entrada se llama a checkIn con la clave de la inscripción existente.</p></div>
-  <div data-prefix="return json(405"><strong>Método fuera de este recorrido</strong><p>Si el handler recibe otro método, devuelve 405 para indicar que esa operación queda fuera de las previstas.</p></div>
+  <div data-prefix="return await operation("><strong>Ejecutar el caso de uso</strong><p>La operación recibe eventId y userId. Por ejemplo, getPass busca la inscripción con esa pareja. await permite capturar aquí los errores de la operación.</p></div>
   <div data-prefix="if (error.name ==="><strong>Una condición impide escribir</strong><p>Cuando DynamoDB rechaza una condición, el handler devuelve 409. Por ejemplo, al intentar inscribir dos veces al mismo usuario.</p></div>
   <div data-prefix="console.error("><strong>Dónde mirar un fallo</strong><p>El detalle técnico se escribe en el registro de Lambda. La respuesta 500 indica a quien llama que ocurrió un fallo interno.</p></div>
 </template>
@@ -635,19 +649,26 @@ async function checkIn(key) {
   return json(501, { message: 'Entrada por construir' });
 }
 
-export async function handler(event) {
+export function consultarPase(event) {
+  return handleRequest(event, getPass);
+}
+
+export function inscribirUsuario(event) {
+  return handleRequest(event, register);
+}
+
+export function registrarEntrada(event) {
+  return handleRequest(event, checkIn);
+}
+
+async function handleRequest(event, operation) {
   const { eventId, userId } = event.pathParameters ?? {};
-  const method = event.requestContext?.http?.method;
   if (eventId !== 'evt-001' || !/^(?:usuario|equipo)-\d{2}$/.test(userId ?? '')) {
     return json(400, { message: 'Usa evt-001 y un código usuario-00 a usuario-99' });
   }
 
-  const key = { eventId, userId };
   try {
-    if (method === 'GET') return await getPass(key);
-    if (method === 'POST') return await register(key);
-    if (method === 'PATCH') return await checkIn(key);
-    return json(405, { message: 'Método no permitido' });
+    return await operation({ eventId, userId });
   } catch (error) {
     if (error.name === 'ConditionalCheckFailedException') {
       return json(409, { message: 'La operación no se puede aplicar a este estado' });
@@ -696,9 +717,10 @@ export async function handler(event) {
 </article>
 <article id="desplegar-stack" class="guide-step" data-step="Desplegar">
 <h3>Despliega el servicio desde la terminal</h3>
+<p class="lesson-note"><strong>Comprueba la pareja YAML y JavaScript.</strong> Si ya habías creado los archivos de una versión anterior, actualiza <code>serverless.yml</code> e <code>index.mjs</code> juntos. Si ya implementaste <code>getPass</code>, <code>register</code> o <code>checkIn</code>, conserva esas implementaciones y actualiza los handlers y la función compartida.</p>
 <p class="lesson-note"><strong>Si ya desplegaste la versión anterior.</strong> El YAML de esta edición usa el servicio <code>festival-checkin-usuarios</code> con tu código. Al desplegarlo se crea un stack nuevo con tablas vacías. Puedes seguir practicando en tu stack anterior con el YAML que guardaste en tu carpeta y los identificadores <code>equipo-01</code>, <code>equipo-02</code> y <code>equipo-03</code> en las pruebas del pase.</p>
 <dl class="command-reasons"><div><dt><code>node --check</code></dt><dd>Comprueba la sintaxis de <code>index.mjs</code>.</dd></div><div><dt><code>&amp;&amp;</code></dt><dd>Ejecuta el segundo comando si el primero termina correctamente.</dd></div><div><dt><code>--stage dev</code></dt><dd>Selecciona el entorno de desarrollo de tu servicio.</dd></div></dl>
-<p>Ejecuta el comando en la carpeta <code>festival-checkin</code>. Serverless Framework lee tu YAML y CloudFormation crea las tablas, la función y la HTTP API en el laboratorio.</p><pre><code>node --check index.mjs &amp;&amp; npx serverless deploy --stage dev --aws-profile "$perfil"</code></pre><p>Si Framework pide iniciar sesión, usa el mismo acceso de la lección <a href="../../#primer-serverless">01 · Primer Serverless</a>. Si falla CloudFormation, lee el primer recurso y permiso que aparecen en el error. Si la sesión de AWS caducó, renueva los tres valores y repite la comprobación de Conexión.</p><p class="checkpoint"><strong>Antes de avanzar</strong> La terminal muestra el despliegue terminado y las tres rutas de la API.</p>
+<p>Ejecuta el comando en la carpeta <code>festival-checkin</code>. Serverless Framework lee tu YAML y CloudFormation crea las tablas, las tres funciones y la HTTP API en el laboratorio.</p><pre><code>node --check index.mjs &amp;&amp; npx serverless deploy --stage dev --aws-profile "$perfil"</code></pre><p>Si Framework pide iniciar sesión, usa el mismo acceso de la lección <a href="../../#primer-serverless">01 · Primer Serverless</a>. Si falla CloudFormation, lee el primer recurso y permiso que aparecen en el error. Si la sesión de AWS caducó, renueva los tres valores y repite la comprobación de Conexión.</p><p class="checkpoint"><strong>Antes de avanzar</strong> La terminal muestra el despliegue terminado y las tres rutas de la API.</p>
 </article>
 </section>
 <section id="datos" class="phase" hidden>
@@ -895,7 +917,7 @@ curl -i "$pase_prueba"</code></pre>
 <figure class="infra-flow">
   <ol>
     <li><a href="#modelo-titulo">Elige las claves</a><span>EVENTO · eventId<br>INSCRIPCION · eventId + userId</span></li>
-    <li><a href="#infraestructura">Escribe serverless.yml</a><span>Tablas, función, tres rutas y nombres de tabla para Lambda</span></li>
+    <li><a href="#infraestructura">Escribe serverless.yml</a><span>Tablas, tres funciones, sus rutas y nombres de tabla para Lambda</span></li>
     <li><a href="#desplegar-stack">Despliega en AWS</a><span>Serverless Framework → CloudFormation → recursos del laboratorio</span></li>
     <li><a href="#guardar-evento">Carga el primer evento</a><span>AWS CLI → PartiQL INSERT → evt-001</span></li>
     <li><a href="#conectar-api">Comprueba la lectura</a><span>Pantalla → HTTP API → Lambda → DynamoDB</span></li>

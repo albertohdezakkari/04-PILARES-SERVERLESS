@@ -226,7 +226,7 @@ function addCodeControls(pre) {
       ? [...document.querySelector('#index-explanations').content.children]
       : [];
     const starts = indexNote
-      ? [0, ...['function json(', 'async function getPass(', 'export async function handler(', '  const key =']
+      ? [0, ...['function json(', 'async function getPass(', 'export function consultarPase(', 'async function handleRequest(']
         .map(prefix => lines.findIndex(line => line.startsWith(prefix)))]
       : Array.from({length: Math.ceil(lines.length / 17)}, (_, index) => index * 17);
     const count = starts.length;
@@ -272,7 +272,7 @@ function addCodeControls(pre) {
           code.append(line);
         }
       }
-      const chapter = indexNote ? ['Conexión', 'Respuesta HTTP', 'Operaciones', 'Entrada de Lambda', 'Enrutado y errores'][page] : '';
+      const chapter = indexNote ? ['Conexión', 'Respuesta HTTP', 'Operaciones', 'Handlers por ruta', 'Validación y errores'][page] : '';
       pageLabel.textContent = full ? 'Archivo completo' : [chapter, 'Página ' + (page + 1) + ' de ' + count].filter(Boolean).join(' · ');
       previous.hidden = following.hidden = full;
       previous.disabled = page === 0;
