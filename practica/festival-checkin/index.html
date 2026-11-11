@@ -153,9 +153,31 @@ done</code></pre><p class="checkpoint"><strong>Antes de avanzar</strong> Ambas e
 <section id="lectura" class="phase" hidden>
 <h2>Leer desde Lambda</h2>
 <article id="crear-lambda" class="guide-step" data-step="Función">
-<h3>Crea la función y elige las tablas</h3>
-<p>En la consola de la región del laboratorio, crea una función Lambda Node.js 22 con el rol de ejecución que indique el profesor. En <strong>Configuration → Environment variables</strong>, configura <code>EVENTS_TABLE</code> y <code>REGISTRATIONS_TABLE</code> con los dos nombres del paso Datos.</p>
-<p class="checkpoint"><strong>Antes de avanzar</strong> La función existe y las variables coinciden con los nombres de tus tablas.</p>
+<h3>Crea la función con el rol del laboratorio</h3>
+<ol>
+  <li>En <strong>AWS Academy → AWS</strong>, comprueba arriba a la derecha que estás en la misma región que tus tablas. En el ensayo usamos <code>us-east-1</code>.</li>
+  <li>Busca <strong>Lambda</strong> y abre <strong>Functions / Event Functions → Create function → Author from scratch</strong>.</li>
+  <li>En <strong>Function name</strong>, escribe <code>equipo-01-festival-checkin</code> con tu prefijo. Elige <strong>Node.js 22.x</strong> y deja la arquitectura en <strong>x86_64</strong>.</li>
+  <li>En <strong>Permissions → Change default execution role</strong>, selecciona <strong>Use an existing role</strong> y, en <strong>Existing role</strong>, elige <strong>LabRole</strong>. Ese rol permite que Lambda actúe con los permisos que le asigna el laboratorio.</li>
+  <li>Pulsa <strong>Create function</strong>. Si la función ya existe, ábrela y revisa su configuración.</li>
+</ol>
+<p>Si <code>LabRole</code> no aparece o la consola muestra <code>iam:PassRole</code>, comprueba que entraste desde el laboratorio y que sigue activo. Si persiste, anota el mensaje para revisar los permisos del aula.</p>
+<p class="checkpoint"><strong>Antes de avanzar</strong> Estás dentro de tu función. En Configuration → Permissions, el rol de ejecución es LabRole.</p>
+</article>
+<article id="tablas-lambda" class="guide-step" data-step="Variables">
+<h3>Dile a Lambda qué tablas debe leer</h3>
+<p>Dentro de la función, abre <strong>Configuration → Environment variables → Edit</strong>. Pulsa <strong>Add environment variable</strong> una vez por cada fila. Cambia <code>equipo-01</code> si usaste otro prefijo.</p>
+<div class="model-table-scroll">
+  <table>
+    <thead><tr><th scope="col">Key</th><th scope="col">Value</th></tr></thead>
+    <tbody>
+      <tr><td><code>EVENTS_TABLE</code></td><td><code>equipo-01-events</code></td></tr>
+      <tr><td><code>REGISTRATIONS_TABLE</code></td><td><code>equipo-01-registrations</code></td></tr>
+    </tbody>
+  </table>
+</div>
+<p>Pulsa <strong>Save</strong>. El código leerá estos nombres mediante <code>process.env</code>. El nombre de cada tabla debe coincidir carácter por carácter con el que viste en <a href="#estado-tablas">Datos → Estado</a>.</p>
+<p class="checkpoint"><strong>Antes de avanzar</strong> La pantalla de Environment variables muestra las dos filas guardadas con los nombres de tus tablas.</p>
 </article>
 <article id="archivo-lambda" class="guide-step" data-step="Archivo base">
 <h3>Abre index.mjs y guarda el punto de partida</h3>
