@@ -110,8 +110,13 @@ function addCodeControls(pre) {
   pre.before(toolbar);
   if (fileName) {
     const lines = fullText.split('\n');
-    const pageSize = 17;
-    const count = Math.ceil(lines.length / pageSize);
+    const notes = pre.parentElement.querySelector('.code-notes');
+    const sections = [...(notes?.querySelectorAll('[data-code-start]') ?? [])];
+    const starts = sections.length
+      ? sections.map(section => lines.findIndex(line => line.startsWith(section.dataset.codeStart)))
+      : lines.filter((_, index) => index % 17 === 0).map((_, pageIndex) => pageIndex * 17);
+    const count = starts.length;
+    if (notes) toolbar.after(notes);
     const pageLabel = document.createElement('span');
     let page = 0;
     let full = false;
@@ -119,9 +124,13 @@ function addCodeControls(pre) {
     const following = button('Página siguiente', () => { page++; render(); });
     const toggle = button('Ver archivo entero', () => { full = !full; render(); });
     function render() {
-      const visibleLines = full ? lines : lines.slice(page * pageSize, (page + 1) * pageSize);
+      const visibleLines = full ? lines : lines.slice(starts[page], starts[page + 1]);
+      if (notes) {
+        notes.hidden = full;
+        sections.forEach((section, index) => { section.hidden = index !== page; });
+      }
       const focus = pre.closest('#infraestructura')
-        ? /^\s*(EVENTS_TABLE:|REGISTRATIONS_TABLE:|Ref:|handler:|method:|KeyType:)/
+        ? /^\s*(service:|region:|role:|Ref:|payload:|handler:|method:|KeyType:|Outputs:)/
         : /process\.env|async function (getPass|register|checkIn|handler)/;
       code.replaceChildren();
       for (const [index, line] of visibleLines.entries()) {

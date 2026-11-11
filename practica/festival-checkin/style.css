@@ -67,6 +67,14 @@ button:disabled { opacity: .65; cursor: wait; }
 .checkpoint strong { display: block; }
 .code-toolbar { align-items: center; margin-top: 10px; }
 .code-toolbar button { min-height: 40px; }
+.code-notes {
+  margin: 8px 0;
+  padding: 8px 12px;
+  border-left: 3px solid var(--accent);
+  background: var(--surface);
+}
+.code-notes h4 { margin: 0 0 4px; }
+.code-notes p { margin: 4px 0; }
 .output-label { color: var(--muted); }
 .relation, .screen-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
 .relation { justify-content: flex-start; }
