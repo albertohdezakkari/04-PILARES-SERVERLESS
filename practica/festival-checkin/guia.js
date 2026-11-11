@@ -225,10 +225,7 @@ function addCodeControls(pre) {
     const explanations = indexNote
       ? [...document.querySelector('#index-explanations').content.children]
       : [];
-    const starts = indexNote
-      ? [0, ...['function json(', 'async function getPass(', 'export function consultarPase(', 'async function handleRequest(']
-        .map(prefix => lines.findIndex(line => line.startsWith(prefix)))]
-      : Array.from({length: Math.ceil(lines.length / 17)}, (_, index) => index * 17);
+    const starts = Array.from({length: Math.ceil(lines.length / 17)}, (_, index) => index * 17);
     const count = starts.length;
     const pageLabel = document.createElement('span');
     let page = 0;
@@ -272,8 +269,7 @@ function addCodeControls(pre) {
           code.append(line);
         }
       }
-      const chapter = indexNote ? ['Conexión', 'Respuesta HTTP', 'Operaciones', 'Handlers por ruta', 'Validación y errores'][page] : '';
-      pageLabel.textContent = full ? 'Archivo completo' : [chapter, 'Página ' + (page + 1) + ' de ' + count].filter(Boolean).join(' · ');
+      pageLabel.textContent = full ? 'Archivo completo' : 'Página ' + (page + 1) + ' de ' + count;
       previous.hidden = following.hidden = full;
       previous.disabled = page === 0;
       following.disabled = page === count - 1;
