@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Festival Check-in · práctica guiada</title>
-<link rel="stylesheet" href="style.css?v=leer-index">
+<link rel="stylesheet" href="style.css?v=lambda-visual">
 <script type="module" src="app.js?v=usuario"></script>
-<script type="module" src="guia.js?v=leer-index"></script>
+<script type="module" src="guia.js?v=lambda-visual"></script>
 <script type="module" src="visor-modelo.js?v=usuario"></script>
 </head>
 <body>
@@ -507,9 +507,24 @@ resources:
 <p class="checkpoint"><strong>Antes de avanzar</strong> La terminal muestra <code>service:</code>, <code>functions:</code> y <code>resources:</code>, seguidos de tres líneas <code>KeyType</code> con <code>HASH</code>, <code>HASH</code> y <code>RANGE</code>.</p>
 </article>
 <article id="archivo-lambda" class="guide-step" data-step="Archivo base">
-<h3>Entiende y comprueba el archivo de Lambda</h3>
-<p>Imagina que <strong>usuario-02</strong> pulsa <strong>Consultar</strong> para <strong>evt-001</strong>. Sigue la petición por <code>index.mjs</code>. Pasa el ratón, pulsa o usa Tab para ver la explicación de cada paso.</p>
-<section class="guided-explainer" data-explainer aria-label="Recorrido de una petición en Lambda">
+<div class="lambda-hero">
+  <div>
+    <p class="lambda-kicker">Configurar · Archivo base</p>
+    <h3>De una petición a una respuesta</h3>
+    <p>Cuando <strong>usuario-02</strong> pulsa <strong>Consultar</strong>, Lambda recibe dos identificadores y decide qué función debe ejecutar.</p>
+  </div>
+  <div class="lambda-ticket" aria-label="Petición de ejemplo">
+    <strong>Petición de ejemplo</strong>
+    <div><span class="lambda-method">GET</span> <code>/events/evt-001/registrations/usuario-02</code></div>
+    <dl>
+      <div><dt>eventId</dt><dd><code>evt-001</code></dd></div>
+      <div><dt>userId</dt><dd><code>usuario-02</code></dd></div>
+    </dl>
+  </div>
+</div>
+<section class="lambda-stage" aria-labelledby="lambda-stage-follow">
+  <h4 id="lambda-stage-follow"><span>01</span> Sigue la petición</h4>
+<div class="guided-explainer lambda-flow" data-explainer aria-label="Recorrido de una petición en Lambda">
   <div class="guided-options" role="group" aria-label="Pasos de la petición">
     <button type="button" data-explain="lambda-recibir" aria-controls="lambda-recibir" aria-pressed="true">1 · Recibir la petición</button>
     <button type="button" data-explain="lambda-elegir" aria-controls="lambda-elegir" aria-pressed="false">2 · Elegir la operación</button>
@@ -522,14 +537,32 @@ resources:
     <div id="lambda-tablas" data-explanation hidden><h4>El YAML conecta el código con DynamoDB</h4><p><code>process.env.EVENTS_TABLE</code> y <code>process.env.REGISTRATIONS_TABLE</code> contienen los nombres que fijaste en <a href="#infraestructura">Leer el YAML</a>. El SDK se usará en las siguientes fases para consultar o guardar ítems en esas tablas.</p></div>
     <div id="lambda-responder" data-explanation hidden><h4><code>json()</code> prepara la respuesta HTTP</h4><p>Devuelve un <code>statusCode</code> y convierte el cuerpo a JSON. En este archivo base, un método válido devuelve <code>501</code> hasta que completes su función. La respuesta de <strong>Consultar</strong> se construye en la fase GET.</p></div>
   </div>
+</div>
 </section>
-<h4>Crea el archivo base</h4>
-<p>Desde la carpeta <code>festival-checkin</code>, ejecuta este comando para crear y abrir <code>index.mjs</code>.</p>
-<pre><code>touch index.mjs &amp;&amp; vi index.mjs</code></pre>
-<p>En la caja de abajo, pulsa <strong>Copiar archivo completo</strong>. En <code>vi</code>, escribe <code>:set paste</code> y pulsa Intro. Si el archivo está vacío, pulsa <kbd>i</kbd> y pega el contenido. Si ya contiene el archivo de este paso, compruébalo y sigue. Para guardar, pulsa <kbd>Esc</kbd>, escribe <code>:wq</code> y pulsa Intro.</p>
-<p>El <code>handler</code> recibe la petición y elige la operación. Por ahora cada operación responde <code>501</code> hasta que la construyas.</p>
-
-<p>En el visor, pasa el ratón por una línea resaltada, selecciónala con Tab o tócala para leer qué hace.</p>
+<section class="lambda-stage" aria-labelledby="lambda-stage-create">
+  <h4 id="lambda-stage-create"><span>02</span> Crea y abre el archivo</h4>
+  <div class="lambda-setup">
+    <div class="lambda-terminal">
+      <h5>Terminal · <code>festival-checkin</code></h5>
+      <pre><code>touch index.mjs &amp;&amp; vi index.mjs</code></pre>
+    </div>
+    <div class="lambda-editor">
+      <h5>Dentro de <code>vi</code></h5>
+      <ol>
+        <li><code>:set paste</code> <kbd>Intro</kbd><span>Conserva la sangría al pegar.</span></li>
+        <li><kbd>i</kbd> <strong>Pegar</strong><span>Si el archivo está vacío, pega el código del visor.</span></li>
+        <li><kbd>Esc</kbd> <code>:wq</code> <kbd>Intro</kbd><span>Guarda y sal de <code>vi</code>.</span></li>
+      </ol>
+      <p>Si ya guardaste el archivo base, revisa su contenido en el visor.</p>
+    </div>
+  </div>
+</section>
+<section class="lambda-stage" aria-labelledby="lambda-stage-read">
+  <h4 id="lambda-stage-read"><span>03</span> Lee <code>index.mjs</code></h4>
+  <div class="lambda-read-intro">
+    <p>Pasa el ratón, usa <kbd>Tab</kbd> o toca una línea resaltada para abrir su explicación.</p>
+    <p class="lambda-status"><code>501</code> Operación pendiente de implementar</p>
+  </div>
 <template id="index-explanations">
   <div data-prefix="import { DynamoDBClient"><strong>Conexión con DynamoDB</strong><p>Importa el cliente que comunica Lambda con DynamoDB. El paquete se instaló al preparar el proyecto.</p></div>
   <div data-prefix="DynamoDBDocumentClient, GetCommand"><strong>Tres operaciones sobre ítems</strong><p>GetCommand lee un ítem, PutCommand guarda uno y UpdateCommand modifica sus atributos. En las siguientes fases los usarás para consultar, inscribir y dar entrada.</p></div>
@@ -556,7 +589,7 @@ resources:
   <div data-prefix="console.error("><strong>Dónde mirar un fallo</strong><p>El detalle técnico se escribe en el registro de Lambda. La respuesta 500 indica a quien llama que ocurrió un fallo interno.</p></div>
 </template>
 <div class="index-reader">
-<aside class="guided-notes index-note" aria-live="polite"></aside>
+<aside class="index-note" aria-live="polite"></aside>
 <pre data-file="index.mjs"><code>import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import {
   DynamoDBDocumentClient, GetCommand, PutCommand, UpdateCommand
@@ -611,7 +644,9 @@ export async function handler(event) {
   }
 }</code></pre>
 </div>
-<h4>Comprueba los archivos antes de desplegar</h4>
+</section>
+<section class="lambda-stage" aria-labelledby="lambda-stage-check">
+<h4 id="lambda-stage-check"><span>04</span> Comprueba antes de desplegar</h4>
 <p>Ejecuta los comandos en la carpeta <code>festival-checkin</code>. Pasa el ratón sobre cada parte resaltada o tócala para recordar qué hace.</p>
 <div class="file-checks">
   <section class="guided-explainer" data-explainer>
@@ -644,6 +679,7 @@ export async function handler(event) {
   <p class="yaml-feedback" role="status"></p>
 </div>
 <p class="checkpoint"><strong>Antes de avanzar</strong> En la terminal aparecen los tres nombres y <code>node --check index.mjs</code> termina sin errores.</p>
+</section>
 </article>
 <article id="desplegar-stack" class="guide-step" data-step="Desplegar">
 <h3>Despliega el servicio desde la terminal</h3>

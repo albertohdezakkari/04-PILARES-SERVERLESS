@@ -272,7 +272,8 @@ function addCodeControls(pre) {
           code.append(line);
         }
       }
-      pageLabel.textContent = full ? 'Archivo completo' : 'Página ' + (page + 1) + ' de ' + count;
+      const chapter = indexNote ? ['Conexión', 'Respuesta HTTP', 'Operaciones', 'Entrada de Lambda', 'Enrutado y errores'][page] : '';
+      pageLabel.textContent = full ? 'Archivo completo' : [chapter, 'Página ' + (page + 1) + ' de ' + count].filter(Boolean).join(' · ');
       previous.hidden = following.hidden = full;
       previous.disabled = page === 0;
       following.disabled = page === count - 1;
