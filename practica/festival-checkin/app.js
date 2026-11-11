@@ -11,14 +11,21 @@ const eventId = 'evt-001';
 const demoTitle = 'Festival de otoño';
 const demoRegistrations = new Map();
 
+function selectPhase(phase) {
+  for (const button of phaseButtons) {
+    const selected = button.dataset.phase === phase;
+    button.setAttribute('aria-pressed', String(selected));
+    document.getElementById(button.dataset.phase).hidden = !selected;
+  }
+}
+
 for (const button of phaseButtons) {
-  button.addEventListener('click', () => {
-    for (const other of phaseButtons) {
-      const selected = other === button;
-      other.setAttribute('aria-pressed', String(selected));
-      document.getElementById(other.dataset.phase).hidden = !selected;
-    }
-  });
+  button.addEventListener('click', () => selectPhase(button.dataset.phase));
+}
+
+const linkedPhase = location.hash.slice(1);
+if ([...phaseButtons].some(button => button.dataset.phase === linkedPhase)) {
+  selectPhase(linkedPhase);
 }
 
 function clearScreen() {

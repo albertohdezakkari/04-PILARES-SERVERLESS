@@ -6,6 +6,7 @@
 <title>Festival Check-in · práctica guiada</title>
 <link rel="stylesheet" href="style.css">
 <script type="module" src="app.js"></script>
+<script type="module" src="visor-modelo.js"></script>
 </head>
 <body>
 <main>
@@ -44,6 +45,18 @@
   <span aria-hidden="true">1 ─── 0..N</span>
   <div><strong>Registrations</strong><br><code>eventId</code> · PK<br><code>userId</code> · SK<br><code>registeredAt</code> · texto<br><code>checkedInAt</code> · opcional</div>
 </div>
+<details open>
+<summary>Pegar JSON y ver las tablas</summary>
+<p>Pega un modelo con <code>DataModel</code>, <code>KeyAttributes</code> y <code>TableData</code> de DynamoDB. Puedes cargar el ejemplo para ver qué parte del JSON define cada clave y cada registro.</p>
+<label for="model-json">JSON del modelo</label>
+<textarea id="model-json" rows="5" spellcheck="false" placeholder="Pega aquí el contenido de modelo-dynamodb.json"></textarea>
+<div class="actions">
+  <button type="button" id="model-example">Cargar ejemplo</button>
+  <button type="button" id="model-view">Ver tablas</button>
+</div>
+<p id="model-status" role="status"></p>
+<div id="model-result"></div>
+</details>
 <details>
 <summary>Ver y explorar las tablas en el diseñador</summary>
 <p>Descargad el <a href="modelo-dynamodb.json" download>modelo de Festival Check-in</a> y abrid <a href="https://amazondynamodblabs.com/static/visualizer/index.html" target="_blank" rel="noopener">DynamoDB Data Modeler</a>. En <strong>☰ → Load from File</strong>, elegid el JSON. Usad el icono de cambiar tabla para pasar de Events a Registrations.</p>

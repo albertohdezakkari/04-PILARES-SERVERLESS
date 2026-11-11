@@ -51,4 +51,27 @@ input, select { width: 100%; min-width: 0; }
 pre { background: var(--background); border-radius: 8px; padding: 12px; overflow: auto; max-height: 45vh; }
 code { overflow-wrap: anywhere; }
 footer { margin: 24px 0; }
+#model-json {
+  display: block;
+  width: 100%;
+  margin: 6px 0 10px;
+  padding: 10px;
+  resize: vertical;
+  font: 1rem ui-monospace, monospace;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--background);
+  color: var(--ink);
+}
+#model-result h3 { margin-bottom: .5rem; }
+.model-table-scroll { overflow-x: auto; }
+.model-table-scroll table { border-collapse: collapse; width: 100%; }
+.model-table-scroll th, .model-table-scroll td {
+  border-bottom: 1px solid var(--border);
+  padding: 8px 10px;
+  text-align: left;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+.model-key { display: block; color: var(--accent); font-weight: 500; }
 [hidden] { display: none !important; }
