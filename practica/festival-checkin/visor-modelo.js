@@ -81,7 +81,7 @@ function createPractice(renderedRows) {
   const panel = element('div', undefined, 'model-practice');
   const buttons = element('div', undefined, 'actions');
   const all = element('button', 'Ver inscritos del evento');
-  const one = element('button', 'Buscar a equipo-02');
+  const one = element('button', 'Buscar a usuario-02');
   all.type = one.type = 'button';
   const condition = element('code');
   const output = element('p');
@@ -91,13 +91,13 @@ function createPractice(renderedRows) {
     let count = 0;
     for (const { row, line } of renderedRows) {
       const match = formatValue(row.eventId) === 'evt-001' &&
-        (!onlyOne || formatValue(row.userId) === 'equipo-02');
+        (!onlyOne || formatValue(row.userId) === 'usuario-02');
       line.hidden = !match;
       if (match) count++;
     }
     all.setAttribute('aria-pressed', String(!onlyOne));
     one.setAttribute('aria-pressed', String(onlyOne));
-    condition.textContent = "WHERE eventId = 'evt-001'" + (onlyOne ? " AND userId = 'equipo-02'" : '');
+    condition.textContent = "WHERE eventId = 'evt-001'" + (onlyOne ? " AND userId = 'usuario-02'" : '');
     const rows = count === 1 ? '1 inscripción' : count + ' inscripciones';
     output.textContent = rows + (onlyOne ? ' al buscar por evento y persona.' : ' al buscar por evento.');
   }
@@ -135,7 +135,7 @@ function showModel(message = status, practice = false) {
 async function loadExample(message, onlyIfEmpty = false) {
   example.disabled = true;
   try {
-    const response = await fetch('modelo-dynamodb.json');
+    const response = await fetch('modelo-dynamodb.json?v=usuario');
     if (!response.ok) throw new Error('El ejemplo no está disponible en este momento.');
     const source = await response.text();
     if (onlyIfEmpty && input.value.trim()) return;

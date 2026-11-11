@@ -8,7 +8,7 @@
   },
   "DataModel": [
     {
-      "TableName": "equipo-01-events",
+      "TableName": "EVENTO_01",
       "KeyAttributes": {
         "PartitionKey": { "AttributeName": "eventId", "AttributeType": "S" },
         "SortKey": { "AttributeName": "", "AttributeType": "S" }
@@ -23,7 +23,7 @@
       ]
     },
     {
-      "TableName": "equipo-01-registrations",
+      "TableName": "INSCRIPCION_01",
       "KeyAttributes": {
         "PartitionKey": { "AttributeName": "eventId", "AttributeType": "S" },
         "SortKey": { "AttributeName": "userId", "AttributeType": "S" }
@@ -37,12 +37,12 @@
       "TableData": [
         {
           "eventId": { "S": "evt-001" },
-          "userId": { "S": "equipo-01" },
+          "userId": { "S": "usuario-01" },
           "registeredAt": { "S": "2026-11-12T09:05:00Z" }
         },
         {
           "eventId": { "S": "evt-001" },
-          "userId": { "S": "equipo-02" },
+          "userId": { "S": "usuario-02" },
           "registeredAt": { "S": "2026-11-12T09:06:00Z" },
           "checkedInAt": { "S": "2026-11-12T09:12:00Z" }
         }

@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Festival Check-in · práctica guiada</title>
 <link rel="stylesheet" href="style.css?v=recorrido-festival">
-<script type="module" src="app.js"></script>
+<script type="module" src="app.js?v=usuario"></script>
 <script type="module" src="guia.js?v=caso-completo"></script>
-<script type="module" src="visor-modelo.js?v=caso-completo"></script>
+<script type="module" src="visor-modelo.js?v=usuario"></script>
 </head>
 <body>
 <main>
@@ -40,7 +40,7 @@
 <article id="objetivo" class="guide-step" data-step="Caso de uso">
 <div class="lesson-intro">
   <h3>Un pase para el Festival de otoño</h3>
-  <p>El <strong>equipo-02</strong> quiere asistir al <strong>Festival de otoño</strong>. En la puerta debemos saber si se inscribió y si ya entró. Construirás el pase y podrás demostrarlo desde la web, la API y DynamoDB.</p>
+  <p>El usuario <strong>usuario-02</strong> quiere asistir al <strong>Festival de otoño</strong>. En la puerta debemos saber si se inscribió y si ya entró. Construirás el pase y podrás demostrarlo desde la web, la API y DynamoDB.</p>
   <a class="lesson-action" href="#pantalla">Abrir pantalla de ensayo →</a>
 </div>
 <ol class="lesson-flow">
@@ -55,15 +55,15 @@
 <h2>Del caso de uso al diseño de datos</h2>
 <article id="entidad-relacion" class="guide-step" data-step="Entidad–relación">
 <h3>Dibuja las entidades y sus relaciones</h3>
-<p>En el festival, un equipo puede inscribirse en varios eventos y un evento puede recibir varios equipos. <strong>Inscripción</strong> representa ese vínculo y guarda dos hechos propios: cuándo se inscribió el equipo y cuándo entró.</p>
-<div class="er-diagram" role="group" aria-label="Un evento tiene de cero a muchas inscripciones. Un equipo tiene de cero a muchas inscripciones. Cada inscripción pertenece a un evento y un equipo.">
-  <section><h4>Evento</h4><code>eventId</code><span>Título</span></section>
+<p>Un usuario puede inscribirse en varios eventos y cada evento puede tener varios usuarios inscritos. Es una relación <strong>muchos a muchos</strong>. <strong>INSCRIPCION</strong> representa ese vínculo y guarda dos hechos propios: cuándo se inscribió el usuario y cuándo entró.</p>
+<div class="er-diagram" role="group" aria-label="Un evento tiene de cero a muchas inscripciones. Un usuario tiene de cero a muchas inscripciones. Cada inscripción vincula un evento y un usuario.">
+  <section><h4>EVENTO</h4><code>eventId</code><span>Título</span></section>
   <div class="er-edge" aria-hidden="true"><b>1</b><i></i><b>0..N</b></div>
-  <section><h4>Inscripción</h4><code>eventId + userId</code><span>Fecha de inscripción</span><span>Fecha de entrada, opcional</span></section>
+  <section><h4>INSCRIPCION</h4><code>eventId + userId</code><span>Fecha de inscripción</span><span>Fecha de entrada, opcional</span></section>
   <div class="er-edge" aria-hidden="true"><b>0..N</b><i></i><b>1</b></div>
-  <section><h4>Equipo</h4><code>userId</code><span>Código recibido en el pase</span></section>
+  <section><h4>USUARIO</h4><code>userId</code><span>Identificador del usuario</span></section>
 </div>
-<div class="lesson-note"><strong>Prueba el modelo.</strong> El equipo <code>equipo-02</code> puede tener una inscripción en <code>evt-001</code> y otra en <code>evt-002</code>. La fecha de entrada de cada inscripción pertenece a su evento. Para probar la API del laboratorio usarás <code>evt-001</code>.</div>
+<div class="lesson-note"><strong>Prueba el modelo.</strong> El usuario <code>usuario-02</code> puede tener una inscripción en <code>evt-001</code> y otra en <code>evt-002</code>. La fecha de entrada de cada inscripción pertenece a su evento. Para probar la API del laboratorio usarás <code>evt-001</code>.</div>
 <p class="checkpoint"><strong>Antes de avanzar</strong> Escribe las dos parejas de identificadores. Comprueba que comparten <code>userId</code> y tienen distintos <code>eventId</code>.</p>
 </article>
 <article id="patrones-acceso" class="guide-step" data-step="Preguntas y claves">
@@ -73,30 +73,31 @@
   <div class="access-options" role="group" aria-label="Preguntas del festival">
     <button type="button" data-access="evento" aria-pressed="true">¿Cuál es el título del evento?</button>
     <button type="button" data-access="grupo" aria-pressed="false">¿Quién se ha inscrito al evento?</button>
-    <button type="button" data-access="pase" aria-pressed="false">¿Está inscrito el equipo 02?</button>
+    <button type="button" data-access="pase" aria-pressed="false">¿Está inscrito usuario-02?</button>
   </div>
   <div class="access-results" aria-live="polite">
-    <section data-access-panel="evento"><h4>Un evento</h4><p>En <code>Events</code>, <code>eventId</code> es la clave de partición (<strong>PK</strong>). Como cada evento tiene un identificador único, con <code>evt-001</code> ya puedes recuperar su título.</p><code>Events → PK evt-001 → Festival de otoño</code></section>
-    <section data-access-panel="grupo" hidden><h4>Todas las inscripciones de un evento</h4><p>En <code>Registrations</code>, la PK sigue siendo <code>eventId</code>. Una consulta por <code>evt-001</code> recupera su grupo de inscripciones.</p><code>Registrations → PK evt-001 → equipo-01, equipo-02</code></section>
-    <section data-access-panel="pase" hidden><h4>Una inscripción concreta</h4><p>Dentro del grupo, <code>userId</code> es la clave de ordenación (<strong>SK</strong>). La pareja completa identifica la inscripción. Su atributo <code>checkedInAt</code> indica si ya se registró la entrada.</p><code>Registrations → PK evt-001 + SK equipo-02 → una fila</code></section>
+    <section data-access-panel="evento"><h4>Un evento</h4><p>En <code>EVENTO</code>, <code>eventId</code> es la clave de partición (<strong>PK</strong>). Como cada evento tiene un identificador único, con <code>evt-001</code> ya puedes recuperar su título.</p><code>EVENTO → PK evt-001 → Festival de otoño</code></section>
+    <section data-access-panel="grupo" hidden><h4>Todas las inscripciones de un evento</h4><p>En <code>INSCRIPCION</code>, la PK sigue siendo <code>eventId</code>. Una consulta por <code>evt-001</code> recupera su grupo de inscripciones.</p><code>INSCRIPCION → PK evt-001 → usuario-01, usuario-02</code></section>
+    <section data-access-panel="pase" hidden><h4>Una inscripción concreta</h4><p>Dentro del grupo, <code>userId</code> es la clave de ordenación (<strong>SK</strong>). La pareja completa identifica la inscripción. Su atributo <code>checkedInAt</code> indica si ya se registró la entrada.</p><code>INSCRIPCION → PK evt-001 + SK usuario-02 → una fila</code></section>
   </div>
 </div>
-<div class="lesson-note"><strong>Truco de diseño.</strong> Pregunta qué dato tienes al buscar. Si más adelante necesitas todos los eventos de un equipo y solo recibes <code>userId</code>, plantéate un índice con <code>userId</code> como clave de partición.</div>
-<p class="checkpoint"><strong>Antes de avanzar</strong> Abre las dos preguntas sobre inscripciones. En ambas tienes <code>evt-001</code>. La búsqueda de un pase añade <code>equipo-02</code>.</p>
+<div class="lesson-note"><strong>Truco de diseño.</strong> Pregunta qué dato tienes al buscar. Si más adelante necesitas todos los eventos de un usuario y solo recibes <code>userId</code>, plantéate un índice con <code>userId</code> como clave de partición.</div>
+<p class="checkpoint"><strong>Antes de avanzar</strong> Abre las dos preguntas sobre inscripciones. En ambas tienes <code>evt-001</code>. La búsqueda de un pase añade <code>usuario-02</code>.</p>
 </article>
 <article id="modelo-titulo" class="guide-step" data-step="Probar el diseño">
 <h3>Convierte el modelo en dos tablas y pruébalo</h3>
-<p><strong>Evento → Events.</strong> Guarda <code>eventId</code> y <code>title</code>. <strong>Inscripción → Registrations.</strong> Guarda la pareja de identificadores, <code>registeredAt</code> y, al entrar, <code>checkedInAt</code>.</p>
-<p>El código del equipo ya llega en la petición. Para este caso basta con guardarlo como <code>userId</code> dentro de la inscripción. En un modelo relacional, la clave foránea de la inscripción referencia al evento y la base de datos puede exigir que exista. Aquí <code>eventId</code> forma parte de la clave de DynamoDB y POST comprueba en la API que el evento existe antes de inscribir al equipo.</p>
+<p class="lesson-note"><strong>Convención de Base de Datos.</strong> Escribe los nombres de tabla en singular y mayúsculas. Separa las palabras con barra baja, como en <code>LINEA_PEDIDO</code>. En esta práctica, <code>EVENTO</code> e <code>INSCRIPCION</code> llevan además el sufijo de tu equipo en AWS.</p>
+<p><strong>Evento → EVENTO.</strong> Guarda <code>eventId</code> y <code>title</code>. <strong>Inscripción → INSCRIPCION.</strong> Guarda la pareja de identificadores, <code>registeredAt</code> y, al entrar, <code>checkedInAt</code>.</p>
+<p>En este caso, <strong>USUARIO</strong> es una entidad del diagrama. El pase recibe su <code>userId</code> y <strong>INSCRIPCION</strong> guarda esa referencia. Si el festival necesita guardar perfiles, podrá añadir una tabla <code>USUARIO</code>. En un modelo relacional, la clave foránea de la inscripción referencia al evento y la base de datos puede exigir que exista. Aquí <code>eventId</code> forma parte de la clave de DynamoDB y POST comprueba en la API que el evento existe antes de inscribir al usuario.</p>
 <div class="relation" aria-label="Un evento tiene cero o muchas inscripciones">
-  <div><strong>Events</strong><br><code>eventId</code> · PK</div><span aria-hidden="true">1 ─── 0..N</span>
-  <div><strong>Registrations</strong><br><code>eventId</code> · PK<br><code>userId</code> · SK</div>
+  <div><strong>EVENTO</strong><br><code>eventId</code> · PK</div><span aria-hidden="true">1 ─── 0..N</span>
+  <div><strong>INSCRIPCION</strong><br><code>eventId</code> · PK<br><code>userId</code> · SK</div>
 </div>
 <p id="model-status" role="status">Cargando el ejemplo…</p>
 <div id="model-result">
 </div>
-<p><strong>Lee los datos de ejemplo.</strong> Un valor en <code>checkedInAt</code> indica que el equipo ya entró. En el laboratorio, la tabla de inscripciones empezará vacía y se llenará al probar POST.</p>
-<p class="checkpoint"><strong>Antes de avanzar</strong> Pulsa <strong>Ver inscritos del evento</strong>. Aparecen dos filas con <code>eventId = evt-001</code> y dos <code>userId</code> distintos. Pulsa <strong>Buscar a equipo-02</strong>. Ahora solo aparece la fila de <code>equipo-02</code>.</p>
+<p><strong>Lee los datos de ejemplo.</strong> Un valor en <code>checkedInAt</code> indica que el usuario ya entró. En el laboratorio, la tabla de inscripciones empezará vacía y se llenará al probar POST.</p>
+<p class="checkpoint"><strong>Antes de avanzar</strong> Pulsa <strong>Ver inscritos del evento</strong>. Aparecen dos filas con <code>eventId = evt-001</code> y dos <code>userId</code> distintos. Pulsa <strong>Buscar a usuario-02</strong>. Ahora solo aparece la fila de <code>usuario-02</code>.</p>
 </article>
 </section>
 <section id="conexion" class="phase" hidden>
@@ -150,9 +151,10 @@ npx serverless --version</code></pre><p class="checkpoint"><strong>Antes de avan
 <article id="rol-laboratorio" class="guide-step" data-step="Rol">
 <h3>Selecciona el equipo y el rol de Lambda</h3>
 <p class="lesson-note"><strong>Quién actúa en cada momento.</strong> Tu perfil ejecuta el despliegue. El rol <code>LabRole</code> da permisos a Lambda cuando atiende una petición y necesita acceder a DynamoDB.</p>
-<p>Cambia <code>equipo-01</code> por el código asignado a tu equipo. El último comando localiza el ARN de <code>LabRole</code>, el rol existente que usará Lambda para leer y escribir en DynamoDB.</p><pre><code>export AWS_PROFILE="$perfil"
+<p>Cambia <code>equipo-01</code> por el código asignado a tu equipo. <code>TABLE_SUFFIX</code> toma la parte que sigue a <code>equipo-</code> para distinguir las tablas de cada despliegue. El último comando localiza el ARN de <code>LabRole</code>, el rol existente que usará Lambda para leer y escribir en DynamoDB.</p><pre><code>export AWS_PROFILE="$perfil"
 export AWS_REGION="$region"
 export STUDENT_CODE=equipo-01
+export TABLE_SUFFIX="${STUDENT_CODE#equipo-}"
 LAMBDA_ROLE_ARN=$(aws iam get-role --role-name LabRole --profile "$perfil" --region "$region" --query 'Role.Arn' --output text) &amp;&amp;
   export LAMBDA_ROLE_ARN &amp;&amp;
   printf '%s\n' "$LAMBDA_ROLE_ARN"</code></pre><p>Si el laboratorio deniega <code>iam:GetRole</code>, consulta las instrucciones del laboratorio o solicita el ARN autorizado para tu cuenta. Escríbelo con <code>export LAMBDA_ROLE_ARN="ARN_DEL_LAB"</code>, sustituyendo el valor entre comillas.</p><p class="checkpoint"><strong>Antes de avanzar</strong> Tienes el ARN del rol del laboratorio y sigues usando el perfil y la región que comprobaste en Conexión.</p>
@@ -166,7 +168,7 @@ LAMBDA_ROLE_ARN=$(aws iam get-role --role-name LabRole --profile "$perfil" --reg
   <dl>
     <div>
       <dt><code>STUDENT_CODE=equipo-01</code></dt>
-      <dd><code>service</code> lee <code>${env:STUDENT_CODE}</code> y forma <code>festival-checkin-equipo-01</code>.</dd>
+      <dd><code>service</code> lee <code>${env:STUDENT_CODE}</code> y forma <code>festival-checkin-usuarios-equipo-01</code>.</dd>
     </div>
     <div>
       <dt><code>AWS_REGION=us-east-1</code></dt>
@@ -180,10 +182,14 @@ LAMBDA_ROLE_ARN=$(aws iam get-role --role-name LabRole --profile "$perfil" --reg
       <dt><code>AWS_PROFILE=default</code></dt>
       <dd>Sale de <code>perfil=default</code>. El comando de despliegue usa <code>--aws-profile "$perfil"</code>.</dd>
     </div>
+    <div>
+      <dt><code>TABLE_SUFFIX=01</code></dt>
+      <dd>Sale de <code>STUDENT_CODE=equipo-01</code>. <code>TableName</code> lo usa para formar <code>EVENTO_01</code> e <code>INSCRIPCION_01</code>.</dd>
+    </div>
   </dl>
-  <p>Ejecuta este comando en la misma terminal para ver tus cuatro valores, incluido el ARN exacto de tu rol.</p>
-  <pre><code>printf 'STUDENT_CODE=%s\nAWS_REGION=%s\nLAMBDA_ROLE_ARN=%s\nAWS_PROFILE=%s\n' \
-  "$STUDENT_CODE" "$AWS_REGION" "$LAMBDA_ROLE_ARN" "$AWS_PROFILE"</code></pre>
+  <p>Ejecuta este comando en la misma terminal para ver tus valores, incluido el ARN exacto de tu rol.</p>
+  <pre><code>printf 'STUDENT_CODE=%s\nAWS_REGION=%s\nLAMBDA_ROLE_ARN=%s\nAWS_PROFILE=%s\nTABLE_SUFFIX=%s\n' \
+  "$STUDENT_CODE" "$AWS_REGION" "$LAMBDA_ROLE_ARN" "$AWS_PROFILE" "$TABLE_SUFFIX"</code></pre>
   <a href="#rol-laboratorio">Ver los comandos del paso Rol</a>
 </aside>
 <div class="yaml-reader">
@@ -275,7 +281,7 @@ LAMBDA_ROLE_ARN=$(aws iam get-role --role-name LabRole --profile "$perfil" --reg
     <p class="yaml-outcome" hidden>Cada equipo despliega su propio servicio en la región del laboratorio.</p>
     <h4>Nombre, versión y destino del despliegue</h4>
     <dl class="yaml-terms">
-      <div><dt><code>service:</code></dt><dd>Nombre del servicio. <code>festival-checkin-</code> es nuestro prefijo. <code>${env:STUDENT_CODE}</code> pide a Serverless el valor de la variable exportada en la terminal. Con <code>equipo-01</code>, el nombre queda <code>festival-checkin-equipo-01</code>.</dd></div>
+      <div><dt><code>service:</code></dt><dd>Nombre del servicio. <code>festival-checkin-usuarios-</code> es nuestro prefijo. <code>${env:STUDENT_CODE}</code> pide a Serverless el valor de la variable exportada en la terminal. Con <code>equipo-01</code>, el nombre queda <code>festival-checkin-usuarios-equipo-01</code>.</dd></div>
       <div><dt><code>frameworkVersion: ~4.45.0</code></dt><dd>Versión de Serverless Framework que admite el proyecto. <code>~</code> permite actualizaciones de parche de la serie 4.45, como 4.45.1.</dd></div>
       <div><dt><code>provider:</code></dt><dd>Abre el bloque de configuración de la plataforma. Las líneas <code>name</code>, <code>runtime</code>, <code>region</code>, <code>stage</code> e <code>iam</code> están dentro de ese bloque.</dd></div>
       <div><dt><code>name: aws</code></dt><dd>Selecciona Amazon Web Services como plataforma.</dd></div>
@@ -288,8 +294,8 @@ LAMBDA_ROLE_ARN=$(aws iam get-role --role-name LabRole --profile "$perfil" --reg
     <div class="yaml-question">
       <p><strong>Si exportas STUDENT_CODE=equipo-03, ¿cómo se llama el servicio?</strong></p>
       <div class="actions">
-      <button type="button" data-feedback="Sí. Serverless sustituye ${env:STUDENT_CODE} por equipo-03." aria-pressed="false">festival-checkin-equipo-03</button>
-      <button type="button" data-feedback="dev es el entorno. Mira qué variable aparece al final de service." aria-pressed="false">festival-checkin-dev</button>
+      <button type="button" data-feedback="Sí. Serverless sustituye ${env:STUDENT_CODE} por equipo-03." aria-pressed="false">festival-checkin-usuarios-equipo-03</button>
+      <button type="button" data-feedback="dev es el entorno. Mira qué variable aparece al final de service." aria-pressed="false">festival-checkin-usuarios-dev</button>
       </div>
       <p class="yaml-feedback" role="status"></p>
     </div>
@@ -337,25 +343,26 @@ LAMBDA_ROLE_ARN=$(aws iam get-role --role-name LabRole --profile "$perfil" --reg
       <div><dt><code>handler: index.handler</code></dt><dd>Une el nombre base del archivo <code>index.mjs</code> con el nombre de la función exportada <code>handler</code>. AWS llama a esa función cuando llega la petición.</dd></div>
       <div><dt data-lines="events:|httpApi:"><code>events:</code></dt><dd>Lista lo que puede activar esa Lambda. Cada <code>- httpApi:</code> añade una ruta HTTP.</dd></div>
       <div><dt><code>method:</code></dt><dd>Selecciona el método HTTP de la ruta. GET, POST y PATCH activan el mismo <code>handler</code>, que usa el método para elegir la operación.</dd></div>
-      <div><dt><code>path:</code></dt><dd>Define la dirección que se compara con la petición. En <code>/events/evt-001/registrations/equipo-02</code>, las llaves de la plantilla marcan los huecos: <code>{eventId}</code> recibe <code>evt-001</code> y <code>{userId}</code> recibe <code>equipo-02</code>.</dd></div>
+      <div><dt><code>path:</code></dt><dd>Define la dirección que se compara con la petición. En <code>/events/evt-001/registrations/usuario-02</code>, las llaves de la plantilla marcan los huecos: <code>{eventId}</code> recibe <code>evt-001</code> y <code>{userId}</code> recibe <code>usuario-02</code>.</dd></div>
     </dl>
     <div class="yaml-question">
-      <p><strong>El equipo ya está inscrito y llega al festival. ¿Qué petición registra su entrada?</strong></p>
+      <p><strong>El usuario ya está inscrito y llega al festival. ¿Qué petición registra su entrada?</strong></p>
       <div class="actions">
-      <button type="button" data-feedback="POST crea la inscripción. Aquí el registro ya existe y queremos actualizarlo." aria-pressed="false">POST /events/evt-001/registrations/equipo-02</button>
-      <button type="button" data-feedback="Sí. PATCH actualiza el registro existente. API Gateway envía la petición al mismo handler." aria-pressed="false">PATCH /events/evt-001/registrations/equipo-02</button>
+      <button type="button" data-feedback="POST crea la inscripción. Aquí el registro ya existe y queremos actualizarlo." aria-pressed="false">POST /events/evt-001/registrations/usuario-02</button>
+      <button type="button" data-feedback="Sí. PATCH actualiza el registro existente. API Gateway envía la petición al mismo handler." aria-pressed="false">PATCH /events/evt-001/registrations/usuario-02</button>
       </div>
       <p class="yaml-feedback" role="status"></p>
     </div>
   </section>
   <section data-code-start="resources:" data-label="Eventos" hidden>
     <p class="yaml-outcome" hidden>Puedes buscar un evento usando solo su identificador.</p>
-    <h4>Cómo se crea EventsTable</h4>
+    <h4>Cómo se crea EVENTO</h4>
     <dl class="yaml-terms">
       <div><dt data-lines="resources:|Resources:"><code>resources: → Resources:</code></dt><dd>El primer bloque pertenece a Serverless Framework. Dentro, <code>Resources</code>, con mayúscula, lista los recursos que crea CloudFormation.</dd></div>
       <div><dt><code>EventsTable:</code></dt><dd>Identificador lógico que elegimos para la tabla de eventos. Es el mismo que aparece en <code>Ref: EventsTable</code>.</dd></div>
       <div><dt><code>Type: AWS::DynamoDB::Table</code></dt><dd>Indica a CloudFormation qué tipo de recurso debe crear: una tabla DynamoDB.</dd></div>
       <div><dt><code>Properties:</code></dt><dd>Agrupa los ajustes de esa tabla.</dd></div>
+      <div><dt><code>TableName:</code></dt><dd>Fija el nombre real en AWS. Con <code>TABLE_SUFFIX=01</code> se crea <code>EVENTO_01</code>.</dd></div>
       <div><dt><code>BillingMode: PAY_PER_REQUEST</code></dt><dd>Selecciona el modo bajo demanda. Las lecturas y escrituras se cobran según el uso.</dd></div>
       <div><dt data-lines="AttributeDefinitions:|AttributeName:|AttributeType:"><code>AttributeDefinitions:</code></dt><dd>Lista los atributos que forman las claves y su tipo. <code>AttributeName: eventId</code> da el nombre del atributo y <code>AttributeType: S</code> lo declara de tipo texto.</dd></div>
       <div><dt data-lines="KeySchema:|KeyType:"><code>KeySchema:</code></dt><dd>Lista qué papel cumple cada atributo en la clave. <code>AttributeName</code> repite el nombre del atributo y <code>KeyType: HASH</code> lo declara clave de partición. En esta tabla, <code>eventId</code> basta para localizar <code>evt-001</code>.</dd></div>
@@ -364,23 +371,24 @@ LAMBDA_ROLE_ARN=$(aws iam get-role --role-name LabRole --profile "$perfil" --reg
       <p><strong>¿Qué valor necesitas para buscar el evento Festival de otoño en EventsTable?</strong></p>
       <div class="actions">
       <button type="button" data-feedback="Sí. En KeySchema solo aparece eventId. El valor del evento de la práctica es evt-001." aria-pressed="false">evt-001</button>
-      <button type="button" data-feedback="Esa pareja identifica una inscripción. Mira cuántas claves declara EventsTable." aria-pressed="false">evt-001 y equipo-02</button>
+      <button type="button" data-feedback="Esa pareja identifica una inscripción. Mira cuántas claves declara EventsTable." aria-pressed="false">evt-001 y usuario-02</button>
       </div>
       <p class="yaml-feedback" role="status"></p>
     </div>
   </section>
   <section data-code-start="    RegistrationsTable:" data-label="Inscripciones" hidden>
-    <p class="yaml-outcome" hidden>Puedes localizar la inscripción de un equipo dentro de un evento.</p>
-    <h4>Por qué RegistrationsTable necesita dos valores</h4>
+    <p class="yaml-outcome" hidden>Puedes localizar la inscripción de un usuario dentro de un evento.</p>
+    <h4>Por qué INSCRIPCION necesita dos valores</h4>
     <dl class="yaml-terms">
       <div><dt data-lines="RegistrationsTable:|Type:|Properties:|BillingMode:"><code>RegistrationsTable:</code></dt><dd>Identificador lógico de la tabla de inscripciones. <code>Type</code>, <code>Properties</code> y <code>BillingMode</code> tienen la misma función que en EventsTable.</dd></div>
       <div><dt data-lines="AttributeDefinitions:|AttributeName:|AttributeType:"><code>AttributeDefinitions:</code></dt><dd>Contiene dos elementos: <code>eventId</code> y <code>userId</code>. El campo <code>AttributeType: S</code> indica que ambos valores son texto.</dd></div>
-      <div><dt><code>KeySchema:</code></dt><dd>Define la clave compuesta de la tabla. <code>eventId</code> agrupa las inscripciones y <code>userId</code> distingue a cada equipo dentro del grupo.</dd></div>
+      <div><dt><code>TableName:</code></dt><dd>Con <code>TABLE_SUFFIX=01</code> se crea <code>INSCRIPCION_01</code>.</dd></div>
+      <div><dt><code>KeySchema:</code></dt><dd>Define la clave compuesta de la tabla. <code>eventId</code> agrupa las inscripciones y <code>userId</code> distingue a cada usuario dentro del grupo.</dd></div>
       <div><dt><code>KeyType: HASH</code></dt><dd><code>eventId</code> es la clave de partición y permite agrupar las inscripciones por evento.</dd></div>
-      <div><dt><code>KeyType: RANGE</code></dt><dd><code>userId</code> es la clave de ordenación y distingue a cada equipo dentro del evento. <code>(evt-001, equipo-01)</code> y <code>(evt-001, equipo-02)</code> son dos claves completas distintas.</dd></div>
+      <div><dt><code>KeyType: RANGE</code></dt><dd><code>userId</code> es la clave de ordenación y distingue a cada usuario dentro del evento. <code>(evt-001, usuario-01)</code> y <code>(evt-001, usuario-02)</code> son dos claves completas distintas.</dd></div>
     </dl>
     <div class="yaml-question">
-      <p><strong>Si ya existe (evt-001, equipo-01), ¿puedes guardar (evt-001, equipo-02) como otra fila?</strong></p>
+      <p><strong>Si ya existe (evt-001, usuario-01), ¿puedes guardar (evt-001, usuario-02) como otra fila?</strong></p>
       <div class="actions">
       <button type="button" data-feedback="eventId agrupa las filas. Comprueba si userId, la segunda clave, tiene el mismo valor." aria-pressed="false">No, porque eventId se repite</button>
       <button type="button" data-feedback="Sí. Las dos filas tienen el mismo evento y dos valores distintos de userId. La pareja completa identifica cada fila." aria-pressed="false">Sí, porque cambia userId</button>
@@ -400,13 +408,13 @@ LAMBDA_ROLE_ARN=$(aws iam get-role --role-name LabRole --profile "$perfil" --reg
       <p><strong>¿Qué salida consultarás para saber sobre qué tabla ejecutar el INSERT del evento?</strong></p>
       <div class="actions">
       <button type="button" data-feedback="Sí. Ref: EventsTable devuelve el nombre real de la tabla de eventos." aria-pressed="false">EventsTableName</button>
-      <button type="button" data-feedback="Esa salida sirve para consultar las inscripciones. El INSERT de Festival de otoño va en EventsTable." aria-pressed="false">RegistrationsTableName</button>
+      <button type="button" data-feedback="Esa salida sirve para consultar las inscripciones. El INSERT de Festival de otoño va en la tabla EVENTO." aria-pressed="false">RegistrationsTableName</button>
       </div>
       <p class="yaml-feedback" role="status"></p>
     </div>
   </section>
 </div>
-<pre data-file="serverless.yml" data-reading><code>service: festival-checkin-${env:STUDENT_CODE}
+<pre data-file="serverless.yml" data-reading><code>service: festival-checkin-usuarios-${env:STUDENT_CODE}
 frameworkVersion: ~4.45.0
 
 provider:
@@ -455,6 +463,7 @@ resources:
     EventsTable:
       Type: AWS::DynamoDB::Table
       Properties:
+        TableName: EVENTO_${env:TABLE_SUFFIX}
         BillingMode: PAY_PER_REQUEST
         AttributeDefinitions:
           - AttributeName: eventId
@@ -465,6 +474,7 @@ resources:
     RegistrationsTable:
       Type: AWS::DynamoDB::Table
       Properties:
+        TableName: INSCRIPCION_${env:TABLE_SUFFIX}
         BillingMode: PAY_PER_REQUEST
         AttributeDefinitions:
           - AttributeName: eventId
@@ -484,7 +494,7 @@ resources:
       Value:
         Ref: RegistrationsTable</code></pre>
 </div>
-<p class="checkpoint"><strong>Antes de avanzar</strong> En el árbol, abre <strong>RegistrationsTable</strong> y localiza <code>eventId</code> como <code>HASH</code> y <code>userId</code> como <code>RANGE</code>. Responde la pregunta y comprueba que el mensaje confirma que los dos equipos tienen filas distintas.</p>
+<p class="checkpoint"><strong>Antes de avanzar</strong> En el árbol, abre <strong>RegistrationsTable</strong> y localiza <code>eventId</code> como <code>HASH</code> y <code>userId</code> como <code>RANGE</code>. Responde la pregunta y comprueba que el mensaje confirma que los dos usuarios tienen filas distintas.</p>
 </article>
 <article id="escribir-yaml" class="guide-step" data-step="Crear el YAML">
 <h3>Crea serverless.yml y comprueba lo que has guardado</h3>
@@ -538,8 +548,8 @@ async function checkIn(key) {
 export async function handler(event) {
   const { eventId, userId } = event.pathParameters ?? {};
   const method = event.requestContext?.http?.method;
-  if (eventId !== 'evt-001' || !/^equipo-\d{2}$/.test(userId ?? '')) {
-    return json(400, { message: 'Usa evt-001 y un código equipo-00 a equipo-99' });
+  if (eventId !== 'evt-001' || !/^(?:usuario|equipo)-\d{2}$/.test(userId ?? '')) {
+    return json(400, { message: 'Usa evt-001 y un código usuario-00 a usuario-99' });
   }
 
   const key = { eventId, userId };
@@ -560,6 +570,7 @@ node --check index.mjs</code></pre><p class="checkpoint"><strong>Antes de avanza
 </article>
 <article id="desplegar-stack" class="guide-step" data-step="Desplegar">
 <h3>Despliega el servicio desde la terminal</h3>
+<p class="lesson-note"><strong>Si ya desplegaste la versión anterior.</strong> El YAML de esta edición usa el servicio <code>festival-checkin-usuarios</code> con tu código. Al desplegarlo se crea un stack nuevo con tablas vacías. Puedes seguir practicando en tu stack anterior con el YAML que guardaste en tu carpeta y los identificadores <code>equipo-01</code>, <code>equipo-02</code> y <code>equipo-03</code> en las pruebas del pase.</p>
 <dl class="command-reasons"><div><dt><code>node --check</code></dt><dd>Comprueba la sintaxis de <code>index.mjs</code>.</dd></div><div><dt><code>&amp;&amp;</code></dt><dd>Ejecuta el segundo comando si el primero termina correctamente.</dd></div><div><dt><code>--stage dev</code></dt><dd>Selecciona el entorno de desarrollo de tu servicio.</dd></div></dl>
 <p>Ejecuta el comando en la carpeta <code>festival-checkin</code>. Serverless Framework lee tu YAML y CloudFormation crea las tablas, la función y la HTTP API en el laboratorio.</p><pre><code>node --check index.mjs &amp;&amp; npx serverless deploy --stage dev --aws-profile "$perfil"</code></pre><p>Si Framework pide iniciar sesión, usa el mismo acceso de la lección <a href="../../#primer-serverless">01 · Primer Serverless</a>. Si falla CloudFormation, lee el primer recurso y permiso que aparecen en el error. Si la sesión de AWS caducó, renueva los tres valores y repite la comprobación de Conexión.</p><p class="checkpoint"><strong>Antes de avanzar</strong> La terminal muestra el despliegue terminado y las tres rutas de la API.</p>
 </article>
@@ -568,8 +579,8 @@ node --check index.mjs</code></pre><p class="checkpoint"><strong>Antes de avanza
 <h2>Comprobar y sembrar los datos del festival</h2>
 <article id="salidas-stack" class="guide-step" data-step="Salidas">
 <h3>Recupera los nombres reales y la URL</h3>
-<p class="lesson-note"><strong>Del nombre lógico al nombre real.</strong> En el YAML escribiste <code>EventsTable</code>. CloudFormation asigna un nombre físico a la tabla. <code>salida EventsTableName</code> lo obtiene del stack y <code>tabla_eventos</code> lo guarda para que tus comandos apunten a esa tabla. <code>api_url</code> guarda la dirección que usarás con <code>curl</code>.</p>
-<p>Ejecuta el bloque en la misma terminal. Las dos primeras líneas impresas son los nombres de DynamoDB. La tercera es la URL base de la HTTP API. Guarda esa URL para la prueba de lectura.</p><pre><code>stack="festival-checkin-${STUDENT_CODE}-dev"
+<p class="lesson-note"><strong>Del nombre lógico al nombre real.</strong> En el YAML escribiste <code>EventsTable</code>. CloudFormation crea la tabla con el nombre indicado en <code>TableName</code>, por ejemplo <code>EVENTO_01</code>. <code>salida EventsTableName</code> lo obtiene del stack y <code>tabla_eventos</code> lo guarda para que tus comandos apunten a esa tabla. <code>api_url</code> guarda la dirección que usarás con <code>curl</code>.</p>
+<p>Ejecuta el bloque en la misma terminal. Las dos primeras líneas impresas son los nombres de DynamoDB. La tercera es la URL base de la HTTP API. Guarda esa URL para la prueba de lectura.</p><pre><code>stack="festival-checkin-usuarios-${STUDENT_CODE}-dev"
 salida() {
   aws cloudformation describe-stacks --stack-name "$stack" \
     --profile "$perfil" --region "$region" \
@@ -578,7 +589,7 @@ salida() {
 tabla_eventos=$(salida EventsTableName)
 tabla_inscripciones=$(salida RegistrationsTableName)
 api_url=$(salida HttpApiUrl)
-printf '%s\n' "$tabla_eventos" "$tabla_inscripciones" "$api_url"</code></pre><p class="checkpoint"><strong>Antes de avanzar</strong> Ves dos nombres distintos y una URL https de execute-api. Si ves None, verifica el nombre del stack, el perfil y la región antes del INSERT.</p>
+printf '%s\n' "$tabla_eventos" "$tabla_inscripciones" "$api_url"</code></pre><p class="checkpoint"><strong>Antes de avanzar</strong> Con <code>equipo-01</code> ves <code>EVENTO_01</code>, <code>INSCRIPCION_01</code> y una URL de API Gateway. Si ves None, verifica el nombre del stack, el perfil y la región antes del INSERT.</p>
 </article>
 <article id="estado-tablas" class="guide-step" data-step="Estado">
 <h3>Espera y comprueba las claves</h3>
@@ -589,30 +600,30 @@ printf '%s\n' "$tabla_eventos" "$tabla_inscripciones" "$api_url"</code></pre><p 
   aws dynamodb describe-table \
     --profile "$perfil" --region "$region" --table-name "$tabla" \
     --query 'Table.{Nombre:TableName,Estado:TableStatus,Claves:KeySchema}' || break
-done</code></pre><p class="checkpoint"><strong>Antes de avanzar</strong> Ambas están ACTIVE. Events tiene eventId como HASH. Registrations añade userId como RANGE.</p>
+done</code></pre><p class="checkpoint"><strong>Antes de avanzar</strong> Ambas están ACTIVE. EVENTO tiene eventId como HASH. INSCRIPCION añade userId como RANGE.</p>
 </article>
 <article id="guardar-evento" class="guide-step" data-step="INSERT">
 <h3>Guarda el primer evento</h3>
-<p class="lesson-note"><strong>Por qué insertas este dato.</strong> El despliegue crea tablas vacías. La inscripción necesita un evento existente, así que primero guardas su identificador y su título en <code>Events</code>.</p>
+<p class="lesson-note"><strong>Por qué insertas este dato.</strong> El despliegue crea tablas vacías. La inscripción necesita un evento existente, así que primero guardas su identificador y su título en <code>EVENTO</code>.</p>
 <p>Usa PartiQL para guardar «Festival de otoño» con el identificador <code>evt-001</code>.</p><pre><code>aws dynamodb execute-statement \
   --profile "$perfil" --region "$region" \
   --statement "INSERT INTO \"$tabla_eventos\" VALUE {'eventId': 'evt-001', 'title': 'Festival de otoño'}"</code></pre><p class="checkpoint"><strong>Antes de avanzar</strong> El comando vuelve al prompt sin error. Si ves DuplicateItemException, el evento ya existe y puedes comprobarlo en el siguiente paso.</p>
 </article>
 <article id="comprobar-datos" class="guide-step" data-step="SELECT">
 <h3>Lee lo que se ha guardado</h3>
-<p class="lesson-note"><strong>Lee por la clave que diseñaste.</strong> Ambas consultas usan <code>eventId = 'evt-001'</code>. En <code>Events</code> recupera el evento. En <code>Registrations</code> selecciona el grupo de inscripciones. <code>--consistent-read</code> permite comprobar el estado después de la escritura.</p>
+<p class="lesson-note"><strong>Lee por la clave que diseñaste.</strong> Ambas consultas usan <code>eventId = 'evt-001'</code>. En <code>EVENTO</code> recupera el evento. En <code>INSCRIPCION</code> selecciona el grupo de inscripciones. <code>--consistent-read</code> permite comprobar el estado después de la escritura.</p>
 <p>Ejecuta cada consulta y compara sus salidas.</p><pre><code>aws dynamodb execute-statement \
   --profile "$perfil" --region "$region" --consistent-read \
   --statement "SELECT eventId, title FROM \"$tabla_eventos\" WHERE eventId = 'evt-001'"</code></pre><pre><code>aws dynamodb execute-statement \
   --profile "$perfil" --region "$region" --consistent-read \
-  --statement "SELECT * FROM \"$tabla_inscripciones\" WHERE eventId = 'evt-001'"</code></pre><p class="checkpoint"><strong>Antes de avanzar</strong> Events devuelve evt-001 y Festival de otoño. Registrations devuelve Items: [] si aún no hay inscripciones.</p>
+  --statement "SELECT * FROM \"$tabla_inscripciones\" WHERE eventId = 'evt-001'"</code></pre><p class="checkpoint"><strong>Antes de avanzar</strong> EVENTO devuelve evt-001 y Festival de otoño. INSCRIPCION devuelve Items: [] si aún no hay inscripciones.</p>
 </article>
 </section>
 <section id="lectura" class="phase" hidden>
 <h2>Leer desde Lambda</h2>
 <article id="leer-pase" class="guide-step" data-step="Lectura">
 <h3>Lee el evento y la inscripción con getPass</h3>
-<p class="lesson-note"><strong>La pregunta que resuelve GET.</strong> El navegador pide el título y el estado del pase en una misma respuesta. La función lee <code>Events</code> con una clave y <code>Registrations</code> con dos. Si existe el evento y aún falta la inscripción, la respuesta incluye <code>registration: null</code>.</p>
+<p class="lesson-note"><strong>La pregunta que resuelve GET.</strong> El navegador pide el título y el estado del pase en una misma respuesta. La función lee <code>EVENTO</code> con una clave y <code>INSCRIPCION</code> con dos. Si existe el evento y aún falta la inscripción, la respuesta incluye <code>registration: null</code>.</p>
 <p>Abre el archivo desde la terminal y localiza <code>getPass</code>.</p><pre data-command><code>vi +/getPass index.mjs</code></pre><p>Pulsa <kbd>i</kbd> para editar y sustituye la respuesta <code>501</code> de <code>getPass(key)</code> siguiendo estos pasos.</p>
 <ol>
   <li>Usa <code>GetCommand</code> sobre <code>eventsTable</code> con la clave <code>{ eventId: key.eventId }</code>. Si el resultado carece de <code>Item</code>, devuelve <code>404</code>.</li>
@@ -646,7 +657,7 @@ done</code></pre><p class="checkpoint"><strong>Antes de avanzar</strong> Ambas e
 </article>
 <article id="conectar-api" class="guide-step" data-step="Probar GET">
 <h3>Despliega la lectura y prueba la pantalla</h3>
-<p>Guarda los cambios en <code>index.mjs</code> y ejecuta el mismo despliegue. Después prueba la ruta GET desde la terminal con un código ficticio nuevo.</p><pre><code>node --check index.mjs &amp;&amp; npx serverless deploy --stage dev --aws-profile "$perfil"</code></pre><pre><code>curl -i "$api_url/events/evt-001/registrations/equipo-01"</code></pre><p>En <a href="#pantalla">Pantalla de prueba</a>, elige AWS, pega el valor de <code>api_url</code> en URL de invocación y pulsa Consultar con el mismo código.</p><p class="checkpoint"><strong>Antes de avanzar</strong> curl devuelve 200 y registration: null. La pantalla muestra Festival de otoño y Sin inscripción.</p>
+<p>Guarda los cambios en <code>index.mjs</code> y ejecuta el mismo despliegue. Después prueba la ruta GET desde la terminal con un código ficticio nuevo.</p><pre><code>node --check index.mjs &amp;&amp; npx serverless deploy --stage dev --aws-profile "$perfil"</code></pre><pre><code>curl -i "$api_url/events/evt-001/registrations/usuario-01"</code></pre><p>En <a href="#pantalla">Pantalla de prueba</a>, elige AWS, pega el valor de <code>api_url</code> en URL de invocación y pulsa Consultar con el mismo código.</p><p class="checkpoint"><strong>Antes de avanzar</strong> curl devuelve 200 y registration: null. La pantalla muestra Festival de otoño y Sin inscripción.</p>
 </article>
 </section>
 <section id="inscripcion" class="phase" hidden>
@@ -679,8 +690,8 @@ done</code></pre><p class="checkpoint"><strong>Antes de avanzar</strong> Ambas e
 </article>
 <article id="probar-post" class="guide-step" data-step="Probar">
 <h3>Comprueba que no se inscribe dos veces</h3>
-<p>Elige un código sin inscripción. Cambia <code>equipo-01</code> si ya se ha usado. Ejecuta los dos POST y luego consulta el registro.</p>
-<pre><code>usuario=equipo-01
+<p>Elige un código sin inscripción. Cambia <code>usuario-01</code> si ya se ha usado. Ejecuta los dos POST y luego consulta el registro.</p>
+<pre><code>usuario=usuario-01
 pase="$api_url/events/evt-001/registrations/$usuario"
 curl -i -X POST "$pase"
 curl -i -X POST "$pase"
@@ -713,7 +724,7 @@ curl -i "$pase"</code></pre>
 <article id="probar-patch" class="guide-step" data-step="Probar">
 <h3>Prueba los tres resultados</h3>
 <p>Usa un código sin inscripción en el primer PATCH. <code>$pase</code> conserva la URL del código que inscribiste en el paso anterior.</p>
-<pre><code>sin_inscripcion=equipo-02
+<pre><code>sin_inscripcion=usuario-02
 curl -i -X PATCH "$api_url/events/evt-001/registrations/$sin_inscripcion"
 curl -i -X PATCH "$pase"
 curl -i -X PATCH "$pase"
@@ -726,7 +737,7 @@ curl -i "$pase"</code></pre>
 <article id="otro-equipo" class="guide-step" data-step="Recorrido">
 <h3>Pasa el control de puerta a tu pareja</h3>
 <p>Elige otro código sin inscripción y ejecuta el bloque. Puedes repetir el recorrido desde la <a href="#pantalla">Pantalla de prueba</a> con otro código.</p>
-<pre><code>codigo_prueba=equipo-03
+<pre><code>codigo_prueba=usuario-03
 pase_prueba="$api_url/events/evt-001/registrations/$codigo_prueba"
 curl -i "$pase_prueba"
 curl -i -X PATCH "$pase_prueba"
@@ -757,7 +768,7 @@ curl -i "$pase_prueba"</code></pre>
 <h3>Del modelo al primer registro</h3>
 <figure class="infra-flow">
   <ol>
-    <li><a href="#modelo-titulo">Elige las claves</a><span>Events · eventId<br>Registrations · eventId + userId</span></li>
+    <li><a href="#modelo-titulo">Elige las claves</a><span>EVENTO · eventId<br>INSCRIPCION · eventId + userId</span></li>
     <li><a href="#infraestructura">Escribe serverless.yml</a><span>Tablas, función, tres rutas y nombres de tabla para Lambda</span></li>
     <li><a href="#desplegar-stack">Despliega en AWS</a><span>Serverless Framework → CloudFormation → recursos del laboratorio</span></li>
     <li><a href="#guardar-evento">Carga el primer evento</a><span>AWS CLI → PartiQL INSERT → evt-001</span></li>
@@ -773,7 +784,7 @@ curl -i "$pase_prueba"</code></pre>
     <dt><code>TableName</code></dt>
     <dd>El nombre que veis encima de cada tabla.</dd>
     <dt><code>KeyAttributes</code></dt>
-    <dd>Las claves que el visor marca como PK y SK. <code>AttributeName</code> es el nombre del campo y <code>S</code> significa texto. En Events, el nombre de <code>SortKey</code> está vacío porque esa tabla solo tiene PK.</dd>
+    <dd>Las claves que el visor marca como PK y SK. <code>AttributeName</code> es el nombre del campo y <code>S</code> significa texto. En EVENTO, el nombre de <code>SortKey</code> está vacío porque esa tabla solo tiene PK.</dd>
     <dt><code>TableData</code></dt>
     <dd>Las filas ficticias. <code>{ "S": "evt-001" }</code> guarda el texto <code>evt-001</code>. La vista de tabla muestra directamente ese valor.</dd>
   </dl>
@@ -786,7 +797,7 @@ curl -i "$pase_prueba"</code></pre>
   </div>
   <p id="model-feedback" role="status">
 </p>
-  <p>Prueba a cambiar <code>Festival de otoño</code> por otro título y pulsa <strong>Ver tablas</strong>. Cambiará la celda de Events en esta página.</p>
+  <p>Prueba a cambiar <code>Festival de otoño</code> por otro título y pulsa <strong>Ver tablas</strong>. Cambiará la celda de EVENTO en esta página.</p>
 <p><a href="#modelo-titulo">Volver a las tablas de «Probar el diseño»</a>
 </p>
 </article>
@@ -801,7 +812,7 @@ curl -i "$pase_prueba"</code></pre>
   </div>
   <div class="settings">
     <label>Conexión<select id="mode"><option value="demo">Ensayo · datos en memoria</option><option value="aws">AWS · API del equipo</option></select></label>
-    <label>Código ficticio<input id="user" value="equipo-01" maxlength="9" autocomplete="off" pattern="equipo-[0-9]{2}"></label>
+    <label>Usuario ficticio<input id="user" value="usuario-01" maxlength="10" autocomplete="off" pattern="(?:usuario|equipo)-[0-9]{2}"></label>
     <label id="endpoint-field" hidden>URL de invocación<input id="endpoint" type="url" placeholder="https://…execute-api.…amazonaws.com" autocomplete="off"></label>
   </div>
   <div class="actions">
