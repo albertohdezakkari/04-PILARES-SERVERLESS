@@ -4,10 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Festival Check-in · práctica guiada</title>
-<link rel="stylesheet" href="style.css?v=prueba-rutas">
+<link rel="stylesheet" href="style.css?v=entrenar-dynamo">
 <script type="module" src="app.js?v=prueba-rutas"></script>
 <script type="module" src="guia.js?v=modulos-pases"></script>
 <script type="module" src="visor-modelo.js?v=usuario"></script>
+<script type="module" src="entrenamiento-dynamo.js"></script>
 </head>
 <body>
 <main>
@@ -757,6 +758,52 @@ done</code></pre><p class="checkpoint"><strong>Antes de avanzar</strong> Ambas e
 </section>
 <section id="lectura" class="phase" hidden>
 <h2>Leer desde Lambda</h2>
+<article id="entrenar-dynamo" class="guide-step" data-step="Entrenar con objetos">
+  <div class="lambda-hero">
+    <div><h3>De la clave al objeto</h3><p><strong>usuario-02</strong> pulsa <strong>Consultar</strong> en el Festival de otoño. Antes de programar, sigue el dato desde la ruta hasta la respuesta.</p></div>
+    <div class="lambda-ticket"><strong>La clave que recibe getPass</strong><code>{ eventId: 'evt-001', userId: 'usuario-02' }</code></div>
+  </div>
+
+  <h4>Qué aprende cada acción del pase</h4>
+  <ol class="route-map" aria-label="Operaciones de DynamoDB de la práctica">
+    <li><span>Consultar · Lectura por clave</span><strong><code>GetCommand</code></strong><p>Lee <code>EVENTO</code> con <code>eventId</code> y <code>INSCRIPCION</code> con las dos claves.</p></li>
+    <li><span>Inscribir · Escritura con condición</span><strong><code>PutCommand</code></strong><p>Guarda la inscripción y <code>registeredAt</code> si la pareja de claves está libre.</p></li>
+    <li><span>Dar entrada · Actualización con condición</span><strong><code>UpdateCommand</code></strong><p>Añade <code>checkedInAt</code> a la inscripción existente una sola vez.</p></li>
+  </ol>
+  <div class="lesson-note">
+    <strong>Cómo se lee el código.</strong> <code>new GetCommand({ TableName, Key, ConsistentRead: true })</code> indica la tabla y la clave. Con <code>ConsistentRead: true</code>, la lectura refleja las escrituras confirmadas antes de esa consulta. <code>await db.send(...)</code> envía la operación y espera su respuesta. <code>const { Item: event } = respuesta</code> extrae <code>Item</code> y le da el nombre local <code>event</code>. El cliente de documentos devuelve los atributos como valores de JavaScript.
+  </div>
+
+  <section class="dynamo-training" aria-labelledby="dynamo-training-title">
+    <h4 id="dynamo-training-title">Entrena las dos lecturas de <code>getPass</code></h4>
+    <form id="dynamo-practice">
+      <label>Datos de partida
+        <select name="scenario">
+          <option value="sin-inscripcion">El evento existe y usuario-02 aún no se inscribió</option>
+          <option value="inscrito">El evento existe y usuario-02 ya se inscribió</option>
+          <option value="sin-evento">La tabla de eventos aún está vacía</option>
+        </select>
+      </label>
+      <label>Predice la respuesta
+        <select name="prediction" required>
+          <option value="">Elige el resultado que esperas</option>
+          <option value="sin-evento">404 · Evento no encontrado</option>
+          <option value="sin-inscripcion">200 · registration: null</option>
+          <option value="inscrito">200 · registration contiene un objeto</option>
+        </select>
+      </label>
+      <button type="submit">Comprobar mi predicción</button>
+    </form>
+    <p id="dynamo-feedback" role="status"></p>
+    <ol id="dynamo-results" class="dynamo-results" aria-label="Resultado de la simulación" hidden>
+      <li><h5>1 · Lee EVENTO</h5><code>Key: { eventId: 'evt-001' }</code><pre><code id="dynamo-event"></code></pre><p id="dynamo-event-value"></p></li>
+      <li><h5>2 · Lee INSCRIPCION</h5><code>Key: { eventId: 'evt-001', userId: 'usuario-02' }</code><pre><code id="dynamo-registration"></code></pre><p id="dynamo-registration-value"></p></li>
+      <li><h5>3 · Responde a la web</h5><strong id="dynamo-status"></strong><pre><code id="dynamo-response"></code></pre><p id="dynamo-response-value"></p></li>
+    </ol>
+  </section>
+  <p class="checkpoint"><strong>Antes de avanzar</strong> Prueba los tres escenarios. Cuando falta el evento, la segunda lectura se omite. Cuando existe el evento, la API devuelve el título y el resultado de la segunda lectura. Después abre <strong>Lectura</strong> para escribirlo en <code>consultar.mjs</code>.</p>
+  <p><a href="https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_GetItem.html">Referencia de GetItem</a> · <a href="https://docs.aws.amazon.com/sdk-for-javascript/v3/developer-guide/javascript_dynamodb_code_examples.html">Ejemplos del SDK de JavaScript</a></p>
+</article>
 <article id="leer-pase" class="guide-step" data-step="Lectura">
 <h3>Lee el evento y la inscripción con getPass</h3>
 <ol class="route-map" aria-label="De la ruta al caso de uso">
@@ -934,7 +981,7 @@ aws dynamodb execute-statement \
     <li><a href="#infraestructura">Escribe serverless.yml</a><span>Tablas, tres funciones, sus rutas y nombres de tabla para Lambda</span></li>
     <li><a href="#desplegar-stack">Despliega en AWS</a><span>Serverless Framework → CloudFormation → recursos del laboratorio</span></li>
     <li><a href="#guardar-evento">Carga el primer evento</a><span>AWS CLI → PartiQL INSERT → evt-001</span></li>
-    <li><a href="#conectar-api">Comprueba la lectura</a><span>Pantalla → HTTP API → Lambda → DynamoDB</span></li>
+    <li><a href="#entrenar-dynamo">Entrena la lectura</a><span>Clave → ítem → objeto JavaScript → respuesta HTTP</span></li>
   </ol>
   <figcaption><a href="../../ayuda/dynamodb/">Ver la infografía del modelo completo ↗</a></figcaption>
 </figure>
