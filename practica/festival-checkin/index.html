@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Festival Check-in · práctica guiada</title>
-<link rel="stylesheet" href="style.css?v=mapa-dynamodb">
+<link rel="stylesheet" href="style.css?v=capas-get-pass">
 <script type="module" src="app.js?v=prueba-rutas"></script>
 <script type="module" src="guia.js?v=modulos-pases"></script>
 <script type="module" src="visor-modelo.js?v=usuario"></script>
@@ -865,18 +865,45 @@ done</code></pre>
 </article>
 <article id="leer-pase" class="guide-step" data-step="Lectura">
 <h3>Lee el evento y la inscripción con getPass</h3>
-<ol class="route-map" aria-label="De la ruta al caso de uso">
-  <li><span>Petición</span><strong>GET · Ruta del pase</strong></li>
-  <li><span>Archivo que invoca AWS</span><code>src/pases/consultar.mjs</code></li>
-  <li><span>Función que completas</span><code>getPass(key)</code></li>
-</ol>
-<p class="lesson-note"><strong>La pregunta que resuelve GET.</strong> El navegador pide el título y el estado del pase en una misma respuesta. La función lee <code>EVENTO</code> con una clave y <code>INSCRIPCION</code> con dos. Si existe el evento y aún falta la inscripción, la respuesta incluye <code>registration: null</code>.</p>
+<figure class="pass-layers" aria-labelledby="pass-layers-title">
+  <figcaption id="pass-layers-title">De la petición a la respuesta del pase</figcaption>
+  <ol role="list">
+    <li>
+      <h4>Navegador → API Gateway</h4>
+      <p>Al pulsar <strong>Consultar</strong>, el navegador pide el pase de <code>usuario-02</code>.</p>
+      <code>GET /events/evt-001/registrations/usuario-02</code>
+    </li>
+    <li>
+      <h4>Lambda · <code>src/pases/consultar.mjs</code></h4>
+      <p>El <code>handler</code> toma los dos valores de la ruta y llama a <code>getPass(key)</code>.</p>
+      <code>key = { eventId: 'evt-001', userId: 'usuario-02' }</code>
+    </li>
+    <li>
+      <h4>DynamoDB · Dos lecturas por clave con <code>GetCommand</code></h4>
+      <div class="pass-lookups">
+        <section aria-labelledby="pass-event-lookup">
+          <h5 id="pass-event-lookup">1. <code>eventsTable</code> → <code>EVENTO_01</code></h5>
+          <code>{ eventId: 'evt-001' }</code>
+          <p><code>Item</code> se guarda en <code>event</code>. Si falta, Lambda devuelve <strong>404</strong> y termina aquí.</p>
+        </section>
+        <span class="pass-next-lookup"><span aria-hidden="true"></span> Si existe</span>
+        <section aria-labelledby="pass-registration-lookup">
+          <h5 id="pass-registration-lookup">2. <code>registrationsTable</code> → <code>INSCRIPCION_01</code></h5>
+          <code>{ eventId: 'evt-001', userId: 'usuario-02' }</code>
+          <p><code>Item</code> se guarda en <code>registration</code>. La pareja completa localiza un único pase en la tabla.</p>
+        </section>
+      </div>
+      <p><code>GetCommand</code> lee por la clave primaria de la tabla. Para listar los eventos partiendo de <code>userId</code>, usarías <a href="#consultar-indice"><code>Query</code> sobre <code>PorUsuario</code></a>.</p>
+    </li>
+    <li>
+      <h4>Lambda → API Gateway → Navegador</h4>
+      <p>Si el evento existe, <strong>200</strong> devuelve su título y <code>registration</code>. Si falta la inscripción, <code>registration ?? null</code> envía <code>null</code>.</p>
+      <code>{ "eventId": "evt-001", "title": "Festival de otoño", "registration": null }</code>
+    </li>
+  </ol>
+</figure>
 <p>Desde la raíz de <code>festival-checkin</code>, abre el archivo de la ruta GET y localiza <code>getPass</code>.</p><pre data-command><code>vi '+/async function getPass(' src/pases/consultar.mjs</code></pre><p>Implementa la función <code>getPass(key)</code> que devuelve <code>501</code>. Mantén los imports y el <code>handler</code> que ya preparaste.</p>
-<ol>
-  <li>Usa <code>GetCommand</code> sobre <code>eventsTable</code> con la clave <code>{ eventId: key.eventId }</code>. Si el resultado carece de <code>Item</code>, devuelve <code>404</code>.</li>
-  <li>Usa otro <code>GetCommand</code> sobre <code>registrationsTable</code> con <code>key</code> completa. Activa <code>ConsistentRead</code> en ambas lecturas.</li>
-  <li>Devuelve <code>200</code> con el identificador y el título del evento. En <code>registration</code>, incluye el ítem de inscripción si existe, o <code>null</code>.</li>
-</ol><pre><code>{ "eventId": "evt-001", "title": "Festival de otoño", "registration": null }</code></pre><p>Cuando exista la inscripción, <code>registration</code> contiene el registro con <code>userId</code>, <code>registeredAt</code> y la hora de entrada si ya se guardó.</p>
+<p>Al leer la función, fíjate en <code>await</code>. Lambda espera a que termine cada lectura antes de usar su <code>Item</code>. Con <code>ConsistentRead: true</code>, cada lectura refleja las escrituras confirmadas antes de esa operación. Puedes <a href="#entrenar-dynamo">simular los tres resultados</a> antes de desplegar.</p>
 <section class="lesson-example" aria-labelledby="ejemplo-getPass">
   <h4 id="ejemplo-getPass">Función completa <code>getPass</code></h4>
   <p>Puedes copiar esta función y reemplazar la versión de <code>getPass</code> que devuelve <code>501</code> en <code>src/pases/consultar.mjs</code>.</p>
