@@ -75,6 +75,9 @@ button:disabled { opacity: .65; cursor: wait; }
 }
 .code-notes h4 { margin: 0 0 4px; }
 .code-notes p { margin: 4px 0; }
+.yaml-question { margin-top: 10px; }
+.yaml-question button { min-height: 40px; }
+.yaml-feedback:empty { display: none; }
 .output-label { color: var(--muted); }
 .relation, .screen-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
 .relation { justify-content: flex-start; }

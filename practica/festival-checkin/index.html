@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Festival Check-in · práctica guiada</title>
-<link rel="stylesheet" href="style.css?v=yaml">
+<link rel="stylesheet" href="style.css?v=leer-yaml">
 <script type="module" src="app.js"></script>
-<script type="module" src="guia.js?v=yaml"></script>
+<script type="module" src="guia.js?v=leer-yaml"></script>
 <script type="module" src="visor-modelo.js"></script>
 </head>
 <body>
@@ -109,43 +109,88 @@ LAMBDA_ROLE_ARN=$(aws iam get-role --role-name LabRole --profile "$perfil" --reg
   export LAMBDA_ROLE_ARN &amp;&amp;
   printf '%s\n' "$LAMBDA_ROLE_ARN"</code></pre><p>Si el laboratorio deniega <code>iam:GetRole</code>, consulta las instrucciones del laboratorio o solicita el ARN autorizado para tu cuenta. Escríbelo con <code>export LAMBDA_ROLE_ARN="ARN_DEL_LAB"</code>, sustituyendo el valor entre comillas.</p><p class="checkpoint"><strong>Antes de avanzar</strong> Tienes el ARN del rol del laboratorio y sigues usando el perfil y la región que comprobaste en Conexión.</p>
 </article>
-<article id="infraestructura" class="guide-step" data-step="serverless.yml">
-<h3>Describe la infraestructura en serverless.yml</h3>
-<p>Desde la carpeta <code>festival-checkin</code>, ejecuta este comando para crear y abrir <code>serverless.yml</code>.</p>
-<pre><code>touch serverless.yml &amp;&amp; vi serverless.yml</code></pre>
-<p>En la caja de abajo, pulsa <strong>Copiar archivo completo</strong>. En <code>vi</code>, escribe <code>:set paste</code> y pulsa Intro. Si el archivo está vacío, pulsa <kbd>i</kbd> y pega el contenido. Si ya contiene el archivo de este paso, compruébalo y sigue. Para guardar, pulsa <kbd>Esc</kbd>, escribe <code>:wq</code> y pulsa Intro.</p>
-<p>Al ejecutar <code>npx serverless deploy</code>, Serverless Framework usa este archivo para configurar el servicio en AWS. Sigue el recorrido de <strong>Consultar</strong> en las páginas del código: la web envía un GET a API Gateway, Lambda recibe la petición y busca el evento y la inscripción en DynamoDB.</p>
+<article id="infraestructura" class="guide-step" data-step="Leer el YAML">
+<h3>Sigue una petición en serverless.yml</h3>
+<p>Imagina que <code>equipo-02</code> pulsa <strong>Consultar</strong> para el evento <code>evt-001</code>. Sigue la petición en el YAML. En cada página, busca la pista en el código y elige una respuesta para comprobar tu razonamiento.</p>
 <div class="code-notes" aria-live="polite">
   <section data-code-start="service:">
     <h4>Nombre, región y permisos</h4>
     <p><code>${env:STUDENT_CODE}</code> toma el código que exportaste en la terminal. Con <code>equipo-01</code>, el servicio se llama <code>festival-checkin-equipo-01</code>. <code>region</code> toma <code>AWS_REGION</code>, <code>stage</code> identifica el entorno <code>dev</code> y <code>runtime</code> indica que Lambda ejecuta Node.js 22.</p>
     <p><code>iam.role</code> asigna a Lambda el rol del laboratorio con el que accederá a DynamoDB. <code>frameworkVersion</code> mantiene el proyecto en la serie 4.45.x de Serverless Framework.</p>
+    <div class="yaml-question">
+      <p><strong>Si exportas STUDENT_CODE=equipo-03, ¿cómo se llama el servicio?</strong></p>
+      <div class="actions">
+      <button type="button" data-feedback="Sí. Serverless sustituye ${env:STUDENT_CODE} por equipo-03." aria-pressed="false">festival-checkin-equipo-03</button>
+      <button type="button" data-feedback="dev es el entorno. Mira qué variable aparece al final de service." aria-pressed="false">festival-checkin-dev</button>
+      </div>
+      <p class="yaml-feedback" role="status"></p>
+    </div>
   </section>
   <section data-code-start="  environment:" hidden>
     <h4>Qué tablas usa Lambda y desde qué web se llama a la API</h4>
     <p><code>Ref: EventsTable</code> devuelve el nombre real que CloudFormation da a la tabla. Lambda recibe ese nombre en <code>EVENTS_TABLE</code> y lo lee con <code>process.env.EVENTS_TABLE</code>. Lo mismo ocurre con <code>REGISTRATIONS_TABLE</code>.</p>
     <p><code>payload: '2.0'</code> indica el formato en que API Gateway entrega la petición a Lambda. CORS permite que el navegador haga GET, POST y PATCH desde el origen de GitHub Pages indicado.</p>
+    <div class="yaml-question">
+      <p><strong>En index.mjs, ¿qué variable leerías para localizar la tabla de inscripciones?</strong></p>
+      <div class="actions">
+      <button type="button" data-feedback="Esa variable apunta a EventsTable. Busca la que tiene Ref: RegistrationsTable." aria-pressed="false">EVENTS_TABLE</button>
+      <button type="button" data-feedback="Sí. Lambda lee process.env.REGISTRATIONS_TABLE para obtener el nombre real de esa tabla." aria-pressed="false">REGISTRATIONS_TABLE</button>
+      </div>
+      <p class="yaml-feedback" role="status"></p>
+    </div>
   </section>
   <section data-code-start="build:" hidden>
     <h4>Qué función recibe cada petición</h4>
     <p>Las tres rutas llaman a <code>index.handler</code>, la función <code>handler</code> exportada en <code>index.mjs</code>. En <code>GET /events/evt-001/registrations/equipo-02</code>, <code>eventId</code> vale <code>evt-001</code> y <code>userId</code> vale <code>equipo-02</code>.</p>
     <p>GET consulta el pase, POST crea la inscripción y PATCH registra la entrada. <code>esbuild: false</code> desactiva el empaquetador de código integrado. Lambda ejecutará el archivo JavaScript que prepararás en el siguiente paso.</p>
+    <div class="yaml-question">
+      <p><strong>El equipo ya está inscrito y llega al festival. ¿Qué petición registra su entrada?</strong></p>
+      <div class="actions">
+      <button type="button" data-feedback="POST crea la inscripción. Aquí el registro ya existe y queremos actualizarlo." aria-pressed="false">POST /events/evt-001/registrations/equipo-02</button>
+      <button type="button" data-feedback="Sí. PATCH actualiza el registro existente. API Gateway envía la petición al mismo handler." aria-pressed="false">PATCH /events/evt-001/registrations/equipo-02</button>
+      </div>
+      <p class="yaml-feedback" role="status"></p>
+    </div>
   </section>
   <section data-code-start="resources:" hidden>
     <h4>Events · Un identificador por evento</h4>
     <p><code>AttributeDefinitions</code> declara el tipo de los atributos que participan en las claves. Aquí <code>S</code> significa texto. <code>KeySchema</code> indica qué función cumple cada atributo. <code>eventId</code> es <code>HASH</code>, la clave de partición. Con <code>evt-001</code> puedes recuperar un evento concreto.</p>
     <p><code>PAY_PER_REQUEST</code> configura el cobro por las lecturas y escrituras que se realicen.</p>
+    <div class="yaml-question">
+      <p><strong>¿Qué valor necesitas para buscar el evento Festival de otoño en EventsTable?</strong></p>
+      <div class="actions">
+      <button type="button" data-feedback="Sí. En KeySchema solo aparece eventId. El valor del evento de la práctica es evt-001." aria-pressed="false">evt-001</button>
+      <button type="button" data-feedback="Esa pareja identifica una inscripción. Mira cuántas claves declara EventsTable." aria-pressed="false">evt-001 y equipo-02</button>
+      </div>
+      <p class="yaml-feedback" role="status"></p>
+    </div>
   </section>
   <section data-code-start="    RegistrationsTable:" hidden>
     <h4>Registrations · Dos valores para localizar una inscripción</h4>
     <p><code>eventId</code> sigue siendo la clave de partición y agrupa las inscripciones de un evento. <code>userId</code> es <code>RANGE</code>, la clave de ordenación. Dentro de <code>evt-001</code>, <code>equipo-01</code> y <code>equipo-02</code> ocupan filas distintas. La pareja <code>evt-001</code> + <code>equipo-02</code> identifica una sola fila.</p>
+    <div class="yaml-question">
+      <p><strong>Si ya existe (evt-001, equipo-01), ¿puedes guardar (evt-001, equipo-02) como otra fila?</strong></p>
+      <div class="actions">
+      <button type="button" data-feedback="eventId agrupa las filas. Comprueba si userId, la segunda clave, tiene el mismo valor." aria-pressed="false">No, porque eventId se repite</button>
+      <button type="button" data-feedback="Sí. Las dos filas tienen el mismo evento y dos valores distintos de userId. La pareja completa identifica cada fila." aria-pressed="false">Sí, porque cambia userId</button>
+      </div>
+      <p class="yaml-feedback" role="status"></p>
+    </div>
   </section>
   <section data-code-start="  Outputs:" hidden>
     <h4>Los nombres que usarás desde la terminal</h4>
     <p><code>Outputs</code> publica los nombres reales en las salidas del despliegue. En <a href="#salidas-stack">Salidas</a> leerás <code>EventsTableName</code> y <code>RegistrationsTableName</code> para ejecutar las consultas de AWS CLI sobre tus tablas.</p>
+    <div class="yaml-question">
+      <p><strong>¿Qué salida consultarás para saber sobre qué tabla ejecutar el INSERT del evento?</strong></p>
+      <div class="actions">
+      <button type="button" data-feedback="Sí. Ref: EventsTable devuelve el nombre real de la tabla de eventos." aria-pressed="false">EventsTableName</button>
+      <button type="button" data-feedback="Esa salida sirve para consultar las inscripciones. El INSERT de Festival de otoño va en EventsTable." aria-pressed="false">RegistrationsTableName</button>
+      </div>
+      <p class="yaml-feedback" role="status"></p>
+    </div>
   </section>
 </div>
-<pre data-file="serverless.yml"><code>service: festival-checkin-${env:STUDENT_CODE}
+<pre data-file="serverless.yml" data-reading><code>service: festival-checkin-${env:STUDENT_CODE}
 frameworkVersion: ~4.45.0
 
 provider:
@@ -221,8 +266,18 @@ resources:
         Ref: EventsTable
     RegistrationsTableName:
       Value:
-        Ref: RegistrationsTable</code></pre><pre><code>ls -l serverless.yml
-sed -n '1,18p' serverless.yml</code></pre><p class="checkpoint"><strong>Antes de avanzar</strong> <code>ls</code> muestra <code>serverless.yml</code> y su primera línea conserva <code>${env:STUDENT_CODE}</code>. En <code>KeySchema</code>, comprueba que las dos tablas tienen <code>eventId</code> como <code>HASH</code> y que solo <code>RegistrationsTable</code> añade <code>userId</code> como <code>RANGE</code>. En <code>environment</code>, comprueba que cada <code>Ref</code> apunta a su tabla.</p>
+        Ref: RegistrationsTable</code></pre>
+<p class="checkpoint"><strong>Antes de avanzar</strong> En la página de <strong>Registrations</strong>, localiza <code>eventId</code> como <code>HASH</code> y <code>userId</code> como <code>RANGE</code>. Responde la pregunta y comprueba que el mensaje confirma que los dos equipos tienen filas distintas.</p>
+</article>
+<article id="escribir-yaml" class="guide-step" data-step="Crear el YAML">
+<h3>Crea serverless.yml y comprueba lo que has guardado</h3>
+<p>Desde la carpeta <code>festival-checkin</code>, ejecuta este comando para crear y abrir <code>serverless.yml</code>.</p>
+<pre><code>touch serverless.yml &amp;&amp; vi serverless.yml</code></pre>
+<p>En la caja del YAML, pulsa <strong>Copiar archivo completo</strong>. En <code>vi</code>, escribe <code>:set paste</code> y pulsa Intro. Si el archivo está vacío, pulsa <kbd>i</kbd> y pega el contenido. Si ya contiene el archivo de este paso, compruébalo y sigue. Para guardar, pulsa <kbd>Esc</kbd>, escribe <code>:wq</code> y pulsa Intro.</p>
+<pre data-file="serverless.yml" data-copy-from="infraestructura"><code></code></pre>
+<p>Ya en la terminal, busca en tu archivo los bloques que acabas de revisar.</p>
+<pre><code>grep -nE '^(service:|functions:|resources:|[[:space:]]+KeyType:)' serverless.yml</code></pre>
+<p class="checkpoint"><strong>Antes de avanzar</strong> La terminal muestra <code>service:</code>, <code>functions:</code> y <code>resources:</code>, seguidos de tres líneas <code>KeyType</code> con <code>HASH</code>, <code>HASH</code> y <code>RANGE</code>.</p>
 </article>
 <article id="archivo-lambda" class="guide-step" data-step="Archivo base">
 <h3>Prepara el archivo index.mjs</h3>

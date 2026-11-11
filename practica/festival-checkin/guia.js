@@ -90,6 +90,7 @@ function addCodeControls(pre) {
   pre.tabIndex = 0;
   const code = pre.querySelector('code');
   const fullText = code.textContent;
+  const reading = pre.hasAttribute('data-reading');
   const toolbar = document.createElement('div');
   toolbar.className = 'code-toolbar actions';
   const feedback = document.createElement('span');
@@ -105,8 +106,10 @@ function addCodeControls(pre) {
       }
     });
   }
-  toolbar.append(copyButton(fileName ? 'Copiar archivo completo' : 'Copiar comando', fullText,
-    fileName ? 'Pulsa Ver archivo entero para copiarlo manualmente.' : 'Selecciona el texto y cópialo con el teclado.'));
+  if (!reading) {
+    toolbar.append(copyButton(fileName ? 'Copiar archivo completo' : 'Copiar comando', fullText,
+      fileName ? 'Pulsa Ver archivo entero para copiarlo manualmente.' : 'Selecciona el texto y cópialo con el teclado.'));
+  }
   pre.before(toolbar);
   if (fileName) {
     const lines = fullText.split('\n');
@@ -129,7 +132,7 @@ function addCodeControls(pre) {
         notes.hidden = full;
         sections.forEach((section, index) => { section.hidden = index !== page; });
       }
-      const focus = pre.closest('#infraestructura')
+      const focus = fileName === 'serverless.yml'
         ? /^\s*(service:|region:|role:|Ref:|payload:|handler:|method:|KeyType:|Outputs:)/
         : /process\.env|async function (getPass|register|checkIn|handler)/;
       code.replaceChildren();
@@ -152,10 +155,27 @@ function addCodeControls(pre) {
       pre.scrollTop = 0;
       pre.scrollLeft = 0;
     }
-    toolbar.append(toggle, previous, following, pageLabel);
+    if (!reading) toolbar.append(toggle);
+    toolbar.append(previous, following, pageLabel);
     render();
   }
   toolbar.append(feedback);
+}
+
+for (const pre of document.querySelectorAll('pre[data-copy-from]')) {
+  const source = document.getElementById(pre.dataset.copyFrom).querySelector('pre[data-file] code');
+  pre.querySelector('code').textContent = source.textContent;
+}
+
+for (const question of document.querySelectorAll('.yaml-question')) {
+  const choices = [...question.querySelectorAll('[data-feedback]')];
+  const result = question.querySelector('.yaml-feedback');
+  for (const choice of choices) {
+    choice.addEventListener('click', () => {
+      for (const option of choices) option.setAttribute('aria-pressed', String(option === choice));
+      result.textContent = choice.dataset.feedback;
+    });
+  }
 }
 
 const commands = '#conexion .guide-step:not(#pegar-aws) pre, #datos pre, #lectura pre[data-command], #conectar-api pre, #inscripcion pre, #entrada pre, #prueba pre';
