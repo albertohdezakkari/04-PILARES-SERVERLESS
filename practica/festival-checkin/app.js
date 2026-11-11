@@ -1,4 +1,3 @@
-const phaseButtons = document.querySelectorAll('[data-phase]');
 const methodButtons = document.querySelectorAll('[data-method]');
 const mode = document.querySelector('#mode');
 const endpoint = document.querySelector('#endpoint');
@@ -10,31 +9,6 @@ const title = document.querySelector('#screen-title');
 const eventId = 'evt-001';
 const demoTitle = 'Festival de otoño';
 const demoRegistrations = new Map();
-
-function selectPhase(phase) {
-  for (const button of phaseButtons) {
-    const selected = button.dataset.phase === phase;
-    button.setAttribute('aria-pressed', String(selected));
-    document.getElementById(button.dataset.phase).hidden = !selected;
-  }
-}
-
-for (const button of phaseButtons) {
-  button.addEventListener('click', () => {
-    selectPhase(button.dataset.phase);
-    history.replaceState(null, '', '#' + button.dataset.phase);
-  });
-}
-
-function followPhaseLink() {
-  const target = document.getElementById(location.hash.slice(1));
-  const phase = target?.closest('.phase');
-  if (!phase) return;
-  selectPhase(phase.id);
-  if (target !== phase) target.scrollIntoView();
-}
-window.addEventListener('hashchange', followPhaseLink);
-followPhaseLink();
 
 function clearScreen() {
   const demo = mode.value === 'demo';

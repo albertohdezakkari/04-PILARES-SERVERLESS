@@ -12,16 +12,40 @@
 }
 * { box-sizing: border-box; }
 body { margin: 0; }
-main { max-width: 920px; margin: auto; padding: clamp(16px, 4vw, 40px); }
-header { padding: 12px 0 28px; }
+main {
+  width: min(1080px, 100%);
+  height: 100dvh;
+  margin: auto;
+  padding: clamp(10px, 2vw, 24px);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto auto auto minmax(0, 1fr) auto;
+  gap: 10px;
+}
+.course-header { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px 18px; align-items: end; }
 a { color: var(--accent); text-underline-offset: .2em; }
-h1 { font-size: clamp(3.1rem, 11vw, 7rem); line-height: .88; letter-spacing: -.075em; margin: .15em 0 .26em; }
+h1 { font-size: clamp(1.4rem, 4vw, 2.4rem); line-height: 1.1; letter-spacing: -.04em; margin: .18em 0 0; }
 h1 em { font-style: normal; color: var(--accent); }
 h2 { margin: 0 0 .7rem; }
+h3 { margin: 0 0 8px; font-size: clamp(1.12rem, 2.5vw, 1.45rem); }
 p, li { line-height: 1.55; }
 li + li { margin-top: .65rem; }
 .eyebrow { color: var(--muted); font-size: .8rem; letter-spacing: .12em; text-transform: uppercase; margin: 1.5em 0 .65em; }
 .phases, .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.phases, #guide-steps { flex-wrap: nowrap; overflow-x: auto; padding: 3px; }
+.phases button, #guide-steps button { flex: 0 0 auto; }
+#guide-progress { margin: 0 3px 5px; color: var(--muted); }
+#guide-steps button { min-height: 40px; padding: 6px 10px; }
+.course-content {
+  min-height: 0;
+  min-width: 0;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: #191323;
+}
+.guide-footer { justify-content: space-between; align-items: center; }
+#guide-next { margin-left: auto; background: var(--accent); color: #25131b; font-weight: 650; }
 button, input, select {
   font: inherit;
   color: var(--ink);
@@ -31,13 +55,19 @@ button, input, select {
   min-height: 44px;
   padding: 8px 12px;
 }
-button, summary { cursor: pointer; }
+button { cursor: pointer; }
 button[aria-pressed="true"], [data-method="POST"] { color: #25131b; background: var(--accent); border-color: var(--accent); font-weight: 650; }
 button:disabled { opacity: .65; cursor: wait; }
 :focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
-.phase, .console { border: 1px solid var(--border); border-radius: 16px; padding: clamp(14px, 3vw, 24px); margin-top: 16px; }
-.phase { background: #191323; }
+.phase { padding: clamp(12px, 2.5vw, 22px); }
+.phase > h2:first-child { font-size: 1rem; color: var(--muted); margin-bottom: 10px; }
 .console { background: var(--surface); }
+.guide-step > p { margin: 8px 0 12px; }
+.checkpoint { padding: 10px 12px; border-left: 3px solid var(--accent); background: var(--surface); }
+.checkpoint strong { display: block; }
+.code-toolbar { align-items: center; margin-top: 10px; }
+.code-toolbar button { min-height: 40px; }
+.output-label { color: var(--muted); }
 .relation, .screen-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
 .relation { justify-content: flex-start; }
 .relation div { padding: 12px; border: 1px solid var(--border); border-radius: 8px; }
@@ -48,11 +78,11 @@ button:disabled { opacity: .65; cursor: wait; }
 label { min-width: 0; display: grid; gap: 5px; color: var(--muted); flex: 1 1 180px; }
 #endpoint-field { flex-basis: 100%; }
 input, select { width: 100%; min-width: 0; }
-pre { background: var(--background); border-radius: 8px; padding: 12px; overflow: auto; max-height: 45vh; }
+pre { background: var(--background); border-radius: 8px; padding: 12px; overflow: auto; max-height: min(36dvh, 340px); margin: 6px 0 12px; }
+#archivo-lambda pre { max-height: min(47dvh, 480px); }
 code { overflow-wrap: anywhere; }
-footer { margin: 24px 0; }
 .guide-poster {
-  margin: 18px 0;
+  margin: 8px 0;
   padding: 12px;
   border: 1px solid var(--border);
   border-radius: 12px;
@@ -63,12 +93,11 @@ footer { margin: 24px 0; }
   display: block;
   margin: auto;
   max-width: 100%;
-  max-height: 520px;
+  max-height: min(58dvh, 620px);
   width: auto;
   height: auto;
   border-radius: 8px;
 }
-.phase details + details { margin-top: 12px; }
 #model-json {
   display: block;
   width: 100%;
@@ -97,4 +126,12 @@ footer { margin: 24px 0; }
   overflow-wrap: anywhere;
 }
 .model-key { display: block; color: var(--accent); font-weight: 500; }
+@media (min-width: 800px) {
+  #model-result { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2.2fr); gap: 18px; }
+}
+@media (max-height: 420px) {
+  main { height: auto; grid-template-rows: auto; }
+  .course-content { overflow: visible; }
+  pre { max-height: 220px; }
+}
 [hidden] { display: none !important; }

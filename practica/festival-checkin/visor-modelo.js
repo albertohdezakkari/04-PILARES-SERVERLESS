@@ -126,7 +126,7 @@ function showModel(message = status, practice = false) {
   try {
     result.replaceChildren(...model.DataModel.map(table => renderTable(table, practice)));
     status.textContent = 'Tablas del modelo: ' + model.DataModel.length + '. PK = partición, SK = ordenación, S = texto.';
-    if (message === feedback) feedback.textContent = 'Tablas actualizadas arriba.';
+    if (message === feedback) feedback.textContent = 'Tablas actualizadas en Datos → Modelo.';
   } catch (error) {
     message.textContent = error.message;
   }
