@@ -1,6 +1,8 @@
 # Festival Check-in
 
-- En Festival Check-in, desplegar toda la infraestructura de la aplicación con Serverless Framework desde `serverless.yml`: las dos tablas DynamoDB, la función Lambda y la HTTP API con sus rutas. Reutilizar el rol autorizado de AWS Academy. Usar AWS CLI para comprobar la sesión y los recursos y para cargar y consultar los datos de ejemplo con PartiQL. Guiar desde Git Bash en Windows y Terminal en macOS, con la infografía enlazada dentro del cuaderno.
+- Aplicar criterios de ingeniería de software profesional en las prácticas y proyectos. Organizar el código por dominio y caso de uso, con módulos de responsabilidad clara y nombres que permitan localizar el comportamiento desde su punto de entrada. Separar el transporte HTTP, las reglas de negocio y el acceso a datos cuando ayude a entender y modificar el código. Compartir la lógica que realmente se repite y mantener la estructura proporcionada al proyecto. Al enseñar una decisión de arquitectura, explicar qué cambio futuro facilita y comprobar el comportamiento por la ruta que utilizará el usuario.
+
+- En Festival Check-in, desplegar toda la infraestructura de la aplicación con Serverless Framework desde `serverless.yml`: las dos tablas DynamoDB, las funciones Lambda y la HTTP API con sus rutas. Reutilizar el rol autorizado de AWS Academy. Usar AWS CLI para comprobar la sesión y los recursos y para cargar y consultar los datos de ejemplo con PartiQL. Guiar desde Git Bash en Windows y Terminal en macOS, con la infografía enlazada dentro del cuaderno.
 
 - Para cada paso que cree, edite, compruebe o despliegue archivos o recursos, incluir los comandos completos para Git Bash en Windows y Terminal en macOS. Al crear un archivo, mostrar primero el comando de creación y apertura en una caja copiable y después el contenido completo en otra caja copiable. Cada caja copia únicamente su contenido.
 
