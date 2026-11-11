@@ -109,34 +109,22 @@ function addCodeControls(pre) {
     fileName ? 'Pulsa Ver archivo entero para copiarlo manualmente.' : 'Selecciona el texto y cópialo con el teclado.'));
   pre.before(toolbar);
   if (fileName) {
-    const creationCommand = "(set -C; cat > " + fileName + " <<'FESTIVAL_FILE'\n" +
-      fullText + "\nFESTIVAL_FILE\n)\n";
-    const copyCreation = copyButton('Copiar comando de creación', creationCommand,
-      'Pulsa Ver comando de creación para copiarlo manualmente.');
     const lines = fullText.split('\n');
     const pageSize = 17;
     const count = Math.ceil(lines.length / pageSize);
     const pageLabel = document.createElement('span');
     let page = 0;
-    let view = 'pages';
+    let full = false;
     const previous = button('Página anterior', () => { page--; render(); });
     const following = button('Página siguiente', () => { page++; render(); });
-    const toggle = button('Ver archivo entero', () => {
-      view = view === 'file' ? 'pages' : 'file';
-      render();
-    });
-    const showCommand = button('Ver comando de creación', () => {
-      view = view === 'command' ? 'pages' : 'command';
-      render();
-    });
+    const toggle = button('Ver archivo entero', () => { full = !full; render(); });
     function render() {
-      const visibleLines = view === 'pages' ? lines.slice(page * pageSize, (page + 1) * pageSize) : lines;
+      const visibleLines = full ? lines : lines.slice(page * pageSize, (page + 1) * pageSize);
       const focus = pre.closest('#infraestructura')
         ? /^\s*(EVENTS_TABLE:|REGISTRATIONS_TABLE:|Ref:|handler:|method:|KeyType:)/
         : /process\.env|async function (getPass|register|checkIn|handler)/;
       code.replaceChildren();
-      if (view === 'command') code.textContent = creationCommand;
-      for (const [index, line] of (view === 'command' ? [] : visibleLines).entries()) {
+      for (const [index, line] of visibleLines.entries()) {
         if (index > 0) code.append('\n');
         if (focus.test(line)) {
           const marked = document.createElement('span');
@@ -147,17 +135,14 @@ function addCodeControls(pre) {
           code.append(line);
         }
       }
-      pageLabel.textContent = { file: 'Archivo completo', command: 'Comando de creación' }[view] ??
-        'Página ' + (page + 1) + ' de ' + count;
-      previous.hidden = following.hidden = view !== 'pages';
+      pageLabel.textContent = full ? 'Archivo completo' : 'Página ' + (page + 1) + ' de ' + count;
+      previous.hidden = following.hidden = full;
       previous.disabled = page === 0;
       following.disabled = page === count - 1;
-      toggle.textContent = view === 'file' ? 'Volver a páginas' : 'Ver archivo entero';
-      showCommand.textContent = view === 'command' ? 'Volver al código' : 'Ver comando de creación';
+      toggle.textContent = full ? 'Volver a páginas' : 'Ver archivo entero';
       pre.scrollTop = 0;
       pre.scrollLeft = 0;
     }
-    toolbar.prepend(copyCreation, showCommand);
     toolbar.append(toggle, previous, following, pageLabel);
     render();
   }

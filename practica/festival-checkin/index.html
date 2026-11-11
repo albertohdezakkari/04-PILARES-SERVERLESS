@@ -6,7 +6,7 @@
 <title>Festival Check-in · práctica guiada</title>
 <link rel="stylesheet" href="style.css">
 <script type="module" src="app.js"></script>
-<script type="module" src="guia.js?v=terminal"></script>
+<script type="module" src="guia.js?v=archivos"></script>
 <script type="module" src="visor-modelo.js"></script>
 </head>
 <body>
@@ -111,7 +111,11 @@ LAMBDA_ROLE_ARN=$(aws iam get-role --role-name LabRole --profile "$perfil" --reg
 </article>
 <article id="infraestructura" class="guide-step" data-step="serverless.yml">
 <h3>Describe la infraestructura en serverless.yml</h3>
-<p>Desde la carpeta <code>festival-checkin</code>, pulsa <strong>Copiar comando de creación</strong>, pégalo en la terminal y pulsa Intro. El bloque escribe <code>serverless.yml</code>. Si ya existe, usa <code>vi serverless.yml</code> para revisarlo. En <code>functions</code> están las tres rutas y el archivo que las atiende. En <code>resources</code> busca las dos tablas: <code>S</code> significa texto, <code>HASH</code> es la PK y <code>RANGE</code> es la SK.</p><pre data-file="serverless.yml"><code>service: festival-checkin-${env:STUDENT_CODE}
+<p>Desde la carpeta <code>festival-checkin</code>, ejecuta este comando para crear y abrir <code>serverless.yml</code>.</p>
+<pre><code>touch serverless.yml &amp;&amp; vi serverless.yml</code></pre>
+<p>En la caja de abajo, pulsa <strong>Copiar archivo completo</strong>. En <code>vi</code>, escribe <code>:set paste</code> y pulsa Intro. Si el archivo está vacío, pulsa <kbd>i</kbd> y pega el contenido. Si ya contiene el archivo de este paso, compruébalo y sigue. Para guardar, pulsa <kbd>Esc</kbd>, escribe <code>:wq</code> y pulsa Intro.</p>
+<p>En <code>functions</code> están las tres rutas y el archivo que las atiende. En <code>resources</code> busca las dos tablas: <code>S</code> significa texto, <code>HASH</code> es la PK y <code>RANGE</code> es la SK.</p>
+<pre data-file="serverless.yml"><code>service: festival-checkin-${env:STUDENT_CODE}
 frameworkVersion: ~4.45.0
 
 provider:
@@ -192,7 +196,11 @@ sed -n '1,18p' serverless.yml</code></pre><p class="checkpoint"><strong>Antes de
 </article>
 <article id="archivo-lambda" class="guide-step" data-step="Archivo base">
 <h3>Prepara el archivo index.mjs</h3>
-<p>Pulsa <strong>Copiar comando de creación</strong> y ejecútalo en la misma carpeta para crear <code>index.mjs</code>. Si ya existe, ábrelo con <code>vi index.mjs</code>. El <code>handler</code> recibe la petición y elige la operación. Por ahora cada operación responde <code>501</code> hasta que la construyas.</p>
+<p>Desde la carpeta <code>festival-checkin</code>, ejecuta este comando para crear y abrir <code>index.mjs</code>.</p>
+<pre><code>touch index.mjs &amp;&amp; vi index.mjs</code></pre>
+<p>En la caja de abajo, pulsa <strong>Copiar archivo completo</strong>. En <code>vi</code>, escribe <code>:set paste</code> y pulsa Intro. Si el archivo está vacío, pulsa <kbd>i</kbd> y pega el contenido. Si ya contiene el archivo de este paso, compruébalo y sigue. Para guardar, pulsa <kbd>Esc</kbd>, escribe <code>:wq</code> y pulsa Intro.</p>
+<p>El <code>handler</code> recibe la petición y elige la operación. Por ahora cada operación responde <code>501</code> hasta que la construyas.</p>
+
 <pre data-file="index.mjs"><code>import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import {
   DynamoDBDocumentClient, GetCommand, PutCommand, UpdateCommand
