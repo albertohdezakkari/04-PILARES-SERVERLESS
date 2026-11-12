@@ -22,11 +22,11 @@ function formatValue(value) {
   return typeof value === 'string' ? value : JSON.stringify(value);
 }
 
-function renderTable(model, practice = false) {
+function renderTable(model) {
   const name = model?.TableName;
   const partitionKey = model?.KeyAttributes?.PartitionKey;
   const sortKey = model?.KeyAttributes?.SortKey;
-  const showPractice = practice && partitionKey?.AttributeName === 'EVENT_ID' && sortKey?.AttributeName === 'USER_ID';
+  const showPractice = partitionKey?.AttributeName === 'EVENT_ID' && sortKey?.AttributeName === 'USER_ID';
   const rows = model?.TableData ?? [];
   const attributes = model?.NonKeyAttributes ?? [];
   if (typeof name !== 'string' || !name.trim() || !partitionKey?.AttributeName) {
@@ -110,7 +110,7 @@ function createPractice(renderedRows) {
   return panel;
 }
 
-function showModel(message = status, practice = false) {
+function showModel(message = status) {
   message.textContent = '';
   let model;
   try {
@@ -124,7 +124,7 @@ function showModel(message = status, practice = false) {
     return;
   }
   try {
-    result.replaceChildren(...model.DataModel.map(table => renderTable(table, practice)));
+    result.replaceChildren(...model.DataModel.map(renderTable));
     status.textContent = 'Tablas del modelo: ' + model.DataModel.length + '. PK = partición, SK = ordenación, N = número, S = texto.';
     if (message === feedback) feedback.textContent = 'Tablas actualizadas en Diseñar → Probar el diseño.';
   } catch (error) {
@@ -140,7 +140,7 @@ async function loadExample(message, onlyIfEmpty = false) {
     const source = await response.text();
     if (onlyIfEmpty && input.value.trim()) return;
     input.value = source;
-    showModel(message, true);
+    showModel(message);
   } catch (error) {
     message.textContent = error.message;
   } finally {

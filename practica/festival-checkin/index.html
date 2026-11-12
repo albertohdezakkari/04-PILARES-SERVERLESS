@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="style.css?v=tablas-fci">
 <script type="module" src="app.js?v=max-id-guardado"></script>
 <script type="module" src="guia.js?v=archivos-lambda-completos"></script>
-<script type="module" src="visor-modelo.js?v=consulta-maximo"></script>
+<script type="module" src="visor-modelo.js?v=modelo-interactivo"></script>
 <script type="module" src="entrenamiento-dynamo.js?v=consulta-maximo"></script>
 </head>
 <body>
@@ -171,7 +171,7 @@
 </article>
 <article id="pegar-aws" class="guide-step" data-step="Credenciales">
 <h3>Pega el bloque y guarda</h3>
-<p>En <code>vi</code>, escribe <code>:set paste</code> y pulsa Intro. Pulsa <kbd>i</kbd> para editar y pega el bloque completo de <strong>AWS Details</strong>. Para guardar y volver a la terminal, pulsa <kbd>Esc</kbd>, escribe <code>:wq</code> y pulsa Intro. Estas son las líneas que debes reconocer:</p><pre><code>[default]
+<p>En <code>vi</code>, escribe <code>:set paste</code> y pulsa Intro. Si el perfil ya existe, reemplaza los tres valores debajo de su cabecera. Si el perfil es nuevo, pulsa <kbd>i</kbd> y pega el bloque de <strong>AWS Details</strong> en un espacio libre del archivo. Para guardar y volver a la terminal, pulsa <kbd>Esc</kbd>, escribe <code>:wq</code> y pulsa Intro. Estas son las líneas que debes reconocer:</p><pre><code>[default]
 aws_access_key_id = VALOR_DE_LA_SESION
 aws_secret_access_key = VALOR_DE_LA_SESION
 aws_session_token = VALOR_DE_LA_SESION</code></pre><p>Si ya usas <code>[default]</code> para otra cuenta, guarda el bloque del laboratorio con la cabecera <code>[academy]</code>. Si ya tienes un perfil del laboratorio, reemplaza sus tres valores juntos.</p>
@@ -194,7 +194,7 @@ aws dynamodb list-tables --profile "$perfil" --region "$region"</code></pre><p><
 <article id="nombres-tablas" class="guide-step" data-step="Proyecto">
 <h3>Prepara la carpeta de trabajo</h3>
 <dl class="command-reasons"><div><dt><code>npm init -y</code></dt><dd>Crea el manifiesto del proyecto.</dd></div><div><dt><code>serverless</code></dt><dd>Lee el YAML y prepara el despliegue.</dd></div><div><dt>SDK de DynamoDB</dt><dd>Permite que el código de Lambda lea y escriba ítems.</dd></div></dl>
-<p>En la misma terminal de Conexión, abre la carpeta donde guardas tus prácticas. Usarás Node.js 22 y la misma versión de Serverless Framework del entrenamiento. Guarda aquí los dos archivos que crearás en los pasos siguientes.</p><pre><code>node --version
+<p>En la misma terminal de Conexión, abre la carpeta donde guardas tus prácticas. Usarás Node.js 22 y la misma versión de Serverless Framework del entrenamiento. Comprueba que <code>node --version</code> empieza por <code>v22</code>. Guarda aquí <code>serverless.yml</code> y las carpetas <code>src/datos</code>, <code>src/eventos</code> y <code>src/pases</code> que prepararás en los pasos siguientes.</p><pre><code>node --version
 mkdir -p festival-checkin
 cd festival-checkin
 npm init -y
@@ -203,18 +203,16 @@ npm install @aws-sdk/client-dynamodb @aws-sdk/lib-dynamodb
 npx serverless --version</code></pre><p class="checkpoint"><strong>Antes de avanzar</strong> Estás en festival-checkin y tienes package.json con Serverless Framework y el SDK de DynamoDB.</p>
 </article>
 <article id="rol-laboratorio" class="guide-step" data-step="Rol">
-<h3>Selecciona el equipo y el rol de Lambda</h3>
+<h3>Recupera el rol de Lambda</h3>
 <p class="lesson-note"><strong>Quién actúa en cada momento.</strong> Tu perfil ejecuta el despliegue. El rol <code>LabRole</code> da permisos a Lambda cuando atiende una petición y necesita acceder a DynamoDB.</p>
-<p>En <a href="#probar-aws">Conectar → Comprobación</a> verificaste tu perfil y tu región. El bloque de abajo vuelve a asignarlos para que puedas ejecutarlo también desde una terminal nueva. Cambia <code>default</code> por <code>academy</code> si guardaste las credenciales bajo <code>[academy]</code>. Si tu laboratorio usa otra región, sustituye <code>us-east-1</code> por la que comprobaste.</p>
+<p>En <a href="#probar-aws">Conectar → Comprobación</a> verificaste tu perfil y tu región. El bloque conserva esos valores en la misma terminal. Si abriste otra, vuelve primero a <a href="#probar-aws">Comprobación</a> para seleccionar tu perfil y región.</p>
 <dl class="command-reasons">
   <div><dt><code>AWS_PROFILE</code></dt><dd>Copia el nombre del perfil de <code>$perfil</code>. Las credenciales temporales están en el perfil que guardaste en <code>~/.aws/credentials</code>.</dd></div>
   <div><dt><code>AWS_REGION</code></dt><dd>Copia <code>$region</code>. Serverless usa ese valor en <code>provider.region</code>.</dd></div>
   <div><dt><code>LAMBDA_ROLE_ARN</code></dt><dd>El comando <code>aws iam get-role</code> consulta el identificador del rol existente <code>LabRole</code> y lo guarda en esta variable.</dd></div>
 </dl>
 <p>Ejecuta el bloque desde la carpeta <code>festival-checkin</code>.</p>
-<pre><code>perfil=default
-region=us-east-1
-export AWS_PROFILE="$perfil"
+<pre><code>export AWS_PROFILE="$perfil"
 export AWS_REGION="$region"
 LAMBDA_ROLE_ARN=$(aws iam get-role --role-name LabRole --profile "$perfil" --region "$region" --query 'Role.Arn' --output text) &amp;&amp;
   export LAMBDA_ROLE_ARN &amp;&amp;
@@ -340,7 +338,7 @@ LAMBDA_ROLE_ARN=$(aws iam get-role --role-name LabRole --profile "$perfil" --reg
 </nav>
 <div class="code-notes" aria-live="polite">
   <section data-code-start="service:" data-label="Servicio">
-    <p class="yaml-outcome" hidden>Cada equipo despliega su propio servicio en la región del laboratorio.</p>
+    <p class="yaml-outcome" hidden>El servicio se despliega en la región que seleccionaste para el laboratorio.</p>
     <h4>Nombre, versión y destino del despliegue</h4>
     <dl class="yaml-terms">
       <div><dt><code>service:</code></dt><dd>Nombre del servicio en Serverless. Con <code>service: festival-check-in</code> y <code>stage: dev</code>, el stack se llama <code>festival-check-in-dev</code>.</dd></div>
@@ -601,11 +599,11 @@ resources:
 <h3>Crea serverless.yml y comprueba lo que has guardado</h3>
 <p>Desde la carpeta <code>festival-checkin</code>, ejecuta este comando para crear y abrir <code>serverless.yml</code>.</p>
 <pre><code>touch serverless.yml &amp;&amp; vi serverless.yml</code></pre>
-<p>En la caja del YAML, pulsa <strong>Copiar archivo completo</strong>. En <code>vi</code>, escribe <code>:set paste</code> y pulsa Intro. Si el archivo está vacío, pulsa <kbd>i</kbd> y pega el contenido. Si ya contiene el archivo de este paso, compruébalo y sigue. Para guardar, pulsa <kbd>Esc</kbd>, escribe <code>:wq</code> y pulsa Intro.</p>
+<p>En la caja del YAML, pulsa <strong>Copiar archivo completo</strong>. En <code>vi</code>, escribe <code>:set paste</code> y pulsa Intro. Si estás actualizando un YAML anterior de la práctica, escribe <code>:%d</code> y pulsa Intro para borrar su contenido. Después pulsa <kbd>i</kbd> y pega el archivo completo. Para guardar, pulsa <kbd>Esc</kbd>, escribe <code>:wq</code> y pulsa Intro.</p>
 <pre data-file="serverless.yml" data-copy-from="infraestructura"><code></code></pre>
 <p>Ya en la terminal, busca en tu archivo los bloques que acabas de revisar.</p>
 <pre><code>grep -nE '^(service:|functions:|resources:|[[:space:]]+(KeyType:|IndexName:))' serverless.yml</code></pre>
-<p class="checkpoint"><strong>Antes de avanzar</strong> La terminal muestra <code>IndexName: PorUsuario</code> seguido de <code>HASH</code> y <code>RANGE</code>. Si ya tenías el YAML de esta práctica y falta el índice, copia solo el bloque <code>GlobalSecondaryIndexes</code> del archivo completo y pégalo debajo del <code>KeySchema</code> de <code>FestivalCheckInInscripciones</code>. Alinea ambas etiquetas con la misma sangría.</p>
+<p class="checkpoint"><strong>Antes de avanzar</strong> La terminal muestra <code>service:</code>, <code>functions:</code>, <code>resources:</code> e <code>IndexName: PorUsuario</code>. En el archivo, comprueba que <code>TIPO_REGISTRO</code> figura como <code>HASH</code> en la tabla de eventos.</p>
 </article>
 <article id="archivo-lambda" class="guide-step" data-step="Archivos Lambda">
 <div class="lambda-hero">
@@ -623,7 +621,7 @@ resources:
   <h4 id="lambda-stage-follow"><span>01</span> Localiza qué se ejecuta</h4>
   <ol class="lambda-env-flow">
     <li><strong>API Gateway elige el archivo</strong><code>Método + ruta → handler</code><span>Para GET invoca el <code>handler</code> de <code>consultar.mjs</code>.</span></li>
-    <li><strong>El archivo ejecuta su caso de uso</strong><code>handler(event) → getPass(key)</code><span>Comparte la validación con POST y PATCH. En esta etapa, la operación devuelve <code>501</code> hasta que completes su lógica.</span></li>
+    <li><strong>El archivo ejecuta su caso de uso</strong><code>handler(event) → getPass(key)</code><span>Comparte con POST y PATCH la lectura de los parámetros de la ruta. En esta etapa, la operación devuelve <code>501</code> hasta que completes su lógica.</span></li>
     <li><strong>La configuración llega desde el YAML</strong><code>Ref → variable de Lambda → process.env</code><span>Al cargar <code>dynamo.mjs</code>, Lambda prepara el cliente y lee <code>FCI_TABLA_EVENTOS</code> y <code>FCI_TABLA_INSCRIPCIONES</code>. Esas variables contienen <code>FCI_EVENTOS</code> y <code>FCI_INSCRIPCIONES</code>, respectivamente. Un <code>.env</code> es otra forma de cargar variables en local.</span></li>
   </ol>
 </section>
@@ -648,7 +646,7 @@ ls -l serverless.yml package.json</code></pre>
     </li>
     <li>
       <strong>Crea y abre el archivo de la pestaña.</strong> El comando de cada pestaña vuelve a asegurar que la carpeta existe. Después, <code>touch</code> crea el archivo si hace falta y <code>vi</code> lo abre. Con <code>&amp;&amp;</code>, cada paso se ejecuta cuando el anterior termina correctamente.
-      <p>En <code>vi</code>, usa <code>:set paste</code>, pulsa <kbd>Intro</kbd> y luego <kbd>i</kbd> para pegar. Para guardar, pulsa <kbd>Esc</kbd>, escribe <code>:wq</code> y pulsa <kbd>Intro</kbd>.</p>
+      <p>En <code>vi</code>, escribe <code>:set paste</code> y pulsa <kbd>Intro</kbd>. Si estás actualizando un archivo anterior de esta práctica, escribe <code>:%d</code> y pulsa <kbd>Intro</kbd> para borrar el contenido. Pulsa <kbd>i</kbd> y pega el archivo completo. Para guardar, pulsa <kbd>Esc</kbd>, escribe <code>:wq</code> y pulsa <kbd>Intro</kbd>.</p>
     </li>
   </ol>
   <p>Sigue las pestañas de izquierda a derecha. Empieza por <strong>DynamoDB · <code>dynamo.mjs</code></strong>, que exporta <code>obtenerSiguienteIdGuardado</code> y el cliente. <code>crear.mjs</code> importa ese módulo. Guarda <code>peticion.mjs</code> antes de preparar los tres archivos del pase. Cada pestaña abre el archivo completo. Puedes usar <strong>Ver por páginas</strong> para leer los archivos largos por partes. Pasa el ratón o toca una línea resaltada para ver su explicación.</p>
@@ -862,7 +860,7 @@ node --input-type=module -e '
 <article id="desplegar-stack" class="guide-step" data-step="Desplegar">
 <h3>Despliega el servicio desde la terminal</h3>
 <p class="lesson-note"><strong>Si ya desplegaste una edición anterior.</strong> Esta edición cambia la clave primaria de <code>FCI_EVENTOS</code>. Para la práctica, despliega en un laboratorio autorizado donde <code>FCI_EVENTOS</code> y <code>FCI_INSCRIPCIONES</code> estén libres. Para conservar datos existentes, la actualización requiere migrar a una tabla nueva con la clave compuesta. <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-dynamodb-table.html">Tablas DynamoDB en CloudFormation</a>.</p>
-<p>Si compartís cuenta y región y trabajáis en el mismo Festival Check-in, desplegad un solo stack y usad la misma URL de la API. Para otro proyecto, elegid su propia abreviatura y su propio nombre de servicio.</p>
+<p>Si compartís cuenta, región y proyecto, una persona ejecuta los despliegues y comparte la URL y los IDs de los eventos. Cada pareja usa códigos de usuario distintos para que sus pruebas de inscripción y entrada partan de un pase libre.</p>
 
 <dl class="command-reasons"><div><dt><code>node --check</code></dt><dd>Comprueba la sintaxis del módulo que indicas.</dd></div><div><dt><code>&amp;&amp;</code></dt><dd>Ejecuta el segundo comando si el primero termina correctamente.</dd></div><div><dt><code>--stage dev</code></dt><dd>Selecciona el entorno de desarrollo de tu servicio.</dd></div></dl>
 <p>Ejecuta el comando en la carpeta <code>festival-checkin</code>. Serverless Framework lee tu YAML y CloudFormation crea las tablas, las cuatro funciones y la HTTP API en el laboratorio.</p><pre><code>(
@@ -1045,7 +1043,7 @@ evento_secundario_id=2</code></pre>
     </li>
   </ol>
 </figure>
-<p>Desde la raíz de <code>festival-checkin</code>, abre el archivo de la ruta GET y localiza <code>getPass</code>.</p><pre data-command><code>vi '+/async function getPass(' src/pases/consultar.mjs</code></pre><p>Implementa <code>getPass(key)</code> con el archivo completo de abajo. En <code>Key</code> usa los atributos de DynamoDB y, al responder, vuelve a los nombres de la API.</p>
+<p>Desde la raíz de <code>festival-checkin</code>, abre el archivo de la ruta GET.</p><pre data-command><code>vi src/pases/consultar.mjs</code></pre><p>Pulsa <strong>Copiar archivo completo</strong> en la caja de abajo. En <code>vi</code>, escribe <code>:%d</code> y pulsa Intro. Escribe <code>:set paste</code>, pulsa Intro y luego <kbd>i</kbd> para pegar. Guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro. El nuevo archivo ya implementa <code>getPass(key)</code>. En <code>Key</code> usa los atributos de DynamoDB y, al responder, vuelve a los nombres de la API.</p>
 <p>Puedes <a href="#entrenar-dynamo">simular los tres resultados</a> antes de desplegar.</p>
 <section class="lesson-example" aria-labelledby="ejemplo-getPass">
   <h4 id="ejemplo-getPass">Archivo completo <code>src/pases/consultar.mjs</code></h4>
@@ -1103,7 +1101,7 @@ async function getPass(key) {
 <p class="checkpoint"><strong>Antes de avanzar</strong> En <code>src/pases/consultar.mjs</code>, el primer <code>GetCommand</code> usa <code>TIPO_REGISTRO + EVENT_ID</code> y el segundo usa <code>EVENT_ID</code> y <code>USER_ID</code>. Pulsa <kbd>Esc</kbd>, escribe <code>:wq</code> y pulsa Intro para guardar.</p>
 </article>
 <template id="prueba-command-notes">
-  <div data-prefix="vi "><strong>Abre el archivo en el punto que vas a editar.</strong><p><code>vi</code> abre el módulo. El argumento que empieza por <code>+/</code> busca la declaración de la función.</p></div>
+  <div data-prefix="vi "><strong>Abre el módulo que vas a actualizar.</strong><p><code>vi</code> abre el archivo. En este paso sustituirás su contenido por el archivo completo de abajo.</p></div>
   <div data-prefix="node --check "><strong>Comprueba la sintaxis y despliega.</strong><p><code>node --check</code> comprueba el archivo sin ejecutarlo. <code>&amp;&amp;</code> permite desplegar solo si esa comprobación termina bien.</p></div>
   <div data-prefix="curl -i -X POST "><strong>POST intenta crear la inscripción.</strong><p><code>-i</code> muestra el estado HTTP junto con el cuerpo. El primer POST válido devuelve <code>201</code>. Si repites la petición para la misma pareja, devuelve <code>409</code>.</p></div>
   <div data-prefix="curl -i -X PATCH "><strong>PATCH intenta registrar la entrada.</strong><p>Si el pase existe y carece de hora de entrada, responde <code>200</code>. Si falta la inscripción o ya entró, responde <code>409</code>.</p></div>
@@ -1146,8 +1144,8 @@ async function getPass(key) {
     <li><h4>Lambda → API Gateway → Navegador</h4><p><strong>201</strong> con el número de inscripción si la guarda. Si ya existe esa pareja, la función responde <strong>409</strong>.</p></li>
   </ol>
 </figure>
-<div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-command data-explanations="prueba-command-notes"><code>vi '+/async function register(' src/pases/inscribir.mjs</code></pre></div>
-<p>Desde la raíz de <code>festival-checkin</code>, abre el módulo de POST. Copia el archivo completo para incluir <code>obtenerSiguienteIdGuardado</code> y <code>TransactWriteCommand</code>. Si preparaste <code>dynamo.mjs</code> antes de este cambio, actualízalo con el archivo de <a href="#archivo-lambda">Archivos Lambda → DynamoDB</a>. Guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro y vuelve a desplegar.</p>
+<div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-command data-explanations="prueba-command-notes"><code>vi src/pases/inscribir.mjs</code></pre></div>
+<p>Desde la raíz de <code>festival-checkin</code>, abre el módulo de POST y pulsa <strong>Copiar archivo completo</strong> en la caja de abajo. En <code>vi</code>, escribe <code>:%d</code> y pulsa Intro. Escribe <code>:set paste</code>, pulsa Intro y luego <kbd>i</kbd> para pegar. Guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro y ejecuta el comando de despliegue de este paso.</p>
 <section class="lesson-example" aria-labelledby="ejemplo-register">
   <h4 id="ejemplo-register">Archivo completo <code>src/pases/inscribir.mjs</code></h4>
   <ol class="route-map" aria-label="Qué protege cada parte de la transacción">
@@ -1272,8 +1270,8 @@ curl -i "$pase"</code></pre></div>
     <li><h4>Lambda → API Gateway → Navegador</h4><p><strong>200</strong> si registra la entrada. Si falta la inscripción o ya tiene hora de entrada, DynamoDB rechaza el cambio y <code>handleRequest</code> responde <strong>409</strong>.</p></li>
   </ol>
 </figure>
-<div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-command data-explanations="prueba-command-notes"><code>vi '+/async function checkIn(' src/pases/entrada.mjs</code></pre></div>
-<p>En la raíz de <code>festival-checkin</code>, abre el módulo de PATCH. Completa el archivo con <code>UpdateCommand</code>. La condición exige que el ítem exista y que aún no tenga <code>CHECKED_IN_AT</code>. Guarda la hora en UTC, devuelve <code>200</code> y guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro. Después, vuelve a desplegar.</p>
+<div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-command data-explanations="prueba-command-notes"><code>vi src/pases/entrada.mjs</code></pre></div>
+<p>Desde la raíz de <code>festival-checkin</code>, abre el módulo de PATCH y pulsa <strong>Copiar archivo completo</strong> en la caja de abajo. En <code>vi</code>, escribe <code>:%d</code> y pulsa Intro. Escribe <code>:set paste</code>, pulsa Intro y luego <kbd>i</kbd> para pegar. Guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro y ejecuta el comando de despliegue. <code>UpdateCommand</code> añade la hora en UTC si el pase existe y aún carece de <code>CHECKED_IN_AT</code>.</p>
 <section class="lesson-example" aria-labelledby="ejemplo-checkIn">
   <h4 id="ejemplo-checkIn">Archivo completo <code>src/pases/entrada.mjs</code></h4>
   <p>Selecciona las líneas resaltadas para ver cómo se traducen los nombres de la API a los atributos de DynamoDB.</p>
@@ -1316,9 +1314,9 @@ async function checkIn(key) {
   <li><span>Primera entrada</span><strong>200 · Entrada registrada</strong><p>El GET muestra <code>checkedInAt</code>.</p></li>
   <li><span>Entrada repetida</span><strong>409 · Entrada ya registrada</strong><p>El siguiente GET conserva las dos horas.</p></li>
 </ol>
-<p>Pon en <code>usuario_inscrito</code> el código que usaste en <strong>Inscribir</strong>. Elige otro código sin inscripción para la primera prueba. Tras la primera entrada válida, consulta la hora y comprueba que se mantiene al repetir PATCH.</p>
+<p>El bloque recupera de <code>$usuario</code> el código que usaste en <strong>Inscribir</strong>. Si cambiaste de terminal, asigna antes a <code>usuario</code> ese mismo código. Elige otro código sin inscripción para la primera prueba. Tras la primera entrada válida, consulta la hora y comprueba que se mantiene al repetir PATCH.</p>
 <p>Selecciona una línea resaltada para ver qué hace.</p>
-<div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-command data-explanations="prueba-command-notes"><code>usuario_inscrito=usuario-01
+<div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-command data-explanations="prueba-command-notes"><code>usuario_inscrito="$usuario"
 sin_inscripcion=usuario-02
 pase="$api_url/events/$evento_id/registrations/$usuario_inscrito"
 curl -i -X PATCH "$api_url/events/$evento_id/registrations/$sin_inscripcion"
@@ -1360,10 +1358,9 @@ curl -i "$pase_prueba"</code></pre></div>
   <li><span>SELECT en DynamoDB</span><strong>Ítem de INSCRIPCIONES</strong><p>Usa la misma pareja y comprueba que coinciden las dos horas.</p></li>
 </ol>
 <p class="lesson-note"><strong>Qué demuestra la comparación.</strong> El GET y la consulta directa a DynamoDB deben mostrar las mismas marcas de tiempo para la misma pareja <code>eventId + userId</code>.</p>
-<p>Usa el mismo <code>codigo_prueba</code> del recorrido anterior. El primer comando consulta la API. El segundo usa las dos claves para leer esa misma inscripción en DynamoDB. Si abriste otra terminal, recupera antes <code>api_url</code> y <code>tabla_inscripciones</code> en <a href="#salidas-stack">Salidas</a>.</p>
+<p>Usa el mismo <code>codigo_prueba</code> del recorrido anterior. El primer comando consulta la API. El segundo usa las dos claves para leer esa misma inscripción en DynamoDB. Si abriste otra terminal, recupera <code>api_url</code> y <code>tabla_inscripciones</code> en <a href="#salidas-stack">Salidas</a> y asigna a <code>evento_id</code> y <code>codigo_prueba</code> los valores que anotaste en Crear eventos y Recorrido.</p>
 <p>Selecciona una línea resaltada para ver qué hace.</p>
-<div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-command data-explanations="prueba-command-notes"><code>codigo_prueba=usuario-03
-curl -i "$api_url/events/$evento_id/registrations/$codigo_prueba"
+<div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-command data-explanations="prueba-command-notes"><code>curl -i "$api_url/events/$evento_id/registrations/$codigo_prueba"
 
 aws dynamodb execute-statement \
   --profile "$perfil" --region "$region" --consistent-read \
@@ -1378,11 +1375,10 @@ aws dynamodb execute-statement \
   <li><span>Tabla INSCRIPCIONES</span><strong><code>EVENT_ID → USER_ID</code></strong><p>Consulta el primer evento y encuentra sus inscritos.</p></li>
   <li><span>Índice PorUsuario</span><strong><code>USER_ID → EVENT_ID</code></strong><p>Consulta el usuario del recorrido y encuentra los dos números de evento.</p></li>
 </ol>
-<p>Después de <a href="#otro-equipo">Recorrido</a>, usa el mismo código de usuario que inscribiste en el primer evento. Trabaja desde <code>festival-checkin</code> con el perfil y la región del laboratorio. Si cambiaste de terminal, recupera los nombres en <a href="#salidas-stack">Salidas</a>. Comprueba en <a href="#estado-tablas">Estado</a> que <code>PorUsuario</code> esté <code>ACTIVE</code>.</p>
+<p>Después de <a href="#otro-equipo">Recorrido</a>, usa el mismo código de usuario que inscribiste en el primer evento. Trabaja desde <code>festival-checkin</code> con el perfil y la región del laboratorio. Si cambiaste de terminal, recupera los nombres en <a href="#salidas-stack">Salidas</a> y vuelve a asignar los dos IDs de evento y el valor de <code>codigo_prueba</code> que usaste en Recorrido. Comprueba en <a href="#estado-tablas">Estado</a> que <code>PorUsuario</code> esté <code>ACTIVE</code>.</p>
 <h4>Inscribe al mismo usuario en el segundo evento</h4>
 <p>Usa el código que elegiste en Recorrido y el <code>evento_secundario_id</code> que obtuviste en <a href="#guardar-evento">Crear eventos</a>. La misma ruta POST inscribe a ese usuario en el segundo evento. Espera <code>201</code> la primera vez y <code>409</code> si repites.</p>
-<div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-command data-explanations="prueba-command-notes"><code>codigo_prueba=usuario-03
-curl -i -X POST "$api_url/events/$evento_secundario_id/registrations/$codigo_prueba"</code></pre></div>
+<div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-command data-explanations="prueba-command-notes"><code>curl -i -X POST "$api_url/events/$evento_secundario_id/registrations/$codigo_prueba"</code></pre></div>
 <h4>¿Quién se apuntó al primer evento?</h4>
 <p>Consulta la tabla con <code>EVENT_ID</code>. Verás <code>usuario-03</code> (o el código que elegiste) junto con los demás inscritos en ese evento.</p>
 <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-command data-explanations="prueba-command-notes"><code>aws dynamodb query \
@@ -1414,15 +1410,15 @@ curl -i -X POST "$api_url/events/$evento_secundario_id/registrations/$codigo_pru
     <li><a href="#entrenar-dynamo">Entrena la lectura</a><span>Clave → ítem → objeto JavaScript → respuesta HTTP</span></li>
     <li><a href="#consultar-indice">Busca en las dos direcciones</a><span>Tabla → inscritos de un evento<br>PorUsuario → eventos de un usuario</span></li>
   </ol>
-  <figcaption><a href="../../ayuda/dynamodb/">Ver la infografía del modelo completo ↗</a></figcaption>
+  <figcaption><a href="../../ayuda/dynamodb/">Ver el diseño inicial de tres tablas ↗</a></figcaption>
 </figure>
 </article>
 <article id="json-modelo" class="guide-step" data-step="JSON">
 <h3>Relaciona el JSON con las tablas</h3>
-  <p>Buscad <code>DataModel</code>. Ahí hay una definición por tabla. Dentro de cada una, buscad estas tres partes.</p>
+  <p>Busca <code>DataModel</code>. Ahí hay una definición por tabla. Dentro de cada una, localiza estas tres partes.</p>
   <dl class="model-reading">
     <dt><code>TableName</code></dt>
-    <dd>El nombre que veis encima de cada tabla.</dd>
+    <dd>El nombre que ves encima de cada tabla.</dd>
     <dt><code>KeyAttributes</code></dt>
     <dd>Las claves que el visor marca como PK y SK. <code>AttributeName</code> es el nombre del campo y <code>S</code> significa texto y <code>N</code> significa número. En EVENTOS, <code>TIPO_REGISTRO</code> es texto y <code>EVENT_ID</code> es la clave de ordenación numérica.</dd>
     <dt><code>TableData</code></dt>
