@@ -17,8 +17,8 @@ const routes = {
 };
 const passState = document.querySelector('#pass-state');
 const title = document.querySelector('#screen-title');
-const demoEventId = 1;
-const demoTitle = 'Festival de otoño';
+const DEMO_EVENT_ID = 1;
+const DEMO_TITLE = 'Festival de otoño';
 const demoRegistrations = new Map();
 let lastDemoRegistrationId = 0;
 
@@ -28,7 +28,7 @@ function clearScreen() {
   document.querySelector('#event-id-field').hidden = demo;
   requestTrace.hidden = true;
   readFeedback.hidden = true;
-  title.textContent = demo ? demoTitle : 'Evento del equipo';
+  title.textContent = demo ? DEMO_TITLE : 'Evento del equipo';
   passState.textContent = 'Por consultar';
   feedback.textContent = demo ? 'Ensayo · datos en memoria' : 'AWS · pulsa Consultar para leer la API';
   response.textContent = 'Pulsa Consultar para empezar.';
@@ -41,12 +41,12 @@ eventInput.addEventListener('input', clearScreen);
 function demoRequest(method, userId) {
   const registration = demoRegistrations.get(userId);
   if (method === 'GET') {
-    return { status: 200, body: { eventId: demoEventId, title: demoTitle, registration: registration ?? null } };
+    return { status: 200, body: { eventId: DEMO_EVENT_ID, title: DEMO_TITLE, registration: registration ?? null } };
   }
   if (method === 'POST' && !registration) {
     const registrationId = ++lastDemoRegistrationId;
     demoRegistrations.set(userId, {
-      eventId: demoEventId,
+      eventId: DEMO_EVENT_ID,
       userId,
       registrationId,
       registeredAt: new Date().toISOString()
@@ -90,7 +90,7 @@ function showPass(body) {
 async function run(method) {
   const userId = user.value.trim();
   const demo = mode.value === 'demo';
-  const eventId = demo ? String(demoEventId) : eventInput.value.trim();
+  const eventId = demo ? String(DEMO_EVENT_ID) : eventInput.value.trim();
   const label = demo ? 'Ensayo' : 'AWS';
   if (!userId) {
     feedback.textContent = 'Escribe un código como usuario-01.';

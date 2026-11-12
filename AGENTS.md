@@ -17,3 +17,5 @@
 - La edición numérica de Festival Check-in usa `EVENT_ID` de tipo `N` en las dos tablas y conserva `USER_ID` como texto. La Lambda `crearEvento`, invocada con AWS CLI, asigna identificadores positivos mediante el contador atómico del ítem reservado `EVENT_ID: 0` en EVENTOS. Las tablas de esta edición, por ejemplo `FCI_EVENTOS` e `FCI_INSCRIPCIONES`, se despliegan en un stack por proyecto y entorno. En una cuenta y región compartidas, los participantes del mismo proyecto usan el mismo despliegue.
 
 - Escribir los atributos persistidos en DynamoDB en mayúsculas con guion bajo. La API HTTP usa camelCase y las operaciones traducen los nombres al leer y escribir.
+
+- En JavaScript, nombrar las constantes de configuración y los valores fijos con mayúsculas y guion bajo. Usar camelCase para los resultados locales calculados en cada petición, aunque se declaren con const.

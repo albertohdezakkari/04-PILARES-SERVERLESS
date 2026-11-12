@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Festival Check-in · práctica guiada</title>
 <link rel="stylesheet" href="style.css?v=tablas-fci">
-<script type="module" src="app.js?v=registro-numerico"></script>
+<script type="module" src="app.js?v=constantes-fci"></script>
 <script type="module" src="guia.js?v=atributos-mayusculas"></script>
 <script type="module" src="visor-modelo.js?v=atributos-mayusculas"></script>
 <script type="module" src="entrenamiento-dynamo.js?v=atributos-mayusculas"></script>
@@ -650,8 +650,8 @@ ls -l serverless.yml package.json</code></pre>
   <template id="index-explanations">
   <div data-prefix="import { DynamoDBClient"><strong>Conexión con DynamoDB</strong><p>Importa el cliente que comunica Lambda con DynamoDB. El paquete se instaló al preparar el proyecto.</p></div>
   <div data-prefix="export const db ="><strong>Cliente de documentos</strong><p>Lambda prepara este cliente al cargar el archivo. Las operaciones pueden reutilizarlo y pasarle objetos de JavaScript, como la clave con <code>EVENT_ID</code> y <code>USER_ID</code>.</p></div>
-  <div data-prefix="export const tablaEventosFCI ="><strong>Tabla de eventos</strong><p>El despliegue configura FCI_TABLA_EVENTOS en Lambda a partir de Ref: FestivalCheckInEventos. <code>process.env.FCI_TABLA_EVENTOS</code> devuelve <code>FCI_EVENTOS</code>.</p></div>
-  <div data-prefix="export const tablaInscripcionesFCI ="><strong>Tabla de inscripciones</strong><p>El despliegue configura FCI_TABLA_INSCRIPCIONES en Lambda a partir de Ref: FestivalCheckInInscripciones. <code>process.env.FCI_TABLA_INSCRIPCIONES</code> devuelve <code>FCI_INSCRIPCIONES</code>, donde se guardan la inscripción y la hora de entrada.</p></div>
+  <div data-prefix="export const TABLA_EVENTOS_FCI ="><strong>Tabla de eventos</strong><p>El despliegue configura FCI_TABLA_EVENTOS en Lambda a partir de Ref: FestivalCheckInEventos. <code>process.env.FCI_TABLA_EVENTOS</code> devuelve <code>FCI_EVENTOS</code>.</p></div>
+  <div data-prefix="export const TABLA_INSCRIPCIONES_FCI ="><strong>Tabla de inscripciones</strong><p>El despliegue configura FCI_TABLA_INSCRIPCIONES en Lambda a partir de Ref: FestivalCheckInInscripciones. <code>process.env.FCI_TABLA_INSCRIPCIONES</code> devuelve <code>FCI_INSCRIPCIONES</code>, donde se guardan la inscripción y la hora de entrada.</p></div>
   <div data-prefix="export function json("><strong>Una respuesta para la API</strong><p>Esta función reúne el código HTTP, la cabecera y el cuerpo que API Gateway devuelve al navegador.</p></div>
   <div data-prefix="headers: {"><strong>Tipo de contenido</strong><p>La cabecera indica al navegador que el cuerpo de la respuesta es JSON.</p></div>
   <div data-prefix="body: JSON.stringify"><strong>Convierte la respuesta a JSON</strong><p>Si el SDK devuelve un <code>BigInt</code>, <code>json</code> lo envía como texto para conservar todas sus cifras.</p></div>
@@ -665,8 +665,10 @@ ls -l serverless.yml package.json</code></pre>
   <div data-prefix="const eventId = await nextId"><strong>Obtiene el siguiente número de evento</strong><p><code>nextId</code> incrementa <code>LAST_EVENT_ID</code> en la fila de contadores.</p></div>
   <div data-prefix="export async function nextId"><strong>Reutiliza la misma operación para dos secuencias</strong><p><code>counterName</code> elige el atributo que aumenta. Cada secuencia tiene su propio valor.</p></div>
   <div data-prefix="ExpressionAttributeNames: { '#contador'"><strong>Indica qué contador se incrementa</strong><p><code>#contador</code> representa el nombre que recibe <code>nextId</code>.</p></div>
-  <div data-prefix="TableName: tablaEventosFCI"><strong>Usa la tabla FCI_EVENTOS</strong><p><code>tablaEventosFCI</code> contiene el valor de <code>FCI_TABLA_EVENTOS</code>. En el YAML, <code>Ref: FestivalCheckInEventos</code> obtiene el nombre <code>FCI_EVENTOS</code>.</p></div>
-  <div data-prefix="Key: { EVENT_ID: 0 }"><strong>Identifica el registro del contador</strong><p>El <code>0</code> queda reservado en <code>FCI_EVENTOS</code> para los dos contadores. Los eventos reales empiezan en <code>1</code>.</p></div>
+  <div data-prefix="TableName: TABLA_EVENTOS_FCI"><strong>Usa la tabla FCI_EVENTOS</strong><p><code>TABLA_EVENTOS_FCI</code> contiene el valor de <code>FCI_TABLA_EVENTOS</code>. En el YAML, <code>Ref: FestivalCheckInEventos</code> obtiene el nombre <code>FCI_EVENTOS</code>.</p></div>
+  <div data-prefix="export const MAX_ID_LONG"><strong>Fija el máximo de un long</strong><p>Usa el mismo límite para los identificadores de la ruta y los dos contadores.</p></div>
+  <div data-prefix="const ID_ITEM_CONTADORES"><strong>Da nombre al cero reservado</strong><p>Esta constante identifica el ítem que guarda los contadores en <code>FCI_EVENTOS</code>.</p></div>
+  <div data-prefix="Key: { EVENT_ID: ID_ITEM_CONTADORES }"><strong>Identifica el registro del contador</strong><p>El <code>0</code> queda reservado en <code>FCI_EVENTOS</code> para los dos contadores. Los eventos reales empiezan en <code>1</code>.</p></div>
   <div data-prefix="UpdateExpression: 'ADD"><strong>Incrementa el contador en DynamoDB</strong><p><code>ADD</code> suma <code>1</code> de forma atómica. Si el contador aún no existe, DynamoDB parte de cero. La condición comprueba el máximo de un <code>long</code>.</p></div>
   <div data-prefix="ReturnValues: 'UPDATED_NEW'"><strong>Pide el número recién asignado</strong><p>DynamoDB devuelve solo el atributo recién incrementado. Puede ser <code>LAST_EVENT_ID</code> para un evento o <code>LAST_REGISTRATION_ID</code> para una inscripción.</p></div>
   <div data-prefix="Item: { EVENT_ID:"><strong>Guarda el evento con su nuevo número</strong><p>El ítem contiene el identificador y el título. La condición protege los eventos que ya existen de una sobrescritura.</p></div>
@@ -689,23 +691,26 @@ ls -l serverless.yml package.json</code></pre>
   <section id="modulo-lambda-4" data-explanation>
     <h5><code>src/datos/dynamo.mjs</code></h5>
     <p>Prepara el cliente, los nombres de las tablas y la función que comparten los dos contadores.</p>
+    <p>Escribe en mayúsculas con guion bajo los valores fijos y la configuración del módulo. Usa camelCase para los valores que obtiene cada petición, como <code>const eventId = await nextId(...)</code>.</p>
     <pre><code>mkdir -p src/datos &amp;&amp; touch src/datos/dynamo.mjs &amp;&amp; vi src/datos/dynamo.mjs</code></pre>
     <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/datos/dynamo.mjs"><code>import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 
-export const maxEventId = 9223372036854775807n;
+export const MAX_ID_LONG = 9223372036854775807n;
+const ID_ITEM_CONTADORES = 0;
+
 export const db = DynamoDBDocumentClient.from(new DynamoDBClient({}));
-export const tablaEventosFCI = process.env.FCI_TABLA_EVENTOS;
-export const tablaInscripcionesFCI = process.env.FCI_TABLA_INSCRIPCIONES;
+export const TABLA_EVENTOS_FCI = process.env.FCI_TABLA_EVENTOS;
+export const TABLA_INSCRIPCIONES_FCI = process.env.FCI_TABLA_INSCRIPCIONES;
 
 export async function nextId(counterName) {
   const { Attributes } = await db.send(new UpdateCommand({
-    TableName: tablaEventosFCI,
-    Key: { EVENT_ID: 0 },
+    TableName: TABLA_EVENTOS_FCI,
+    Key: { EVENT_ID: ID_ITEM_CONTADORES },
     UpdateExpression: 'ADD #contador :uno',
     ConditionExpression: 'attribute_not_exists(#contador) OR #contador &lt; :limite',
     ExpressionAttributeNames: { '#contador': counterName },
-    ExpressionAttributeValues: { ':uno': 1, ':limite': maxEventId },
+    ExpressionAttributeValues: { ':uno': 1, ':limite': MAX_ID_LONG },
     ReturnValues: 'UPDATED_NEW'
   }));
   return Attributes[counterName];
@@ -715,10 +720,10 @@ export async function nextId(counterName) {
     <h5><code>src/eventos/crear.mjs</code></h5>
     <p>Antes de abrir este archivo, guarda <code>src/datos/dynamo.mjs</code> en la pestaña anterior. <code>crear.mjs</code> importa <code>nextId</code> desde ahí.</p>
     <p>Invocarás esta función desde AWS CLI. La fila reservada con <code>EVENT_ID: 0</code> guarda un contador para eventos y otro para inscripciones. Cada evento nuevo recibe un identificador positivo.</p>
-    <p><code>Ref: FestivalCheckInEventos</code> resuelve <code>FCI_EVENTOS</code>. La variable <code>FCI_TABLA_EVENTOS</code> entrega ese nombre a Lambda y <code>tablaEventosFCI</code> se lo pasa a <code>PutCommand</code>.</p>
+    <p><code>Ref: FestivalCheckInEventos</code> resuelve <code>FCI_EVENTOS</code>. La variable <code>FCI_TABLA_EVENTOS</code> entrega ese nombre a Lambda y <code>TABLA_EVENTOS_FCI</code> se lo pasa a <code>PutCommand</code>.</p>
     <pre><code>mkdir -p src/eventos &amp;&amp; touch src/eventos/crear.mjs &amp;&amp; vi src/eventos/crear.mjs</code></pre>
     <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/eventos/crear.mjs"><code>import { PutCommand } from '@aws-sdk/lib-dynamodb';
-import { db, tablaEventosFCI, nextId } from '../datos/dynamo.mjs';
+import { db, TABLA_EVENTOS_FCI, nextId } from '../datos/dynamo.mjs';
 
 export async function handler({ title } = {}) {
   if (typeof title !== 'string' || !title.trim()) {
@@ -727,7 +732,7 @@ export async function handler({ title } = {}) {
 
   const eventId = await nextId('LAST_EVENT_ID');
   await db.send(new PutCommand({
-    TableName: tablaEventosFCI,
+    TableName: TABLA_EVENTOS_FCI,
     Item: { EVENT_ID: eventId, TITLE: title.trim() },
     ConditionExpression: 'attribute_not_exists(EVENT_ID)'
   }));
@@ -739,7 +744,7 @@ export async function handler({ title } = {}) {
     <h5><code>src/pases/peticion.mjs</code></h5>
     <p>Comparte el formato de respuesta y el tratamiento de errores de estas rutas. Si ya creaste el archivo con una versión anterior, sustituye la condición y el mensaje <code>400</code> por los de este ejemplo y actualiza <code>json</code> para serializar los identificadores grandes.</p>
     <pre><code>mkdir -p src/pases &amp;&amp; touch src/pases/peticion.mjs &amp;&amp; vi src/pases/peticion.mjs</code></pre>
-    <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/pases/peticion.mjs"><code>import { maxEventId } from '../datos/dynamo.mjs';
+    <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/pases/peticion.mjs"><code>import { MAX_ID_LONG } from '../datos/dynamo.mjs';
 
 export function json(statusCode, body) {
   return {
@@ -753,7 +758,7 @@ export function json(statusCode, body) {
 export async function handleRequest(event, operation) {
   const { eventId: routeId, userId } = event.pathParameters ?? {};
   const eventId = /^[1-9]\d{0,18}$/.test(routeId ?? '') ? BigInt(routeId) : 0n;
-  if (!eventId || eventId &gt; maxEventId || !userId) {
+  if (!eventId || eventId &gt; MAX_ID_LONG || !userId) {
     return json(400, { message: 'Indica un ID de evento entero positivo y un usuario' });
   }
 
@@ -773,7 +778,7 @@ export async function handleRequest(event, operation) {
     <p>Consultar el pase. El YAML enlaza la ruta con el handler de este archivo.</p>
     <pre><code>mkdir -p src/pases &amp;&amp; touch src/pases/consultar.mjs &amp;&amp; vi src/pases/consultar.mjs</code></pre>
     <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/pases/consultar.mjs"><code>import { GetCommand } from '@aws-sdk/lib-dynamodb';
-import { db, tablaEventosFCI, tablaInscripcionesFCI } from '../datos/dynamo.mjs';
+import { db, TABLA_EVENTOS_FCI, TABLA_INSCRIPCIONES_FCI } from '../datos/dynamo.mjs';
 import { handleRequest, json } from './peticion.mjs';
 
 export function handler(event) {
@@ -790,7 +795,7 @@ async function getPass(key) {
     <p>Inscribir al usuario. El YAML enlaza la ruta con el handler de este archivo.</p>
     <pre><code>mkdir -p src/pases &amp;&amp; touch src/pases/inscribir.mjs &amp;&amp; vi src/pases/inscribir.mjs</code></pre>
     <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/pases/inscribir.mjs"><code>import { GetCommand, PutCommand } from '@aws-sdk/lib-dynamodb';
-import { db, tablaEventosFCI, tablaInscripcionesFCI } from '../datos/dynamo.mjs';
+import { db, TABLA_EVENTOS_FCI, TABLA_INSCRIPCIONES_FCI } from '../datos/dynamo.mjs';
 import { handleRequest, json } from './peticion.mjs';
 
 export function handler(event) {
@@ -807,7 +812,7 @@ async function register(key) {
     <p>Registrar la entrada. El YAML enlaza la ruta con el handler de este archivo.</p>
     <pre><code>mkdir -p src/pases &amp;&amp; touch src/pases/entrada.mjs &amp;&amp; vi src/pases/entrada.mjs</code></pre>
     <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/pases/entrada.mjs"><code>import { UpdateCommand } from '@aws-sdk/lib-dynamodb';
-import { db, tablaInscripcionesFCI } from '../datos/dynamo.mjs';
+import { db, TABLA_INSCRIPCIONES_FCI } from '../datos/dynamo.mjs';
 import { handleRequest, json } from './peticion.mjs';
 
 export function handler(event) {
@@ -999,13 +1004,13 @@ evento_secundario_id=2</code></pre>
       <h4>DynamoDB · Dos lecturas por clave con <code>GetCommand</code></h4>
       <div class="pass-lookups">
         <section aria-labelledby="pass-event-lookup">
-          <h5 id="pass-event-lookup">1. <code>tablaEventosFCI</code> → <code>FCI_EVENTOS</code></h5>
+          <h5 id="pass-event-lookup">1. <code>TABLA_EVENTOS_FCI</code> → <code>FCI_EVENTOS</code></h5>
           <code>{ EVENT_ID: 1 }</code>
           <p><code>Item</code> se guarda en <code>event</code>. Si falta, Lambda devuelve <strong>404</strong> y termina aquí.</p>
         </section>
         <span class="pass-next-lookup"><span aria-hidden="true"></span> Si existe</span>
         <section aria-labelledby="pass-registration-lookup">
-          <h5 id="pass-registration-lookup">2. <code>tablaInscripcionesFCI</code> → <code>FCI_INSCRIPCIONES</code></h5>
+          <h5 id="pass-registration-lookup">2. <code>TABLA_INSCRIPCIONES_FCI</code> → <code>FCI_INSCRIPCIONES</code></h5>
           <code>{ EVENT_ID: 1, USER_ID: 'usuario-02' }</code>
           <p><code>Item</code> se guarda en <code>registration</code>. La pareja completa localiza un único pase en la tabla.</p>
         </section>
@@ -1028,12 +1033,12 @@ evento_secundario_id=2</code></pre>
   <template id="get-pass-explanations">
     <div data-prefix="async function getPass("><strong>JavaScript declara la función. Tú eliges los nombres.</strong><p><code>async</code> permite usar <code>await</code>. <code>getPass</code> es el nombre que eliges y <code>key</code> recibe el objeto que le pasa <code>handleRequest</code>, por ejemplo <code>{ eventId: 1, userId: 'usuario-02' }</code>.</p></div>
     <div data-prefix="const { Item: event }"><strong>El SDK devuelve Item. JavaScript lo guarda como event.</strong><p>Lee de dentro hacia fuera. <code>new GetCommand(...)</code>, del SDK de AWS, prepara la lectura. <code>db.send(...)</code> la envía y <code>await</code> espera el resultado. <code>{ Item: event }</code> equivale a guardar <code>respuesta.Item</code> en una variable local llamada <code>event</code>.</p></div>
-    <div data-prefix="TableName: tablaEventosFCI"><strong>TableName lo exige AWS. tablaEventosFCI sale de tu proyecto.</strong><p><code>dynamo.mjs</code> lee el nombre desde <code>process.env.FCI_TABLA_EVENTOS</code>. Serverless configura esa variable con la tabla creada, por ejemplo <code>FCI_EVENTOS</code>.</p></div>
+    <div data-prefix="TableName: TABLA_EVENTOS_FCI"><strong>TableName lo exige AWS. TABLA_EVENTOS_FCI sale de tu proyecto.</strong><p><code>dynamo.mjs</code> lee el nombre desde <code>process.env.FCI_TABLA_EVENTOS</code>. Serverless configura esa variable con la tabla creada, por ejemplo <code>FCI_EVENTOS</code>.</p></div>
     <div data-prefix="Key: { EVENT_ID: key.eventId }"><strong>Key contiene la clave primaria de la tabla elegida.</strong><p>A la izquierda, <code>EVENT_ID</code> es el atributo de DynamoDB. A la derecha, <code>key.eventId</code> aporta el valor de la ruta convertido a número. La clave de búsqueda es <code>{ EVENT_ID: 1 }</code>.</p></div>
     <div data-prefix="ConsistentRead: true"><strong>ConsistentRead es una opción de DynamoDB.</strong><p>Con <code>true</code>, la lectura refleja las escrituras confirmadas antes de esa operación. <code>await</code> controla cuándo sigue el código. <code>ConsistentRead</code> controla qué versión de los datos puede leer.</p></div>
     <div data-prefix="if (!event)"><strong>JavaScript comprueba si apareció el evento.</strong><p>Si DynamoDB no encuentra el ítem, <code>event</code> vale <code>undefined</code>. <code>!event</code> se cumple y <code>return</code> termina la función con <code>404</code>, antes de buscar la inscripción.</p></div>
     <div data-prefix="const { Item: registration }"><strong>El SDK vuelve a devolver Item.</strong><p>Esta vez tú llamas <code>registration</code> a la variable porque la respuesta viene de la tabla de inscripciones. Si la pareja no existe, <code>registration</code> vale <code>undefined</code>.</p></div>
-    <div data-prefix="TableName: tablaInscripcionesFCI"><strong>El segundo comando apunta a INSCRIPCIONES.</strong><p><code>dynamo.mjs</code> obtiene el nombre desde <code>process.env.FCI_TABLA_INSCRIPCIONES</code>. En esta práctica, el nombre es <code>FCI_INSCRIPCIONES</code>.</p></div>
+    <div data-prefix="TableName: TABLA_INSCRIPCIONES_FCI"><strong>El segundo comando apunta a INSCRIPCIONES.</strong><p><code>dynamo.mjs</code> obtiene el nombre desde <code>process.env.FCI_TABLA_INSCRIPCIONES</code>. En esta práctica, el nombre es <code>FCI_INSCRIPCIONES</code>.</p></div>
     <div data-prefix="Key: { EVENT_ID: key.eventId, USER_ID: key.userId },"><strong>La inscripción necesita los dos identificadores.</strong><p>El <code>Key</code> de la izquierda es la opción de AWS. El objeto de la derecha usa los nombres de DynamoDB, <code>EVENT_ID</code> y <code>USER_ID</code>, y toma sus valores de <code>key</code>.</p></div>
     <div data-prefix="return json(200"><strong>json es una función de la práctica.</strong><p>La importas de <code>peticion.mjs</code>. Recibe el código HTTP <code>200</code> y convierte el objeto que le pasas en el cuerpo JSON que verá el navegador.</p></div>
     <div data-prefix="eventId: event.EVENT_ID"><strong>El identificador sale del ítem.</strong><p>El primer <code>eventId</code> nombra el campo de la respuesta. <code>event.EVENT_ID</code> lee <code>1</code> del objeto devuelto por DynamoDB.</p></div>
@@ -1041,7 +1046,7 @@ evento_secundario_id=2</code></pre>
     <div data-prefix="registration: registration ?"><strong>La respuesta traduce el ítem de DynamoDB</strong><p>Si existe, convierte atributos como <code>REGISTRATION_ID</code> al campo <code>registrationId</code> del JSON. Si falta el ítem, devuelve <code>registration: null</code>.</p></div>
   </template>
   <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/pases/consultar.mjs" data-explanations="get-pass-explanations"><code>import { GetCommand } from '@aws-sdk/lib-dynamodb';
-import { db, tablaEventosFCI, tablaInscripcionesFCI } from '../datos/dynamo.mjs';
+import { db, TABLA_EVENTOS_FCI, TABLA_INSCRIPCIONES_FCI } from '../datos/dynamo.mjs';
 import { handleRequest, json } from './peticion.mjs';
 
 export function handler(event) {
@@ -1050,14 +1055,14 @@ export function handler(event) {
 
 async function getPass(key) {
   const { Item: event } = await db.send(new GetCommand({
-    TableName: tablaEventosFCI,
+    TableName: TABLA_EVENTOS_FCI,
     Key: { EVENT_ID: key.eventId },
     ConsistentRead: true
   }));
   if (!event) return json(404, { message: 'Evento no encontrado' });
 
   const { Item: registration } = await db.send(new GetCommand({
-    TableName: tablaInscripcionesFCI,
+    TableName: TABLA_INSCRIPCIONES_FCI,
     Key: { EVENT_ID: key.eventId, USER_ID: key.userId },
     ConsistentRead: true
   }));
@@ -1129,19 +1134,19 @@ async function getPass(key) {
   <template id="register-explanations">
     <div data-prefix="async function register("><strong>La función recibe la pareja del pase.</strong><p><code>key</code> contiene <code>eventId</code> y <code>userId</code>. <code>async</code> permite usar <code>await</code> con las operaciones de DynamoDB.</p></div>
     <div data-prefix="const { Item: event }"><strong>Primero lee el evento.</strong><p><code>GetCommand</code> prepara la lectura y <code>db.send</code> la envía. <code>await</code> espera la respuesta y la desestructuración guarda <code>Item</code> como <code>event</code>.</p></div>
-    <div data-prefix="TableName: tablaEventosFCI"><strong>La lectura va a EVENTOS.</strong><p><code>tablaEventosFCI</code> contiene el nombre que Lambda recibe en <code>FCI_TABLA_EVENTOS</code>.</p></div>
+    <div data-prefix="TableName: TABLA_EVENTOS_FCI"><strong>La lectura va a EVENTOS.</strong><p><code>TABLA_EVENTOS_FCI</code> contiene el nombre que Lambda recibe en <code>FCI_TABLA_EVENTOS</code>.</p></div>
     <div data-prefix="Key: { EVENT_ID"><strong>El evento se identifica con una clave.</strong><p><code>key.eventId</code> lee el valor de la ruta, por ejemplo <code>1</code>.</p></div>
     <div data-prefix="ConsistentRead:"><strong>Pide una lectura fuerte de la tabla.</strong><p>La lectura refleja las escrituras confirmadas antes de esa operación.</p></div>
     <div data-prefix="if (!event)"><strong>Si falta el evento, termina con 404.</strong><p>El <code>return</code> evita que se intente guardar la inscripción.</p></div>
     <div data-prefix="const registrationId ="><strong>Asigna el siguiente número a la inscripción.</strong><p><code>nextId('LAST_REGISTRATION_ID')</code> incrementa el contador de inscripciones. <code>eventId</code> y <code>userId</code> ya vienen en la ruta.</p></div>
     <div data-prefix="await db.send(new PutCommand"><strong>Envía un ítem nuevo a DynamoDB.</strong><p>El SDK ejecuta <code>PutCommand</code> y JavaScript espera su resultado antes de responder.</p></div>
-    <div data-prefix="TableName: tablaInscripcionesFCI"><strong>La escritura va a INSCRIPCIONES.</strong><p><code>tablaInscripcionesFCI</code> contiene el nombre recibido en <code>FCI_TABLA_INSCRIPCIONES</code>.</p></div>
+    <div data-prefix="TableName: TABLA_INSCRIPCIONES_FCI"><strong>La escritura va a INSCRIPCIONES.</strong><p><code>TABLA_INSCRIPCIONES_FCI</code> contiene el nombre recibido en <code>FCI_TABLA_INSCRIPCIONES</code>.</p></div>
     <div data-prefix="Item: {"><strong>Construye el ítem con la pareja, el número y la hora.</strong><p>El ítem guarda <code>EVENT_ID</code> y <code>USER_ID</code> a partir de la clave de la petición. <code>REGISTRATION_ID</code> guarda el número asignado. <code>toISOString()</code> escribe la hora UTC en <code>REGISTERED_AT</code>.</p></div>
     <div data-prefix="ConditionExpression:"><strong>La condición protege esta pareja de claves.</strong><p>DynamoDB comprueba si existe <code>EVENT_ID</code> en el ítem que identifica la pareja completa. Si ya existe ese pase, rechaza la escritura y <code>handleRequest</code> responde <code>409</code>. Otro usuario puede inscribirse en el mismo evento.</p></div>
     <div data-prefix="return json(201"><strong>Devuelve 201 después de guardar.</strong><p><code>json</code> es la función de <code>peticion.mjs</code> que prepara el estado HTTP y el cuerpo de la respuesta.</p></div>
   </template>
   <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/pases/inscribir.mjs" data-explanations="register-explanations"><code>import { GetCommand, PutCommand } from '@aws-sdk/lib-dynamodb';
-import { db, tablaEventosFCI, tablaInscripcionesFCI, nextId } from '../datos/dynamo.mjs';
+import { db, TABLA_EVENTOS_FCI, TABLA_INSCRIPCIONES_FCI, nextId } from '../datos/dynamo.mjs';
 import { handleRequest, json } from './peticion.mjs';
 
 export function handler(event) {
@@ -1150,7 +1155,7 @@ export function handler(event) {
 
 async function register(key) {
   const { Item: event } = await db.send(new GetCommand({
-    TableName: tablaEventosFCI,
+    TableName: TABLA_EVENTOS_FCI,
     Key: { EVENT_ID: key.eventId },
     ConsistentRead: true
   }));
@@ -1158,7 +1163,7 @@ async function register(key) {
 
   const registrationId = await nextId('LAST_REGISTRATION_ID');
   await db.send(new PutCommand({
-    TableName: tablaInscripcionesFCI,
+    TableName: TABLA_INSCRIPCIONES_FCI,
     Item: {
       EVENT_ID: key.eventId,
       USER_ID: key.userId,
@@ -1211,7 +1216,7 @@ curl -i "$pase"</code></pre></div>
   <template id="checkIn-explanations">
     <div data-prefix="async function checkIn("><strong>La función recibe la clave del pase.</strong><p><code>key</code> trae <code>eventId</code> y <code>userId</code> desde <code>handleRequest</code>.</p></div>
     <div data-prefix="await db.send(new UpdateCommand"><strong>Envía una actualización a DynamoDB.</strong><p><code>UpdateCommand</code> prepara la operación. <code>await</code> espera que termine antes de responder al navegador.</p></div>
-    <div data-prefix="TableName: tablaInscripcionesFCI"><strong>El cambio va a INSCRIPCIONES.</strong><p><code>tablaInscripcionesFCI</code> recibe el nombre real desde <code>FCI_TABLA_INSCRIPCIONES</code>.</p></div>
+    <div data-prefix="TableName: TABLA_INSCRIPCIONES_FCI"><strong>El cambio va a INSCRIPCIONES.</strong><p><code>TABLA_INSCRIPCIONES_FCI</code> recibe el nombre real desde <code>FCI_TABLA_INSCRIPCIONES</code>.</p></div>
     <div data-prefix="Key: { EVENT_ID"><strong>Selecciona un único pase.</strong><p>El <code>Key</code> de AWS usa <code>EVENT_ID</code> y <code>USER_ID</code>, con los valores recibidos en la ruta.</p></div>
     <div data-prefix="UpdateExpression:"><strong>SET indica el atributo que se escribe.</strong><p><code>CHECKED_IN_AT</code> es el atributo de la inscripción en DynamoDB. <code>:hora</code> es el marcador que DynamoDB sustituye por el valor indicado abajo.</p></div>
     <div data-prefix="ConditionExpression:"><strong>DynamoDB comprueba las dos condiciones al escribir.</strong><p><code>attribute_exists(EVENT_ID)</code> exige que exista el pase. <code>attribute_not_exists(CHECKED_IN_AT)</code> protege la primera hora. Si falla cualquiera de las dos, <code>handleRequest</code> responde <code>409</code>.</p></div>
@@ -1219,7 +1224,7 @@ curl -i "$pase"</code></pre></div>
     <div data-prefix="return json(200"><strong>Devuelve 200 después de actualizar.</strong><p><code>json</code> prepara la respuesta. Un GET posterior permite comprobar la hora guardada.</p></div>
   </template>
   <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/pases/entrada.mjs" data-explanations="checkIn-explanations"><code>import { UpdateCommand } from '@aws-sdk/lib-dynamodb';
-import { db, tablaInscripcionesFCI } from '../datos/dynamo.mjs';
+import { db, TABLA_INSCRIPCIONES_FCI } from '../datos/dynamo.mjs';
 import { handleRequest, json } from './peticion.mjs';
 
 export function handler(event) {
@@ -1228,7 +1233,7 @@ export function handler(event) {
 
 async function checkIn(key) {
   await db.send(new UpdateCommand({
-    TableName: tablaInscripcionesFCI,
+    TableName: TABLA_INSCRIPCIONES_FCI,
     Key: { EVENT_ID: key.eventId, USER_ID: key.userId },
     UpdateExpression: 'SET CHECKED_IN_AT = :hora',
     ConditionExpression: 'attribute_exists(EVENT_ID) AND attribute_not_exists(CHECKED_IN_AT)',
