@@ -32,7 +32,7 @@ form.addEventListener('submit', submission => {
   const item = scenario === 'inscrito' ? registration : null;
 
   putObject('dynamo-event', eventFound ? {
-    Item: { EVENT_ID: event.eventId, TITLE: event.title }
+    Item: { TIPO_REGISTRO: 'EVENTO', EVENT_ID: event.eventId, TITLE: event.title }
   } : {});
   putText('dynamo-event-value', eventFound
     ? 'Item se guarda en la variable event.'

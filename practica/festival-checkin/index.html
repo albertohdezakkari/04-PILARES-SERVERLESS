@@ -7,8 +7,8 @@
 <link rel="stylesheet" href="style.css?v=tablas-fci">
 <script type="module" src="app.js?v=max-id-guardado"></script>
 <script type="module" src="guia.js?v=archivos-lambda-completos"></script>
-<script type="module" src="visor-modelo.js?v=atributos-mayusculas"></script>
-<script type="module" src="entrenamiento-dynamo.js?v=atributos-mayusculas"></script>
+<script type="module" src="visor-modelo.js?v=consulta-maximo"></script>
+<script type="module" src="entrenamiento-dynamo.js?v=consulta-maximo"></script>
 </head>
 <body>
 <main>
@@ -71,10 +71,11 @@
     <p class="dynamo-map-origin"><span aria-hidden="true">↓</span> EVENTO se convierte en tabla</p>
     <h5><code>FCI_EVENTOS</code></h5>
     <dl>
-      <div><dt><abbr class="dynamo-pk" title="Clave de partición">PK</abbr> <code>EVENT_ID</code></dt><dd><code>1</code></dd></div>
+      <div><dt><abbr class="dynamo-pk" title="Clave de partición">PK</abbr> <code>TIPO_REGISTRO</code></dt><dd><code>EVENTO</code></dd></div>
+      <div><dt><abbr class="dynamo-sk" title="Clave de ordenación">SK</abbr> <code>EVENT_ID</code></dt><dd><code>1</code></dd></div>
       <div><dt><code>TITLE</code></dt><dd>Festival de otoño</dd></div>
     </dl>
-    <p>Con <code>EVENT_ID</code> encuentras el evento y lees su título.</p>
+    <p>Dentro de <code>EVENTO</code>, DynamoDB ordena por <code>EVENT_ID</code>.</p>
   </section>
   <section class="dynamo-map-card">
     <p class="dynamo-map-origin"><span aria-hidden="true">↓</span> INSCRIPCION se convierte en tabla</p>
@@ -127,7 +128,7 @@
     <button type="button" data-access="usuario" aria-pressed="false">¿En qué eventos está inscrito usuario-02?</button>
   </div>
   <div class="access-results" aria-live="polite">
-    <section data-access-panel="evento"><h4>Un evento</h4><p>En <code>EVENTOS</code>, <code>EVENT_ID</code> es la clave de partición (<strong>PK</strong>). Como cada evento tiene un identificador único, con <code>1</code> ya puedes recuperar su título.</p><code>EVENTOS → PK 1 → Festival de otoño</code></section>
+    <section data-access-panel="evento"><h4>Un evento</h4><p>En <code>EVENTOS</code>, <code>TIPO_REGISTRO</code> selecciona el grupo <code>EVENTO</code>. Dentro del grupo, <code>EVENT_ID</code> selecciona el evento <code>1</code>.</p><code>EVENTOS → PK EVENTO + SK 1 → Festival de otoño</code></section>
     <section data-access-panel="grupo" hidden><h4>Todas las inscripciones de un evento</h4><p>En <code>INSCRIPCIONES</code>, la PK sigue siendo <code>EVENT_ID</code>. Una consulta por <code>1</code> recupera su grupo de inscripciones.</p><code>INSCRIPCIONES → PK 1 → usuario-01, usuario-02</code></section>
     <section data-access-panel="pase" hidden><h4>Una inscripción concreta</h4><p>Dentro del grupo, <code>USER_ID</code> es la clave de ordenación (<strong>SK</strong>). La pareja <code>EVENT_ID</code> + <code>USER_ID</code> es la clave primaria compuesta. Su atributo <code>CHECKED_IN_AT</code> indica si ya se registró la entrada.</p><code>INSCRIPCIONES → PK 1 + SK usuario-02 → una fila</code></section>
     <section data-access-panel="usuario" hidden><h4>Los eventos de un usuario</h4><p>Guardas cada inscripción una vez. DynamoDB mantiene el índice <code>PorUsuario</code>, que agrupa esas inscripciones por <code>USER_ID</code> (PK) y las ordena por <code>EVENT_ID</code> (SK).</p><code>PorUsuario → PK usuario-02 → 1, 2</code></section>
@@ -139,11 +140,11 @@
 <h3>Convierte el modelo en dos tablas y pruébalo</h3>
 <p>Escribe los atributos de DynamoDB en mayúsculas con guion bajo, como <code>EVENT_ID</code>. Cuando la API recibe o devuelve JSON, usa nombres como <code>eventId</code>. Verás cómo traducirlos en <a href="#leer-pase">Lectura</a>.</p>
 <p class="lesson-note"><strong>Convención de Base de Datos.</strong> Llama a las entidades <strong>Evento</strong> e <strong>Inscripción</strong>. Usa la abreviatura del proyecto, un guion bajo y el nombre de la tabla en plural. En Festival Check-in obtienes <code>FCI_EVENTOS</code> y <code>FCI_INSCRIPCIONES</code>. «San Valentín» sería el título de un evento guardado en <code>FCI_EVENTOS</code>.</p>
-<p><strong>Evento → EVENTOS.</strong> Guarda <code>EVENT_ID</code> y <code>TITLE</code>. <strong>Inscripción → INSCRIPCIONES.</strong> Guarda la pareja de identificadores, el número automático <code>REGISTRATION_ID</code>, <code>REGISTERED_AT</code> y, al entrar, <code>CHECKED_IN_AT</code>.</p>
+<p><strong>Evento → EVENTOS.</strong> Guarda <code>TIPO_REGISTRO = EVENTO</code>, <code>EVENT_ID</code> y <code>TITLE</code>. <strong>Inscripción → INSCRIPCIONES.</strong> Guarda la pareja de identificadores, el número automático <code>REGISTRATION_ID</code>, <code>REGISTERED_AT</code> y, al entrar, <code>CHECKED_IN_AT</code>.</p>
 <p><code>EVENT_ID</code> y <code>USER_ID</code> son referencias al evento y a la persona, como dos claves foráneas en un modelo relacional. <code>REGISTRATION_ID</code> identifica la inscripción y se guarda como un atributo del ítem. La clave de DynamoDB sigue siendo la pareja <code>EVENT_ID</code> + <code>USER_ID</code>, que garantiza una inscripción por persona y evento.</p>
 <p>En este caso, <strong>USUARIO</strong> es una entidad del diagrama. El pase recibe su <code>USER_ID</code> y <strong>INSCRIPCIONES</strong> guarda esa referencia. Si el festival necesita guardar perfiles, podrá añadir una tabla <code>USUARIOS</code>. En un modelo relacional, la clave foránea de la inscripción referencia al evento y la base de datos puede exigir que exista. Aquí <code>EVENT_ID</code> forma parte de la clave de DynamoDB y POST comprueba en la API que el evento existe antes de inscribir al usuario.</p>
 <div class="relation" aria-label="Un evento tiene cero o muchas inscripciones">
-  <div><strong>EVENTOS</strong><br><code>EVENT_ID</code> · PK</div><span aria-hidden="true">1 ─── 0..N</span>
+  <div><strong>EVENTOS</strong><br><code>TIPO_REGISTRO</code> · PK<br><code>EVENT_ID</code> · SK</div><span aria-hidden="true">1 ─── 0..N</span>
   <div><strong>INSCRIPCIONES</strong><br><code>EVENT_ID</code> · PK<br><code>USER_ID</code> · SK</div>
 </div>
 <p id="model-status" role="status">Cargando el ejemplo…</p>
@@ -431,13 +432,13 @@ LAMBDA_ROLE_ARN=$(aws iam get-role --role-name LabRole --profile "$perfil" --reg
       <div><dt><code>TableName:</code></dt><dd>Fija el nombre real en AWS, <code>FCI_EVENTOS</code>.</dd></div>
       <div><dt><code>BillingMode: PAY_PER_REQUEST</code></dt><dd>Selecciona el modo bajo demanda. Las lecturas y escrituras se cobran según el uso.</dd></div>
       <div><dt data-lines="AttributeDefinitions:|AttributeName:|AttributeType:"><code>AttributeDefinitions:</code></dt><dd>Lista los atributos que forman las claves y su tipo. <code>AttributeName: EVENT_ID</code> da el nombre del atributo y <code>AttributeType: N</code> lo declara de tipo numérico.</dd></div>
-      <div><dt data-lines="KeySchema:|KeyType:"><code>KeySchema:</code></dt><dd>Lista qué papel cumple cada atributo en la clave. <code>AttributeName</code> repite el nombre del atributo y <code>KeyType: HASH</code> lo declara clave de partición. En esta tabla, <code>EVENT_ID</code> basta para localizar <code>1</code>.</dd></div>
+      <div><dt data-lines="KeySchema:|KeyType:"><code>KeySchema:</code></dt><dd>Lista qué papel cumple cada atributo en la clave. <code>AttributeName</code> repite el nombre del atributo y <code>KeyType: HASH</code> lo declara clave de partición. Aquí <code>HASH</code> agrupa por <code>TIPO_REGISTRO</code> y <code>RANGE</code> ordena por <code>EVENT_ID</code>.</dd></div>
     </dl>
     <div class="yaml-question">
-      <p><strong>¿Qué valor necesitas para buscar el evento Festival de otoño en FestivalCheckInEventos?</strong></p>
+      <p><strong>¿Qué dos valores localizan Festival de otoño en FestivalCheckInEventos?</strong></p>
       <div class="actions">
-      <button type="button" data-feedback="Sí. En KeySchema solo aparece EVENT_ID. El valor del evento de la práctica es 1." aria-pressed="false">1</button>
-      <button type="button" data-feedback="Esa pareja identifica una inscripción. Mira cuántas claves declara FestivalCheckInEventos." aria-pressed="false">1 y usuario-02</button>
+      <button type="button" data-feedback="Sí. EVENTO es el grupo y 1 es el identificador dentro del grupo." aria-pressed="false">EVENTO y 1</button>
+      <button type="button" data-feedback="Esa pareja identifica una inscripción. Busca el valor de TIPO_REGISTRO para los eventos." aria-pressed="false">1 y usuario-02</button>
       </div>
       <p class="yaml-feedback" role="status"></p>
     </div>
@@ -553,11 +554,15 @@ resources:
         TableName: FCI_EVENTOS
         BillingMode: PAY_PER_REQUEST
         AttributeDefinitions:
+          - AttributeName: TIPO_REGISTRO
+            AttributeType: S
           - AttributeName: EVENT_ID
             AttributeType: N
         KeySchema:
-          - AttributeName: EVENT_ID
+          - AttributeName: TIPO_REGISTRO
             KeyType: HASH
+          - AttributeName: EVENT_ID
+            KeyType: RANGE
     FestivalCheckInInscripciones:
       Type: AWS::DynamoDB::Table
       Properties:
@@ -663,15 +668,15 @@ ls -l serverless.yml package.json</code></pre>
   <div data-prefix="const { eventId: routeId"><strong>La ruta entrega texto</strong><p>En <code>/events/1/registrations/usuario-02</code>, <code>routeId</code> recibe <code>"1"</code> y <code>userId</code> recibe <code>"usuario-02"</code>.</p></div>
   <div data-prefix="const eventId = /^[1-9]"><strong>Convierte el ID a entero</strong><p>La expresión comprueba que el texto tenga entre una y 19 cifras y empiece por una cifra distinta de cero. <code>BigInt</code> conserva la precisión de un <code>long</code>.</p></div>
   <div data-prefix="const eventId = await obtenerSiguienteIdGuardado"><strong>Calcula el siguiente número de evento</strong><p>Lee <code>EVENT_ID</code> en <code>FCI_EVENTOS</code>. Si el mayor guardado es <code>7</code>, propone <code>8</code>.</p></div>
-  <div data-prefix="export async function obtenerSiguienteIdGuardado"><strong>Elige la tabla y el atributo numérico</strong><p>Para eventos buscas <code>EVENT_ID</code>. Para inscripciones buscarás <code>REGISTRATION_ID</code> en su propia tabla.</p></div>
-  <div data-prefix="const { Items, LastEvaluatedKey }"><strong>Lee una página de DynamoDB</strong><p><code>Items</code> contiene los resultados. Si llega <code>LastEvaluatedKey</code>, pásala a <code>ExclusiveStartKey</code> para continuar desde ahí.</p></div>
-  <div data-prefix="ProjectionExpression: &#x27;#id&#x27;"><strong>Pide solo el atributo del número</strong><p><code>#id</code> representa el nombre que recibe la función. DynamoDB recorre la tabla y devuelve ese atributo cuando existe.</p></div>
-  <div data-prefix="let maximo = 0n"><strong>Parte de cero</strong><p>Si la tabla está vacía, el resultado será <code>1</code>. El cero y los identificadores internos negativos quedan fuera del cálculo.</p></div>
-  <div data-prefix="return maximo + 1n"><strong>Propone el número después de leer todas las páginas</strong><p>El sufijo <code>n</code> indica <code>BigInt</code>. Si otra petición consigue ese mismo número, la condición de escritura decide cuál puede guardarlo.</p></div>
+  <div data-prefix="export async function obtenerSiguienteIdGuardado"><strong>Elige el grupo</strong><p><code>EVENTO</code> reúne los eventos. <code>NUMERO_INSCRIPCION</code> reúne las marcas de los números de inscripción confirmados.</p></div>
+  <div data-prefix="KeyConditionExpression:"><strong>Selecciona el grupo por su clave de partición</strong><p><code>:grupo</code> recibe el valor que le pasa la función.</p></div>
+  <div data-prefix="ScanIndexForward: false"><strong>Empieza por el mayor</strong><p>DynamoDB lee en orden descendente por la clave de ordenación numérica.</p></div>
+  <div data-prefix="Limit: 1"><strong>Pide un solo resultado</strong><p>El primero en orden descendente tiene el ID mayor.</p></div>
+  <div data-prefix="const maximo ="><strong>Lee el único resultado</strong><p>Si el grupo está vacío, JavaScript usa <code>0</code> y el primer ID será <code>1</code>.</p></div>
   <div data-prefix="TableName: TABLA_EVENTOS_FCI"><strong>Usa la tabla FCI_EVENTOS</strong><p><code>TABLA_EVENTOS_FCI</code> contiene el valor de <code>FCI_TABLA_EVENTOS</code>. En el YAML, <code>Ref: FestivalCheckInEventos</code> obtiene el nombre <code>FCI_EVENTOS</code>.</p></div>
   <div data-prefix="export const MAX_ID_LONG"><strong>Fija el máximo de un long</strong><p>Usa el mismo límite para los identificadores de la ruta y los números nuevos.</p></div>
   <div data-prefix="ConditionExpression: &#x27;attribute_not_exists(EVENT_ID)&#x27;"><strong>La clave protege el número al escribir</strong><p>Si dos peticiones proponen <code>8</code>, la primera que lo guarda gana. La otra vuelve a leer y calcula un nuevo candidato.</p></div>
-  <div data-prefix="Item: { EVENT_ID:"><strong>Guarda el evento con su nuevo número</strong><p>El ítem contiene el identificador y el título. La condición protege los eventos que ya existen de una sobrescritura.</p></div>
+  <div data-prefix="Item: { TIPO_REGISTRO: GRUPO_EVENTOS"><strong>Guarda el evento con su nuevo número</strong><p>El ítem contiene el grupo, el identificador y el título. La condición protege los eventos que ya existen de una sobrescritura.</p></div>
   <div data-prefix="if (!eventId"><strong>Comprueba los datos del pase</strong><p>Devuelve <code>400</code> si el ID es inválido, supera el máximo de un <code>long</code> o falta el usuario.</p></div>
   <div data-prefix="return await operation("><strong>Ejecutar el caso de uso</strong><p>La operación recibe eventId y userId. Por ejemplo, getPass busca la inscripción con esa pareja. await permite capturar aquí los errores de la operación.</p></div>
   <div data-prefix="if (error.name ==="><strong>Una condición impide escribir</strong><p>Cuando DynamoDB rechaza una condición, el handler devuelve 409. Por ejemplo, al intentar inscribir dos veces al mismo usuario.</p></div>
@@ -692,42 +697,34 @@ ls -l serverless.yml package.json</code></pre>
     <h5><code>src/datos/dynamo.mjs</code></h5>
     <p>Prepara el cliente, los nombres de las tablas y la función que calcula el siguiente número a partir de los datos guardados.</p>
     <ol class="route-map" aria-label="Calcular el siguiente ID guardado">
-      <li><strong>Lee los números</strong><p><code>ScanCommand</code> lee el atributo de cada ítem. Ejemplo: <code>2</code>, <code>7</code> y <code>4</code>.</p></li>
-      <li><strong>Busca el mayor</strong><p>Compara todas las páginas. Aquí el máximo es <code>7</code>.</p></li>
-      <li><strong>Propón el siguiente</strong><p><code>7 + 1 = 8</code>. La escritura condicional protege el número al guardar.</p></li>
+      <li><strong>Elige el grupo</strong><p><code>TIPO_REGISTRO = EVENTO</code>. DynamoDB lo ordena por <code>EVENT_ID</code>.</p></li>
+      <li><strong>Pide el mayor</strong><p><code>ScanIndexForward: false</code> empieza por el más alto. <code>Limit: 1</code> pide solo ese registro.</p></li>
+      <li><strong>Suma uno</strong><p>Si DynamoDB devuelve <code>7</code>, la Lambda propone <code>8</code>.</p></li>
     </ol>
     <p>Escribe en mayúsculas con guion bajo los valores fijos y la configuración del módulo. Usa camelCase para los valores que obtiene cada petición, como <code>const eventId = await obtenerSiguienteIdGuardado(...)</code>.</p>
     <pre><code>mkdir -p src/datos &amp;&amp; touch src/datos/dynamo.mjs &amp;&amp; vi src/datos/dynamo.mjs</code></pre>
     <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/datos/dynamo.mjs"><code>import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { DynamoDBDocumentClient, ScanCommand } from '@aws-sdk/lib-dynamodb';
+import { DynamoDBDocumentClient, QueryCommand } from '@aws-sdk/lib-dynamodb';
 
 export const MAX_ID_LONG = 9223372036854775807n;
 export const MAX_INTENTOS_ID = 5;
+export const GRUPO_EVENTOS = 'EVENTO';
+export const GRUPO_NUMEROS_INSCRIPCION = 'NUMERO_INSCRIPCION';
 export const db = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 export const TABLA_EVENTOS_FCI = process.env.FCI_TABLA_EVENTOS;
 export const TABLA_INSCRIPCIONES_FCI = process.env.FCI_TABLA_INSCRIPCIONES;
 
-export async function obtenerSiguienteIdGuardado(nombreTabla, nombreAtributo) {
-  let maximo = 0n;
-  let inicio;
+export async function obtenerSiguienteIdGuardado(grupo) {
+  const { Items = [] } = await db.send(new QueryCommand({
+    TableName: TABLA_EVENTOS_FCI,
+    KeyConditionExpression: 'TIPO_REGISTRO = :grupo',
+    ExpressionAttributeValues: { ':grupo': grupo },
+    ScanIndexForward: false,
+    Limit: 1,
+    ConsistentRead: true
+  }));
 
-  do {
-    const { Items, LastEvaluatedKey } = await db.send(new ScanCommand({
-      TableName: nombreTabla,
-      ProjectionExpression: '#id',
-      ExpressionAttributeNames: { '#id': nombreAtributo },
-      ConsistentRead: true,
-      ExclusiveStartKey: inicio
-    }));
-
-    for (const item of Items ?? []) {
-      const id = BigInt(item[nombreAtributo] ?? 0);
-      if (id &gt; maximo) maximo = id;
-    }
-
-    inicio = LastEvaluatedKey;
-  } while (inicio &amp;&amp; Object.keys(inicio).length &gt; 0);
-
+  const maximo = BigInt(Items[0]?.EVENT_ID ?? 0);
   if (maximo &gt;= MAX_ID_LONG) throw new Error('Se alcanzó el máximo del identificador');
   return maximo + 1n;
 }</code></pre></div>
@@ -740,7 +737,7 @@ export async function obtenerSiguienteIdGuardado(nombreTabla, nombreAtributo) {
     <pre><code>mkdir -p src/eventos &amp;&amp; touch src/eventos/crear.mjs &amp;&amp; vi src/eventos/crear.mjs</code></pre>
     <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/eventos/crear.mjs"><code>import { PutCommand } from '@aws-sdk/lib-dynamodb';
 import {
-  db, MAX_INTENTOS_ID, TABLA_EVENTOS_FCI, obtenerSiguienteIdGuardado
+  db, GRUPO_EVENTOS, MAX_INTENTOS_ID, TABLA_EVENTOS_FCI, obtenerSiguienteIdGuardado
 } from '../datos/dynamo.mjs';
 
 export async function handler({ title } = {}) {
@@ -750,11 +747,11 @@ export async function handler({ title } = {}) {
   const titulo = title.trim();
 
   for (let intento = 0; intento &lt; MAX_INTENTOS_ID; intento++) {
-    const eventId = await obtenerSiguienteIdGuardado(TABLA_EVENTOS_FCI, 'EVENT_ID');
+    const eventId = await obtenerSiguienteIdGuardado(GRUPO_EVENTOS);
     try {
       await db.send(new PutCommand({
         TableName: TABLA_EVENTOS_FCI,
-        Item: { EVENT_ID: eventId, TITLE: titulo },
+        Item: { TIPO_REGISTRO: GRUPO_EVENTOS, EVENT_ID: eventId, TITLE: titulo },
         ConditionExpression: 'attribute_not_exists(EVENT_ID)'
       }));
       return { eventId: eventId.toString(), title: titulo };
@@ -804,7 +801,7 @@ export async function handleRequest(event, operation) {
     <p>Prepara el archivo base de GET. Por ahora responde <code>501</code>. Lo completarás en <a href="#leer-pase">6 · Consultar</a>.</p>
     <pre><code>mkdir -p src/pases &amp;&amp; touch src/pases/consultar.mjs &amp;&amp; vi src/pases/consultar.mjs</code></pre>
     <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/pases/consultar.mjs"><code>import { GetCommand } from '@aws-sdk/lib-dynamodb';
-import { db, TABLA_EVENTOS_FCI, TABLA_INSCRIPCIONES_FCI } from '../datos/dynamo.mjs';
+import { db, GRUPO_EVENTOS, TABLA_EVENTOS_FCI, TABLA_INSCRIPCIONES_FCI } from '../datos/dynamo.mjs';
 import { handleRequest, json } from './peticion.mjs';
 
 export function handler(event) {
@@ -871,7 +868,7 @@ node --input-type=module -e '
 </article>
 <article id="desplegar-stack" class="guide-step" data-step="Desplegar">
 <h3>Despliega el servicio desde la terminal</h3>
-<p class="lesson-note"><strong>Si ya desplegaste una edición anterior.</strong> Este YAML usa los identificadores de recurso <code>FestivalCheckInEventos</code> y <code>FestivalCheckInInscripciones</code>. Para desplegarlo tal cual, usa una cuenta o región autorizada donde <code>FCI_EVENTOS</code> y <code>FCI_INSCRIPCIONES</code> estén libres. Si necesitas conservar las tablas de un stack existente, revisa la migración antes de actualizarlo. <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/stack-refactoring.html">Refactorización de stacks en CloudFormation</a>.</p>
+<p class="lesson-note"><strong>Si ya desplegaste una edición anterior.</strong> Esta edición cambia la clave primaria de <code>FCI_EVENTOS</code>. Para la práctica, despliega en un laboratorio autorizado donde <code>FCI_EVENTOS</code> y <code>FCI_INSCRIPCIONES</code> estén libres. Para conservar datos existentes, la actualización requiere migrar a una tabla nueva con la clave compuesta. <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-dynamodb-table.html">Tablas DynamoDB en CloudFormation</a>.</p>
 <p>Si compartís cuenta y región y trabajáis en el mismo Festival Check-in, desplegad un solo stack y usad la misma URL de la API. Para otro proyecto, elegid su propia abreviatura y su propio nombre de servicio.</p>
 
 <dl class="command-reasons"><div><dt><code>node --check</code></dt><dd>Comprueba la sintaxis del módulo que indicas.</dd></div><div><dt><code>&amp;&amp;</code></dt><dd>Ejecuta el segundo comando si el primero termina correctamente.</dd></div><div><dt><code>--stage dev</code></dt><dd>Selecciona el entorno de desarrollo de tu servicio.</dd></div></dl>
@@ -914,11 +911,11 @@ done</code></pre>
   --query "Table.GlobalSecondaryIndexes[?IndexName=='PorUsuario'].{Estado:IndexStatus,Claves:KeySchema}" \
   --output json</code></pre>
 <p>Si ves <code>CREATING</code>, repite este último comando hasta ver <code>ACTIVE</code>. Si ves <code>[]</code> o <code>null</code>, comprueba que el YAML incluye <code>PorUsuario</code> y despliega de nuevo.</p>
-<p class="checkpoint"><strong>Antes de avanzar</strong> Las dos tablas y el índice están <code>ACTIVE</code>. En <code>Tipos</code>, <code>EVENT_ID</code> es <code>N</code> en ambas tablas. En <code>INSCRIPCIONES</code>, <code>EVENT_ID</code> es <code>HASH</code> y <code>USER_ID</code> es <code>RANGE</code>. En <code>PorUsuario</code> los papeles se invierten.</p>
+<p class="checkpoint"><strong>Antes de avanzar</strong> Las dos tablas y el índice están <code>ACTIVE</code>. En <code>Tipos</code>, <code>EVENT_ID</code> es <code>N</code> en ambas tablas. En <code>EVENTOS</code>, <code>TIPO_REGISTRO</code> es <code>HASH</code> y <code>EVENT_ID</code> es <code>RANGE</code>. En <code>INSCRIPCIONES</code>, <code>EVENT_ID</code> es <code>HASH</code> y <code>USER_ID</code> es <code>RANGE</code>. En <code>PorUsuario</code> los papeles se invierten.</p>
 </article>
 <article id="guardar-evento" class="guide-step" data-step="Crear eventos">
 <h3>Crea dos eventos y guarda sus identificadores</h3>
-<p class="lesson-note"><strong>El número sale de los datos guardados.</strong> Si restauras eventos con IDs <code>4</code> y <code>12</code>, la Lambda propone <code>13</code>. Con la tabla vacía empieza en <code>1</code>. En esta práctica usamos <code>Scan</code> para leer todas las páginas. El coste de lectura crece con la tabla. <a href="https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Scan.html">Documentación de Scan</a>.</p>
+<p class="lesson-note"><strong>El número sale de los datos guardados.</strong> Si restauras eventos con IDs <code>4</code> y <code>12</code>, la Lambda propone <code>13</code>. Con la tabla vacía empieza en <code>1</code>. <code>Query</code> pide a DynamoDB un solo evento, el de mayor ID. <a href="https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Query.html">Documentación de Query</a>.</p>
 <p>Desde <code>festival-checkin</code>, usa la misma terminal en la que recuperaste las <a href="#salidas-stack">Salidas</a>. El bloque invoca la Lambda con AWS CLI y extrae el identificador de su respuesta. Ejecútalo una vez para crear «Festival de otoño» y «Feria de invierno». Si lo repites, crearás otros dos eventos con nuevos números.</p>
 <pre><code>crear_evento() (
   respuesta=$(mktemp) || exit 1
@@ -945,15 +942,22 @@ evento_id=$(crear_evento '{"title":"Festival de otoño"}') &amp;&amp;
 <p>Si cierras la terminal, recupera las <a href="#salidas-stack">Salidas</a> y vuelve a asignar los dos números que imprimió la creación. Este ejemplo corresponde al primer despliegue con las tablas vacías.</p>
 <pre><code>evento_id=1
 evento_secundario_id=2</code></pre>
-<p class="checkpoint"><strong>Antes de avanzar</strong> Apunta los dos números de la terminal. Deben ser consecutivos si solo tú estás creando eventos en ese momento. En una tabla vacía, el primero es <code>1</code> y el segundo es <code>2</code>. Usa los valores reales que te devolvió Lambda.</p>
+<p>Pide el mayor ID desde la misma terminal. <code>--limit 1</code> limita la consulta y <code>--no-paginate</code> evita que AWS CLI pida la página siguiente.</p>
+<pre><code>aws dynamodb query \
+  --profile "$perfil" --region "$region" --table-name "$tabla_eventos" \
+  --key-condition-expression 'TIPO_REGISTRO = :grupo' \
+  --expression-attribute-values '{":grupo":{"S":"EVENTO"}}' \
+  --no-scan-index-forward --limit 1 --no-paginate --consistent-read \
+  --query 'Items[0].EVENT_ID.N' --output text</code></pre>
+<p class="checkpoint"><strong>Antes de avanzar</strong> Apunta los dos números de la terminal. Si solo tú estás creando eventos, deben ser consecutivos y la última consulta debe devolver el segundo. En una tabla vacía, el primero es <code>1</code> y el segundo es <code>2</code>. Usa los valores reales que te devolvió Lambda.</p>
 </article>
 <article id="comprobar-datos" class="guide-step" data-step="SELECT">
 <h3>Lee lo que se ha guardado</h3>
 <p class="lesson-note"><strong>La clave <code>EVENT_ID</code> es numérica.</strong> Los dos <code>SELECT</code> usan el primer identificador que guardaste en <code>$evento_id</code>. En PartiQL se pasa como <code>N</code>. AWS CLI escribe sus cifras entre comillas en el JSON, pero DynamoDB las interpreta como número por la etiqueta <code>N</code>.</p>
 <pre><code>aws dynamodb execute-statement \
   --profile "$perfil" --region "$region" --consistent-read \
-  --statement "SELECT \"EVENT_ID\", \"TITLE\" FROM \"$tabla_eventos\" WHERE \"EVENT_ID\" = ?" \
-  --parameters "[{\"N\":\"$evento_id\"}]"</code></pre>
+  --statement "SELECT \"EVENT_ID\", \"TITLE\" FROM \"$tabla_eventos\" WHERE \"TIPO_REGISTRO\" = ? AND \"EVENT_ID\" = ?" \
+  --parameters "[{\"S\":\"EVENTO\"},{\"N\":\"$evento_id\"}]"</code></pre>
 <pre><code>aws dynamodb execute-statement \
   --profile "$perfil" --region "$region" --consistent-read \
   --statement "SELECT * FROM \"$tabla_inscripciones\" WHERE \"EVENT_ID\" = ?" \
@@ -971,7 +975,7 @@ evento_secundario_id=2</code></pre>
 
   <h4>Qué aprende cada acción del pase</h4>
   <ol class="route-map" aria-label="Operaciones de DynamoDB de la práctica">
-    <li><span>Consultar · Lectura por clave</span><strong><code>GetCommand</code></strong><p>Lee <code>EVENTOS</code> con <code>EVENT_ID</code> y <code>INSCRIPCIONES</code> con las dos claves.</p></li>
+    <li><span>Consultar · Lectura por clave</span><strong><code>GetCommand</code></strong><p>Lee <code>EVENTOS</code> con <code>TIPO_REGISTRO + EVENT_ID</code> e <code>INSCRIPCIONES</code> con <code>EVENT_ID + USER_ID</code>.</p></li>
     <li><span>Inscribir · Escritura con condiciones</span><strong><code>TransactWriteCommand</code></strong><p>Guarda el pase y la marca que protege el número de inscripción en una sola transacción.</p></li>
     <li><span>Dar entrada · Actualización con condición</span><strong><code>UpdateCommand</code></strong><p>Añade <code>CHECKED_IN_AT</code> a la inscripción existente una sola vez.</p></li>
   </ol>
@@ -1001,7 +1005,7 @@ evento_secundario_id=2</code></pre>
     </form>
     <p id="dynamo-feedback" role="status"></p>
     <ol id="dynamo-results" class="dynamo-results" aria-label="Resultado de la simulación" hidden>
-      <li><h5>1 · Lee EVENTOS</h5><code>Key: { EVENT_ID: 1 }</code><pre><code id="dynamo-event"></code></pre><p id="dynamo-event-value"></p></li>
+      <li><h5>1 · Lee EVENTOS</h5><code>Key: { TIPO_REGISTRO: 'EVENTO', EVENT_ID: 1 }</code><pre><code id="dynamo-event"></code></pre><p id="dynamo-event-value"></p></li>
       <li><h5>2 · Lee INSCRIPCIONES</h5><code>Key: { EVENT_ID: 1, USER_ID: 'usuario-02' }</code><pre><code id="dynamo-registration"></code></pre><p id="dynamo-registration-value"></p></li>
       <li><h5>3 · Responde a la web</h5><strong id="dynamo-status"></strong><pre><code id="dynamo-response"></code></pre><p id="dynamo-response-value"></p></li>
     </ol>
@@ -1029,7 +1033,7 @@ evento_secundario_id=2</code></pre>
       <div class="pass-lookups">
         <section aria-labelledby="pass-event-lookup">
           <h5 id="pass-event-lookup">1. <code>TABLA_EVENTOS_FCI</code> → <code>FCI_EVENTOS</code></h5>
-          <code>{ EVENT_ID: 1 }</code>
+          <code>{ TIPO_REGISTRO: 'EVENTO', EVENT_ID: 1 }</code>
           <p><code>Item</code> se guarda en <code>event</code>. Si falta, Lambda devuelve <strong>404</strong> y termina aquí.</p>
         </section>
         <span class="pass-next-lookup"><span aria-hidden="true"></span> Si existe</span>
@@ -1058,7 +1062,7 @@ evento_secundario_id=2</code></pre>
     <div data-prefix="async function getPass("><strong>JavaScript declara la función. Tú eliges los nombres.</strong><p><code>async</code> permite usar <code>await</code>. <code>getPass</code> es el nombre que eliges y <code>key</code> recibe el objeto que le pasa <code>handleRequest</code>, por ejemplo <code>{ eventId: 1, userId: 'usuario-02' }</code>.</p></div>
     <div data-prefix="const { Item: event }"><strong>El SDK devuelve Item. JavaScript lo guarda como event.</strong><p>Lee de dentro hacia fuera. <code>new GetCommand(...)</code>, del SDK de AWS, prepara la lectura. <code>db.send(...)</code> la envía y <code>await</code> espera el resultado. <code>{ Item: event }</code> equivale a guardar <code>respuesta.Item</code> en una variable local llamada <code>event</code>.</p></div>
     <div data-prefix="TableName: TABLA_EVENTOS_FCI"><strong>TableName lo exige AWS. TABLA_EVENTOS_FCI sale de tu proyecto.</strong><p><code>dynamo.mjs</code> lee el nombre desde <code>process.env.FCI_TABLA_EVENTOS</code>. Serverless configura esa variable con la tabla creada, por ejemplo <code>FCI_EVENTOS</code>.</p></div>
-    <div data-prefix="Key: { EVENT_ID: key.eventId }"><strong>Key contiene la clave primaria de la tabla elegida.</strong><p>A la izquierda, <code>EVENT_ID</code> es el atributo de DynamoDB. A la derecha, <code>key.eventId</code> aporta el valor de la ruta convertido a número. La clave de búsqueda es <code>{ EVENT_ID: 1 }</code>.</p></div>
+    <div data-prefix="Key: { TIPO_REGISTRO: GRUPO_EVENTOS, EVENT_ID: key.eventId }"><strong>Key contiene la clave primaria de la tabla elegida.</strong><p>El grupo <code>EVENTO</code> aporta la PK. <code>key.eventId</code> aporta la SK numérica desde la ruta. La clave de búsqueda es <code>{ TIPO_REGISTRO: 'EVENTO', EVENT_ID: 1 }</code>.</p></div>
     <div data-prefix="ConsistentRead: true"><strong>ConsistentRead es una opción de DynamoDB.</strong><p>Con <code>true</code>, la lectura refleja las escrituras confirmadas antes de esa operación. <code>await</code> controla cuándo sigue el código. <code>ConsistentRead</code> controla qué versión de los datos puede leer.</p></div>
     <div data-prefix="if (!event)"><strong>JavaScript comprueba si apareció el evento.</strong><p>Si DynamoDB no encuentra el ítem, <code>event</code> vale <code>undefined</code>. <code>!event</code> se cumple y <code>return</code> termina la función con <code>404</code>, antes de buscar la inscripción.</p></div>
     <div data-prefix="const { Item: registration }"><strong>El SDK vuelve a devolver Item.</strong><p>Esta vez tú llamas <code>registration</code> a la variable porque la respuesta viene de la tabla de inscripciones. Si la pareja no existe, <code>registration</code> vale <code>undefined</code>.</p></div>
@@ -1070,7 +1074,7 @@ evento_secundario_id=2</code></pre>
     <div data-prefix="registration: registration ?"><strong>La respuesta traduce el ítem de DynamoDB</strong><p>Si existe, convierte atributos como <code>REGISTRATION_ID</code> al campo <code>registrationId</code> del JSON. Si falta el ítem, devuelve <code>registration: null</code>.</p></div>
   </template>
   <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/pases/consultar.mjs" data-explanations="get-pass-explanations"><code>import { GetCommand } from '@aws-sdk/lib-dynamodb';
-import { db, TABLA_EVENTOS_FCI, TABLA_INSCRIPCIONES_FCI } from '../datos/dynamo.mjs';
+import { db, GRUPO_EVENTOS, TABLA_EVENTOS_FCI, TABLA_INSCRIPCIONES_FCI } from '../datos/dynamo.mjs';
 import { handleRequest, json } from './peticion.mjs';
 
 export function handler(event) {
@@ -1080,7 +1084,7 @@ export function handler(event) {
 async function getPass(key) {
   const { Item: event } = await db.send(new GetCommand({
     TableName: TABLA_EVENTOS_FCI,
-    Key: { EVENT_ID: key.eventId },
+    Key: { TIPO_REGISTRO: GRUPO_EVENTOS, EVENT_ID: key.eventId },
     ConsistentRead: true
   }));
   if (!event) return json(404, { message: 'Evento no encontrado' });
@@ -1103,7 +1107,7 @@ async function getPass(key) {
   });
 }</code></pre></div>
 </section>
-<p class="checkpoint"><strong>Antes de avanzar</strong> En <code>src/pases/consultar.mjs</code>, el primer <code>GetCommand</code> usa <code>EVENT_ID</code> y el segundo usa <code>EVENT_ID</code> y <code>USER_ID</code>. Pulsa <kbd>Esc</kbd>, escribe <code>:wq</code> y pulsa Intro para guardar.</p>
+<p class="checkpoint"><strong>Antes de avanzar</strong> En <code>src/pases/consultar.mjs</code>, el primer <code>GetCommand</code> usa <code>TIPO_REGISTRO + EVENT_ID</code> y el segundo usa <code>EVENT_ID</code> y <code>USER_ID</code>. Pulsa <kbd>Esc</kbd>, escribe <code>:wq</code> y pulsa Intro para guardar.</p>
 </article>
 <template id="prueba-command-notes">
   <div data-prefix="vi "><strong>Abre el archivo en el punto que vas a editar.</strong><p><code>vi</code> abre el módulo. El argumento que empieza por <code>+/</code> busca la declaración de la función.</p></div>
@@ -1154,31 +1158,32 @@ async function getPass(key) {
 <section class="lesson-example" aria-labelledby="ejemplo-register">
   <h4 id="ejemplo-register">Archivo completo <code>src/pases/inscribir.mjs</code></h4>
   <ol class="route-map" aria-label="Qué protege cada parte de la transacción">
-    <li><strong>Calcula el número</strong><p>Si en <code>FCI_INSCRIPCIONES</code> el mayor <code>REGISTRATION_ID</code> es <code>7</code>, propone <code>8</code>.</p></li>
-    <li><strong>Protege el pase y el número</strong><p>En <code>FCI_INSCRIPCIONES</code>, la pareja <code>EVENT_ID + USER_ID</code> protege el pase. En <code>FCI_EVENTOS</code>, una marca interna con <code>EVENT_ID = -8</code> protege el número <code>8</code>.</p></li>
+    <li><strong>Calcula el número</strong><p>Pide la marca de mayor número del grupo <code>NUMERO_INSCRIPCION</code>. Si devuelve <code>7</code>, propone <code>8</code>.</p></li>
+    <li><strong>Protege el pase y el número</strong><p>En <code>FCI_INSCRIPCIONES</code>, la pareja <code>EVENT_ID + USER_ID</code> protege el pase. En <code>FCI_EVENTOS</code>, la clave <code>NUMERO_INSCRIPCION + 8</code> protege el número <code>8</code>.</p></li>
     <li><strong>Confirma las dos escrituras juntas</strong><p>Si falla una condición, DynamoDB cancela las dos. Si dos pases distintos proponen <code>8</code>, uno lo guarda y el otro vuelve a calcular.</p></li>
   </ol>
-  <p>Los eventos reales tienen ID positivo. La marca negativa solo impide repetir un número de inscripción. El máximo de inscripciones sale de los valores <code>REGISTRATION_ID</code> de <code>FCI_INSCRIPCIONES</code>. <a href="https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_TransactWriteItems.html">Documentación de transacciones</a>.</p>
+  <p>Cada marca identifica un número asignado a una inscripción confirmada. Su grupo permite pedir el mayor con la misma consulta ordenada. Si importas inscripciones, carga también sus marcas. <a href="https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_TransactWriteItems.html">Documentación de transacciones</a>.</p>
   <p>Selecciona una línea resaltada para relacionar el código con el recorrido.</p>
   <template id="register-explanations">
     <div data-prefix="async function register("><strong>La función recibe la pareja del pase.</strong><p><code>key</code> contiene <code>eventId</code> y <code>userId</code>. <code>async</code> permite usar <code>await</code> con las operaciones de DynamoDB.</p></div>
     <div data-prefix="const { Item: event }"><strong>Primero lee el evento.</strong><p><code>GetCommand</code> prepara la lectura y <code>db.send</code> la envía. <code>await</code> espera la respuesta y la desestructuración guarda <code>Item</code> como <code>event</code>.</p></div>
     <div data-prefix="TableName: TABLA_EVENTOS_FCI"><strong>La lectura va a EVENTOS.</strong><p><code>TABLA_EVENTOS_FCI</code> contiene el nombre que Lambda recibe en <code>FCI_TABLA_EVENTOS</code>.</p></div>
-    <div data-prefix="Key: { EVENT_ID"><strong>El evento se identifica con una clave.</strong><p><code>key.eventId</code> lee el valor de la ruta, por ejemplo <code>1</code>.</p></div>
+    <div data-prefix="Key: { TIPO_REGISTRO"><strong>El evento se identifica por su grupo y su número.</strong><p><code>key.eventId</code> lee el valor de la ruta, por ejemplo <code>1</code>.</p></div>
     <div data-prefix="ConsistentRead:"><strong>Pide una lectura fuerte de la tabla.</strong><p>La lectura refleja las escrituras confirmadas antes de esa operación.</p></div>
     <div data-prefix="if (!event)"><strong>Si falta el evento, termina con 404.</strong><p>El <code>return</code> evita que se intente guardar la inscripción.</p></div>
-    <div data-prefix="const registrationId ="><strong>Calcula el siguiente número de inscripción</strong><p><code>obtenerSiguienteIdGuardado</code> recorre <code>FCI_INSCRIPCIONES</code> y suma uno al mayor <code>REGISTRATION_ID</code>.</p></div>
+    <div data-prefix="const registrationId ="><strong>Calcula el siguiente número de inscripción</strong><p><code>obtenerSiguienteIdGuardado</code> pide a DynamoDB la marca con el mayor número y suma uno.</p></div>
     <div data-prefix="await db.send(new TransactWriteCommand"><strong>Envía las dos escrituras como una unidad</strong><p>DynamoDB guarda las dos si se cumplen sus condiciones. Si falla una, cancela ambas.</p></div>
-    <div data-prefix="Item: { EVENT_ID: -registrationId }"><strong>Reserva un número único usando una clave</strong><p>Para <code>registrationId = 8</code>, la clave <code>-8</code> solo puede crearse una vez en <code>FCI_EVENTOS</code>.</p></div>
+    <div data-prefix="Item: { TIPO_REGISTRO: GRUPO_NUMEROS_INSCRIPCION, EVENT_ID: registrationId }"><strong>Reserva un número único usando una clave</strong><p>Para <code>registrationId = 8</code>, la pareja <code>NUMERO_INSCRIPCION + 8</code> solo puede crearse una vez en <code>FCI_EVENTOS</code>.</p></div>
     <div data-prefix="TableName: TABLA_INSCRIPCIONES_FCI"><strong>Escribe el pase en INSCRIPCIONES</strong><p><code>TABLA_INSCRIPCIONES_FCI</code> contiene el nombre recibido en <code>FCI_TABLA_INSCRIPCIONES</code>.</p></div>
     <div data-prefix="Item: {"><strong>Construye el ítem con la pareja, el número y la hora</strong><p><code>EVENT_ID</code> y <code>USER_ID</code> vienen de la petición. <code>REGISTRATION_ID</code> es el número calculado y <code>REGISTERED_AT</code> guarda la hora UTC.</p></div>
-    <div data-prefix="ConditionExpression:"><strong>Comprueba si ya existe ese ítem</strong><p>DynamoDB usa la clave del <code>Put</code>: <code>EVENT_ID + USER_ID</code> para el pase y el ID negativo para la marca.</p></div>
+    <div data-prefix="ConditionExpression:"><strong>Comprueba si ya existe ese ítem</strong><p>DynamoDB usa la clave del <code>Put</code>: <code>EVENT_ID + USER_ID</code> para el pase y <code>TIPO_REGISTRO + EVENT_ID</code> para la marca.</p></div>
     <div data-prefix="if (Item) return json(409"><strong>Distingue una inscripción repetida de un número ocupado</strong><p>Después de una cancelación, comprueba el pase. Si existe, devuelve <code>409</code>. En un conflicto de escritura, vuelve a calcular el número.</p></div>
     <div data-prefix="return json(201"><strong>Devuelve 201 después de guardar.</strong><p><code>json</code> es la función de <code>peticion.mjs</code> que prepara el estado HTTP y el cuerpo de la respuesta.</p></div>
   </template>
   <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/pases/inscribir.mjs" data-explanations="register-explanations"><code>import { GetCommand, TransactWriteCommand } from '@aws-sdk/lib-dynamodb';
 import {
-  db, MAX_INTENTOS_ID, TABLA_EVENTOS_FCI, TABLA_INSCRIPCIONES_FCI, obtenerSiguienteIdGuardado
+  db, GRUPO_EVENTOS, GRUPO_NUMEROS_INSCRIPCION, MAX_INTENTOS_ID,
+  TABLA_EVENTOS_FCI, TABLA_INSCRIPCIONES_FCI, obtenerSiguienteIdGuardado
 } from '../datos/dynamo.mjs';
 import { handleRequest, json } from './peticion.mjs';
 
@@ -1189,7 +1194,7 @@ export function handler(event) {
 async function register(key) {
   const { Item: event } = await db.send(new GetCommand({
     TableName: TABLA_EVENTOS_FCI,
-    Key: { EVENT_ID: key.eventId },
+    Key: { TIPO_REGISTRO: GRUPO_EVENTOS, EVENT_ID: key.eventId },
     ConsistentRead: true
   }));
   if (!event) return json(404, { message: 'Evento no encontrado' });
@@ -1197,9 +1202,7 @@ async function register(key) {
   const clavePase = { EVENT_ID: key.eventId, USER_ID: key.userId };
 
   for (let intento = 0; intento &lt; MAX_INTENTOS_ID; intento++) {
-    const registrationId = await obtenerSiguienteIdGuardado(
-      TABLA_INSCRIPCIONES_FCI, 'REGISTRATION_ID'
-    );
+    const registrationId = await obtenerSiguienteIdGuardado(GRUPO_NUMEROS_INSCRIPCION);
     try {
       await db.send(new TransactWriteCommand({
         TransactItems: [
@@ -1217,7 +1220,7 @@ async function register(key) {
           {
             Put: {
               TableName: TABLA_EVENTOS_FCI,
-              Item: { EVENT_ID: -registrationId },
+              Item: { TIPO_REGISTRO: GRUPO_NUMEROS_INSCRIPCION, EVENT_ID: registrationId },
               ConditionExpression: 'attribute_not_exists(EVENT_ID)'
             }
           }
@@ -1411,7 +1414,7 @@ curl -i -X POST "$api_url/events/$evento_secundario_id/registrations/$codigo_pru
 <h3>Del modelo al primer registro</h3>
 <figure class="infra-flow">
   <ol>
-    <li><a href="#modelo-titulo">Elige las claves</a><span>EVENTOS · EVENT_ID<br>INSCRIPCIONES · EVENT_ID + USER_ID</span></li>
+    <li><a href="#modelo-titulo">Elige las claves</a><span>EVENTOS · TIPO_REGISTRO + EVENT_ID<br>INSCRIPCIONES · EVENT_ID + USER_ID</span></li>
     <li><a href="#infraestructura">Escribe serverless.yml</a><span>Dos tablas, cuatro funciones y las rutas del pase</span></li>
     <li><a href="#desplegar-stack">Despliega en AWS</a><span>Serverless Framework → CloudFormation → recursos del laboratorio</span></li>
     <li><a href="#guardar-evento">Carga el primer evento</a><span>AWS CLI → Lambda → máximo guardado y evento</span></li>
@@ -1428,9 +1431,9 @@ curl -i -X POST "$api_url/events/$evento_secundario_id/registrations/$codigo_pru
     <dt><code>TableName</code></dt>
     <dd>El nombre que veis encima de cada tabla.</dd>
     <dt><code>KeyAttributes</code></dt>
-    <dd>Las claves que el visor marca como PK y SK. <code>AttributeName</code> es el nombre del campo y <code>S</code> significa texto y <code>N</code> significa número. En EVENTOS, el nombre de <code>SortKey</code> está vacío porque esa tabla solo tiene PK.</dd>
+    <dd>Las claves que el visor marca como PK y SK. <code>AttributeName</code> es el nombre del campo y <code>S</code> significa texto y <code>N</code> significa número. En EVENTOS, <code>TIPO_REGISTRO</code> es texto y <code>EVENT_ID</code> es la clave de ordenación numérica.</dd>
     <dt><code>TableData</code></dt>
-    <dd>Las filas ficticias. <code>{ "N": "1" }</code> representa el número <code>1</code> en el formato de DynamoDB. La vista de tabla muestra directamente ese valor.</dd>
+    <dd>Las filas ficticias. En EVENTOS, las filas de <code>NUMERO_INSCRIPCION</code> representan las marcas de las dos inscripciones de ejemplo. <code>{ "N": "1" }</code> representa el número <code>1</code> en el formato de DynamoDB. La vista de tabla muestra directamente ese valor.</dd>
   </dl>
   <p><code>NonKeyAttributes</code> enumera campos como <code>TITLE</code> y <code>REGISTERED_AT</code>. En <code>GlobalSecondaryIndexes</code> de <code>INSCRIPCIONES</code> puedes comparar las claves del índice <code>PorUsuario</code> con las de la tabla.</p>
   <label for="model-json">JSON del modelo</label>

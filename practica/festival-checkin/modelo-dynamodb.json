@@ -4,14 +4,14 @@
     "Author": "Festival Check-in",
     "Description": "Modelo de aula con registros ficticios para comparar inscripción y asistencia.",
     "AWSService": "Amazon DynamoDB",
-    "Version": "2.0"
+    "Version": "3.0"
   },
   "DataModel": [
     {
       "TableName": "FCI_EVENTOS",
       "KeyAttributes": {
-        "PartitionKey": { "AttributeName": "EVENT_ID", "AttributeType": "N" },
-        "SortKey": { "AttributeName": "", "AttributeType": "S" }
+        "PartitionKey": { "AttributeName": "TIPO_REGISTRO", "AttributeType": "S" },
+        "SortKey": { "AttributeName": "EVENT_ID", "AttributeType": "N" }
       },
       "NonKeyAttributes": [
         { "AttributeName": "TITLE", "AttributeType": "S" }
@@ -19,7 +19,9 @@
       "GlobalSecondaryIndexes": [],
       "DataAccess": {},
       "TableData": [
-        { "EVENT_ID": { "N": "1" }, "TITLE": { "S": "Festival de otoño" } }
+        { "TIPO_REGISTRO": { "S": "EVENTO" }, "EVENT_ID": { "N": "1" }, "TITLE": { "S": "Festival de otoño" } },
+        { "TIPO_REGISTRO": { "S": "NUMERO_INSCRIPCION" }, "EVENT_ID": { "N": "1" } },
+        { "TIPO_REGISTRO": { "S": "NUMERO_INSCRIPCION" }, "EVENT_ID": { "N": "2" } }
       ]
     },
     {
