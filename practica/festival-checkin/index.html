@@ -664,9 +664,9 @@ ls -l serverless.yml package.json</code></pre>
   <div data-prefix="async function register"><strong>Crear una inscripción</strong><p>El handler llama a esta función al recibir POST. Usará la pareja de claves para guardar la inscripción de un usuario en un evento.</p></div>
   <div data-prefix="async function checkIn"><strong>Registrar la entrada</strong><p>El handler llama a esta función al recibir PATCH. Buscará la inscripción por su clave completa y añadirá <code>CHECKED_IN_AT</code>.</p></div>
   <div data-prefix="return json(501"><strong>Operación pendiente</strong><p>El archivo base responde 501 hasta que escribas la operación. Esta respuesta te permite distinguir una ruta conectada de una operación ya implementada.</p></div>
-  <div data-prefix="export async function handleRequest"><strong>Validación y errores compartidos</strong><p>Los tres handlers usan esta función. Recibe la petición y la operación elegida, valida los identificadores y convierte los errores en respuestas HTTP.</p></div>
+  <div data-prefix="export async function handleRequest"><strong>Entrada y errores compartidos</strong><p>Los tres handlers usan esta función. Lee los datos de la ruta, llama a la operación elegida y prepara la respuesta si ocurre un error.</p></div>
   <div data-prefix="const { eventId: routeId"><strong>La ruta entrega texto</strong><p>En <code>/events/1/registrations/usuario-02</code>, <code>routeId</code> recibe <code>"1"</code> y <code>userId</code> recibe <code>"usuario-02"</code>.</p></div>
-  <div data-prefix="const eventId = /^[1-9]"><strong>Convierte el ID a entero</strong><p>La expresión comprueba que el texto tenga entre una y 19 cifras y empiece por una cifra distinta de cero. <code>BigInt</code> conserva la precisión de un <code>long</code>.</p></div>
+  <div data-prefix="const eventId = BigInt(routeId)"><strong>Convierte el texto de la ruta en un entero</strong><p>API Gateway entrega <code>"1"</code> como texto. <code>BigInt("1")</code> devuelve <code>1n</code>, el entero que pasas a DynamoDB.</p></div>
   <div data-prefix="const eventId = await obtenerSiguienteIdGuardado"><strong>Calcula el siguiente número de evento</strong><p>Lee <code>EVENT_ID</code> en <code>FCI_EVENTOS</code>. Si el mayor guardado es <code>7</code>, propone <code>8</code>.</p></div>
   <div data-prefix="export async function obtenerSiguienteIdGuardado"><strong>Elige el grupo</strong><p><code>EVENTO</code> reúne los eventos. <code>NUMERO_INSCRIPCION</code> reúne las marcas de los números de inscripción confirmados.</p></div>
   <div data-prefix="KeyConditionExpression:"><strong>Selecciona el grupo por su clave de partición</strong><p><code>:grupo</code> recibe el valor que le pasa la función.</p></div>
@@ -674,10 +674,9 @@ ls -l serverless.yml package.json</code></pre>
   <div data-prefix="Limit: 1"><strong>Pide un solo resultado</strong><p>El primero en orden descendente tiene el ID mayor.</p></div>
   <div data-prefix="const maximo ="><strong>Lee el único resultado</strong><p>Si el grupo está vacío, JavaScript usa <code>0</code> y el primer ID será <code>1</code>.</p></div>
   <div data-prefix="TableName: TABLA_EVENTOS_FCI"><strong>Usa la tabla FCI_EVENTOS</strong><p><code>TABLA_EVENTOS_FCI</code> contiene el valor de <code>FCI_TABLA_EVENTOS</code>. En el YAML, <code>Ref: FestivalCheckInEventos</code> obtiene el nombre <code>FCI_EVENTOS</code>.</p></div>
-  <div data-prefix="export const MAX_ID_LONG"><strong>Fija el máximo de un long</strong><p>Usa el mismo límite para los identificadores de la ruta y los números nuevos.</p></div>
+  <div data-prefix="export const MAX_ID_LONG"><strong>Fija el máximo de un long</strong><p>Limita los nuevos identificadores al máximo de un entero de 64 bits con signo.</p></div>
   <div data-prefix="ConditionExpression: &#x27;attribute_not_exists(EVENT_ID)&#x27;"><strong>La clave protege el número al escribir</strong><p>Si dos peticiones proponen <code>8</code>, la primera que lo guarda gana. La otra vuelve a leer y calcula un nuevo candidato.</p></div>
   <div data-prefix="Item: { TIPO_REGISTRO: GRUPO_EVENTOS"><strong>Guarda el evento con su nuevo número</strong><p>El ítem contiene el grupo, el identificador y el título. La condición protege los eventos que ya existen de una sobrescritura.</p></div>
-  <div data-prefix="if (!eventId"><strong>Comprueba los datos del pase</strong><p>Devuelve <code>400</code> si el ID es inválido, supera el máximo de un <code>long</code> o falta el usuario.</p></div>
   <div data-prefix="return await operation("><strong>Ejecutar el caso de uso</strong><p>La operación recibe eventId y userId. Por ejemplo, getPass busca la inscripción con esa pareja. await permite capturar aquí los errores de la operación.</p></div>
   <div data-prefix="if (error.name ==="><strong>Una condición impide escribir</strong><p>Cuando DynamoDB rechaza una condición, el handler devuelve 409. Por ejemplo, al intentar inscribir dos veces al mismo usuario.</p></div>
   <div data-prefix="console.error("><strong>Dónde mirar un fallo</strong><p>El detalle técnico se escribe en el registro de Lambda. La respuesta 500 indica a quien llama que ocurrió un fallo interno.</p></div>
@@ -765,11 +764,9 @@ export async function handler({ title } = {}) {
   </section>
   <section id="modulo-lambda-5" data-explanation hidden>
     <h5><code>src/pases/peticion.mjs</code></h5>
-    <p>Comparte el formato de respuesta y el tratamiento de errores de estas rutas. Si ya creaste el archivo con una versión anterior, sustituye la condición y el mensaje <code>400</code> por los de este ejemplo y actualiza <code>json</code> para serializar los identificadores grandes.</p>
+    <p>Comparte el formato de respuesta y el tratamiento de errores de las tres rutas. Para este paso, prueba con un ID de evento que hayas creado, como <code>1</code>, y con un código como <code>usuario-02</code>. Añadirás las validaciones de la ruta más adelante.</p>
     <pre><code>mkdir -p src/pases &amp;&amp; touch src/pases/peticion.mjs &amp;&amp; vi src/pases/peticion.mjs</code></pre>
-    <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/pases/peticion.mjs"><code>import { MAX_ID_LONG } from '../datos/dynamo.mjs';
-
-export function json(statusCode, body) {
+    <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/pases/peticion.mjs"><code>export function json(statusCode, body) {
   return {
     statusCode,
     headers: { 'content-type': 'application/json' },
@@ -779,13 +776,9 @@ export function json(statusCode, body) {
 }
 
 export async function handleRequest(event, operation) {
-  const { eventId: routeId, userId } = event.pathParameters ?? {};
-  const eventId = /^[1-9]\d{0,18}$/.test(routeId ?? '') ? BigInt(routeId) : 0n;
-  if (!eventId || eventId &gt; MAX_ID_LONG || !userId) {
-    return json(400, { message: 'Indica un ID de evento entero positivo y un usuario' });
-  }
-
   try {
+    const { eventId: routeId, userId } = event.pathParameters;
+    const eventId = BigInt(routeId);
     return await operation({ eventId, userId });
   } catch (error) {
     if (error.name === 'ConditionalCheckFailedException') {
@@ -1148,7 +1141,7 @@ async function getPass(key) {
   <figcaption id="post-layers-title">De la petición a la inscripción</figcaption>
   <ol role="list">
     <li><h4>Navegador → API Gateway</h4><code>POST /events/1/registrations/usuario-02</code></li>
-    <li><h4>Lambda · <code>src/pases/inscribir.mjs</code></h4><p><code>handleRequest</code> valida los identificadores y llama a <code>register(key)</code>.</p><code>key = { eventId: 1, userId: 'usuario-02' }</code></li>
+    <li><h4>Lambda · <code>src/pases/inscribir.mjs</code></h4><p><code>handleRequest</code> convierte el ID del evento a entero y llama a <code>register(key)</code>.</p><code>key = { eventId: 1, userId: 'usuario-02' }</code></li>
     <li><h4>DynamoDB</h4><p><code>GetCommand</code> busca <code>1</code> en <code>EVENTOS</code>. Si falta, responde <strong>404</strong>. Si existe, <code>obtenerSiguienteIdGuardado</code> calcula el próximo <code>REGISTRATION_ID</code>. <code>TransactWriteCommand</code> guarda la inscripción y protege ese número en una sola operación.</p></li>
     <li><h4>Lambda → API Gateway → Navegador</h4><p><strong>201</strong> con el número de inscripción si la guarda. Si ya existe esa pareja, la función responde <strong>409</strong>.</p></li>
   </ol>
@@ -1274,7 +1267,7 @@ curl -i "$pase"</code></pre></div>
   <figcaption id="patch-layers-title">De la petición a la entrada</figcaption>
   <ol role="list">
     <li><h4>Navegador → API Gateway</h4><code>PATCH /events/1/registrations/usuario-02</code></li>
-    <li><h4>Lambda · <code>src/pases/entrada.mjs</code></h4><p><code>handleRequest</code> valida los identificadores y llama a <code>checkIn(key)</code>.</p><code>key = { eventId: 1, userId: 'usuario-02' }</code></li>
+    <li><h4>Lambda · <code>src/pases/entrada.mjs</code></h4><p><code>handleRequest</code> convierte el ID del evento a entero y llama a <code>checkIn(key)</code>.</p><code>key = { eventId: 1, userId: 'usuario-02' }</code></li>
     <li><h4>DynamoDB</h4><p><code>UpdateCommand</code> localiza la inscripción por <code>EVENT_ID</code> y <code>USER_ID</code>. Solo escribe <code>CHECKED_IN_AT</code> si la inscripción existe y aún carece de esa hora.</p></li>
     <li><h4>Lambda → API Gateway → Navegador</h4><p><strong>200</strong> si registra la entrada. Si falta la inscripción o ya tiene hora de entrada, DynamoDB rechaza el cambio y <code>handleRequest</code> responde <strong>409</strong>.</p></li>
   </ol>
