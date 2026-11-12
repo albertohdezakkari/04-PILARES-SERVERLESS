@@ -29,6 +29,7 @@
         "SortKey": { "AttributeName": "userId", "AttributeType": "S" }
       },
       "NonKeyAttributes": [
+        { "AttributeName": "registrationId", "AttributeType": "N" },
         { "AttributeName": "registeredAt", "AttributeType": "S" },
         { "AttributeName": "checkedInAt", "AttributeType": "S" }
       ],
@@ -47,11 +48,13 @@
         {
           "eventId": { "N": "1" },
           "userId": { "S": "usuario-01" },
+          "registrationId": { "N": "1" },
           "registeredAt": { "S": "2026-11-12T09:05:00Z" }
         },
         {
           "eventId": { "N": "1" },
           "userId": { "S": "usuario-02" },
+          "registrationId": { "N": "2" },
           "registeredAt": { "S": "2026-11-12T09:06:00Z" },
           "checkedInAt": { "S": "2026-11-12T09:12:00Z" }
         }

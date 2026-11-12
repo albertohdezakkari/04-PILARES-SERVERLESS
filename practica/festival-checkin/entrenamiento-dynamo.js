@@ -6,6 +6,7 @@ const event = { eventId: 1, title: 'Festival de otoño' };
 const registration = {
   eventId: 1,
   userId: 'usuario-02',
+  registrationId: 2,
   registeredAt: '2026-11-01T10:00:00.000Z'
 };
 
