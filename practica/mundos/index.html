@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tu mundo · Serverless</title>
+  <link rel="stylesheet" href="../taller-bicis/style.css">
+  <link rel="stylesheet" href="mundos.css">
+  <script type="module" src="mundo.js"></script>
+</head>
+<body>
+  <main>
+    <header class="top">
+      <a href="../festival-checkin/">← Consultar Festival Check-in</a>
+    </header>
+    <div class="hero">
+      <div>
+        <p class="eyebrow">Práctica individual</p>
+        <h1 id="titulo">Tu mundo</h1>
+        <p id="mision">Abre tu ficha desde el acceso de la actividad.</p>
+      </div>
+      <div class="work-ticket" id="ficha" hidden>
+        <span id="tipo-registro"></span>
+        <strong id="ejemplo"></strong>
+        <span id="detalle"></span>
+      </div>
+    </div>
+    <div id="recorrido" hidden>
+      <nav class="tabs" aria-label="Pasos de la práctica">
+        <a href="#caso">Caso</a><a href="#diseno">Diseñar</a><a href="#pantalla">Pantalla</a>
+        <a href="#construir">Construir</a><a href="#probar">Probar y ampliar</a>
+      </nav>
+      <section class="panel" id="caso" data-step>
+        <h2>Qué vas a construir</h2>
+        <ol class="cards" id="acciones"></ol>
+        <p class="checkpoint"><strong>Antes de avanzar</strong> Identifica qué dato permitirá distinguir un registro pendiente de uno terminado.</p>
+        <a class="next" href="#diseno">Siguiente · Diseñar</a>
+      </section>
+      <section class="panel" id="diseno" data-step hidden>
+        <h2>Empieza por las búsquedas</h2>
+        <div class="relations" role="group" aria-label="Cada registro vincula un elemento y una persona. Cada elemento y cada persona pueden tener cero o muchos registros.">
+          <div><h3 id="nombre-entidad"></h3><code id="id-entidad"></code></div>
+          <span aria-hidden="true"><b>1</b><i></i><b>0..N</b></span>
+          <div><h3 id="nombre-registro"></h3><code id="id-registro"></code></div>
+          <span aria-hidden="true"><b>0..N</b><i></i><b>1</b></span>
+          <div><h3 id="nombre-persona"></h3><code id="id-persona"></code></div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <caption>Datos de ejemplo</caption>
+            <thead><tr><th scope="col" id="col-entidad"></th><th scope="col" id="col-registro"></th><th scope="col" id="col-persona"></th><th scope="col">Detalle</th></tr></thead>
+            <tbody id="filas"></tbody>
+          </table>
+        </div>
+        <ol class="cards" id="preguntas"></ol>
+        <p class="checkpoint"><strong>Antes de avanzar</strong> Dibuja tu tabla y tu índice con sus claves. Anota qué filas esperas obtener en cada búsqueda.</p>
+        <a class="next" href="#pantalla">Siguiente · Pantalla</a>
+      </section>
+      <section class="panel" id="pantalla" data-step hidden>
+        <h2>Cómo cambia el registro</h2>
+        <div class="preview">
+          <div class="state-controls" role="group" aria-label="Estado de ejemplo">
+            <button type="button" data-status="0" aria-pressed="true">Antes de crear</button>
+            <button type="button" data-status="1" aria-pressed="false">Después de crear</button>
+            <button type="button" data-status="2" aria-pressed="false">Después de completar</button>
+          </div>
+          <article class="preview-ticket">
+            <div class="ticket-head"><h3 id="ficha-registro"></h3><span id="ticket-state"></span></div>
+            <dl>
+              <div><dt>Detalle</dt><dd id="ficha-detalle"></dd></div>
+              <div><dt id="ficha-persona-label"></dt><dd id="ficha-persona"></dd></div>
+              <div><dt>Creación</dt><dd id="ficha-creacion"></dd></div>
+              <div><dt>Cierre</dt><dd id="ficha-cierre"></dd></div>
+            </dl>
+            <p id="ticket-result" role="status"></p>
+          </article>
+        </div>
+        <a class="next" href="#construir">Siguiente · Construir</a>
+      </section>
+      <section class="panel" id="construir" data-step hidden>
+        <h2>Construye desde tu carpeta</h2>
+        <p>Usa Node.js 22 en Git Bash o Terminal. Comprueba la sesión y recupera tu rol en <a href="../festival-checkin/#rol-laboratorio">Festival Check-in → Rol</a>. Ejecuta el primer bloque desde tu carpeta de prácticas.</p>
+        <div class="command"><pre><code id="preparar"></code></pre></div>
+        <p>Desde la carpeta recién creada, abre cada archivo y escribe tu solución. En <code>vi</code>, pulsa <kbd>i</kbd> para escribir. Guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro.</p>
+        <div class="command"><pre><code>touch serverless.yml &amp;&amp; vi serverless.yml
+touch src/registros/consultar.mjs &amp;&amp; vi src/registros/consultar.mjs
+touch src/registros/crear.mjs &amp;&amp; vi src/registros/crear.mjs
+touch src/registros/completar.mjs &amp;&amp; vi src/registros/completar.mjs</code></pre></div>
+        <p>Declara la tabla, el índice y las tres rutas en <code>serverless.yml</code>. Usa el rol del laboratorio y nombres de servicio y tabla únicos en tu cuenta y región. La API recibe <code>personaId</code> y <code>detalle</code> en el POST. Usa esta misma ruta con GET, POST y PATCH:</p>
+        <p><code id="ruta"></code></p>
+        <div class="command"><pre><code>(
+  for archivo in src/registros/*.mjs; do
+    node --check "$archivo" || exit 1
+  done
+) &amp;&amp; npx serverless deploy --stage dev --aws-profile "$perfil"</code></pre></div>
+        <p class="checkpoint"><strong>Antes de avanzar</strong> Serverless muestra las tres rutas y la URL base. Cópiala para probar.</p>
+        <a class="next" href="#probar">Siguiente · Probar y ampliar</a>
+      </section>
+      <section class="panel" id="probar" data-step hidden>
+        <h2>Comprueba el cambio y amplía la búsqueda</h2>
+        <p>En la misma terminal, sustituye <code>PEGA_AQUI_LA_URL</code> por la URL base que acabas de obtener. Si ya creaste el ejemplo, usa un identificador nuevo para repetir este recorrido.</p>
+        <div class="command"><pre><code id="comandos-prueba"></code></pre></div>
+        <div class="table-wrap">
+          <table>
+            <caption>Resultados esperados en orden</caption>
+            <thead><tr><th scope="col">Petición</th><th scope="col">HTTP</th><th scope="col">Comprueba</th></tr></thead>
+            <tbody>
+              <tr><td>GET inicial</td><td>404</td><td>Todavía falta el registro.</td></tr>
+              <tr><td>POST y repetición</td><td>201 → 409</td><td>Se conserva la primera fecha de creación.</td></tr>
+              <tr><td>PATCH y repetición</td><td>200 → 409</td><td>Se conserva la primera fecha de cierre.</td></tr>
+              <tr><td>GET final</td><td>200</td><td>Devuelve el mismo registro con las dos fechas.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p id="ampliacion"></p>
+        <p class="checkpoint"><strong>Entrega</strong> Guarda en tu repositorio el diagrama, el código y las salidas de las dos consultas. Incluye el GET final y el resultado de repetir PATCH.</p>
+        <a class="next" href="#caso">Volver al caso</a>
+      </section>
+    </div>
+  </main>
+</body>
+</html>
