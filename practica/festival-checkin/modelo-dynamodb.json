@@ -8,7 +8,7 @@
   },
   "DataModel": [
     {
-      "TableName": "FESTIVAL_CHECK_IN_EVENTOS_01",
+      "TableName": "FCI_EVENTOS",
       "KeyAttributes": {
         "PartitionKey": { "AttributeName": "eventId", "AttributeType": "N" },
         "SortKey": { "AttributeName": "", "AttributeType": "S" }
@@ -23,7 +23,7 @@
       ]
     },
     {
-      "TableName": "FESTIVAL_CHECK_IN_INSCRIPCIONES_01",
+      "TableName": "FCI_INSCRIPCIONES",
       "KeyAttributes": {
         "PartitionKey": { "AttributeName": "eventId", "AttributeType": "N" },
         "SortKey": { "AttributeName": "userId", "AttributeType": "S" }

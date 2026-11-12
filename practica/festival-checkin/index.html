@@ -4,10 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Festival Check-in · práctica guiada</title>
-<link rel="stylesheet" href="style.css?v=tablas-festival">
+<link rel="stylesheet" href="style.css?v=tablas-fci">
 <script type="module" src="app.js?v=eventos-numericos"></script>
 <script type="module" src="guia.js?v=ensayo-en-diseno"></script>
-<script type="module" src="visor-modelo.js?v=tablas-festival"></script>
+<script type="module" src="visor-modelo.js?v=tablas-fci"></script>
 <script type="module" src="entrenamiento-dynamo.js?v=eventos-numericos"></script>
 </head>
 <body>
@@ -65,11 +65,11 @@
   <div class="er-edge" aria-hidden="true"><b>0..N</b><i></i><b>1</b></div>
   <section><h4>USUARIO</h4><code>userId</code><span>Identificador del usuario</span></section>
 </div>
-<h4 class="design-label" id="dynamo-mapping">Cómo se guardan en DynamoDB · Equipo 01</h4>
+<h4 class="design-label" id="dynamo-mapping">Cómo se guardan en DynamoDB</h4>
 <div class="dynamo-map" role="group" aria-labelledby="dynamo-mapping">
   <section class="dynamo-map-card">
     <p class="dynamo-map-origin"><span aria-hidden="true">↓</span> EVENTO se convierte en tabla</p>
-    <h5><code>FESTIVAL_CHECK_IN_EVENTOS_01</code></h5>
+    <h5><code>FCI_EVENTOS</code></h5>
     <dl>
       <div><dt><abbr class="dynamo-pk" title="Clave de partición">PK</abbr> <code>eventId</code></dt><dd><code>1</code></dd></div>
       <div><dt><code>title</code></dt><dd>Festival de otoño</dd></div>
@@ -78,7 +78,7 @@
   </section>
   <section class="dynamo-map-card">
     <p class="dynamo-map-origin"><span aria-hidden="true">↓</span> INSCRIPCION se convierte en tabla</p>
-    <h5><code>FESTIVAL_CHECK_IN_INSCRIPCIONES_01</code></h5>
+    <h5><code>FCI_INSCRIPCIONES</code></h5>
     <dl>
       <div><dt><abbr class="dynamo-pk" title="Clave de partición">PK</abbr> <code>eventId</code></dt><dd><code>1</code></dd></div>
       <div><dt><abbr class="dynamo-sk" title="Clave de ordenación">SK</abbr> <code>userId</code></dt><dd><code>usuario-02</code></dd></div>
@@ -90,14 +90,14 @@
   <section class="dynamo-map-card dynamo-map-reference">
     <p class="dynamo-map-origin"><span aria-hidden="true">↓</span> De USUARIO guardas su referencia</p>
     <h5><abbr class="dynamo-sk" title="Clave de ordenación">SK</abbr> <code>userId</code></h5>
-    <p class="dynamo-map-target">En <code>FESTIVAL_CHECK_IN_INSCRIPCIONES_01</code></p>
+    <p class="dynamo-map-target">En <code>FCI_INSCRIPCIONES</code></p>
     <p>El pase recibe <code>usuario-02</code> y guarda ese código en la inscripción. Crearías una tabla <code>USUARIOS</code> si el festival necesitara guardar perfiles.</p>
   </section>
 </div>
 <h4 class="design-label">Dos consultas sobre las mismas inscripciones</h4>
 <ul class="route-map" role="list">
   <li>
-    <span>Tabla <code>FESTIVAL_CHECK_IN_INSCRIPCIONES_01</code> · <code>Query</code></span>
+    <span>Tabla <code>FCI_INSCRIPCIONES</code> · <code>Query</code></span>
     <strong>Usuarios de un evento</strong>
     <p>Busca por <code>eventId</code>, la clave de partición. En este ejemplo, <code>1</code> devuelve <code>usuario-01</code> y <code>usuario-02</code>.</p>
   </li>
@@ -136,7 +136,7 @@
 </article>
 <article id="modelo-titulo" class="guide-step" data-step="Probar el diseño">
 <h3>Convierte el modelo en dos tablas y pruébalo</h3>
-<p class="lesson-note"><strong>Convención de Base de Datos.</strong> Llama a las entidades <strong>Evento</strong> e <strong>Inscripción</strong>. Forma el nombre de cada tabla con el prefijo <code>FESTIVAL_CHECK_IN</code>, el nombre <code>EVENTOS</code> o <code>INSCRIPCIONES</code> y el número del equipo, como <code>FESTIVAL_CHECK_IN_EVENTOS_01</code>.</p>
+<p class="lesson-note"><strong>Convención de Base de Datos.</strong> Llama a las entidades <strong>Evento</strong> e <strong>Inscripción</strong>. Usa la abreviatura del proyecto, un guion bajo y el nombre de la tabla en plural. En Festival Check-in obtienes <code>FCI_EVENTOS</code> y <code>FCI_INSCRIPCIONES</code>. «San Valentín» sería el título de un evento guardado en <code>FCI_EVENTOS</code>.</p>
 <p><strong>Evento → EVENTOS.</strong> Guarda <code>eventId</code> y <code>title</code>. <strong>Inscripción → INSCRIPCIONES.</strong> Guarda la pareja de identificadores, <code>registeredAt</code> y, al entrar, <code>checkedInAt</code>.</p>
 <p>En este caso, <strong>USUARIO</strong> es una entidad del diagrama. El pase recibe su <code>userId</code> y <strong>INSCRIPCIONES</strong> guarda esa referencia. Si el festival necesita guardar perfiles, podrá añadir una tabla <code>USUARIOS</code>. En un modelo relacional, la clave foránea de la inscripción referencia al evento y la base de datos puede exigir que exista. Aquí <code>eventId</code> forma parte de la clave de DynamoDB y POST comprueba en la API que el evento existe antes de inscribir al usuario.</p>
 <div class="relation" aria-label="Un evento tiene cero o muchas inscripciones">
@@ -207,13 +207,11 @@ npx serverless --version</code></pre><p class="checkpoint"><strong>Antes de avan
   <div><dt><code>AWS_REGION</code></dt><dd>Copia <code>$region</code>. Serverless usa ese valor en <code>provider.region</code>.</dd></div>
   <div><dt><code>LAMBDA_ROLE_ARN</code></dt><dd>El comando <code>aws iam get-role</code> consulta el identificador del rol existente <code>LabRole</code> y lo guarda en esta variable.</dd></div>
 </dl>
-<p>Cambia <code>equipo-01</code> por el código asignado a tu equipo. <code>TABLE_SUFFIX</code> toma la parte que sigue a <code>equipo-</code> para distinguir las tablas de cada despliegue. Ejecuta el bloque desde la carpeta <code>festival-checkin</code>.</p>
+<p>Ejecuta el bloque desde la carpeta <code>festival-checkin</code>.</p>
 <pre><code>perfil=default
 region=us-east-1
 export AWS_PROFILE="$perfil"
 export AWS_REGION="$region"
-export STUDENT_CODE=equipo-01
-export TABLE_SUFFIX="${STUDENT_CODE#equipo-}"
 LAMBDA_ROLE_ARN=$(aws iam get-role --role-name LabRole --profile "$perfil" --region "$region" --query 'Role.Arn' --output text) &amp;&amp;
   export LAMBDA_ROLE_ARN &amp;&amp;
   printf 'AWS_PROFILE=%s\nAWS_REGION=%s\nLAMBDA_ROLE_ARN=%s\n' \
@@ -227,10 +225,6 @@ LAMBDA_ROLE_ARN=$(aws iam get-role --role-name LabRole --profile "$perfil" --reg
   <h4 id="yaml-variables-title">Los valores del ejemplo que configuraste en la terminal</h4>
   <dl>
     <div>
-      <dt><code>STUDENT_CODE=equipo-01</code></dt>
-      <dd><code>service</code> lee <code>${env:STUDENT_CODE}</code> y forma <code>festival-check-in-equipo-01</code>.</dd>
-    </div>
-    <div>
       <dt><code>AWS_REGION=us-east-1</code></dt>
       <dd>Sale de <code>region=us-east-1</code>. <code>provider.region</code> lee <code>${env:AWS_REGION}</code>.</dd>
     </div>
@@ -242,14 +236,10 @@ LAMBDA_ROLE_ARN=$(aws iam get-role --role-name LabRole --profile "$perfil" --reg
       <dt><code>AWS_PROFILE=default</code></dt>
       <dd>Sale de <code>perfil=default</code>. El comando de despliegue usa <code>--aws-profile "$perfil"</code>.</dd>
     </div>
-    <div>
-      <dt><code>TABLE_SUFFIX=01</code></dt>
-      <dd>Sale de <code>STUDENT_CODE=equipo-01</code>. <code>TableName</code> lo usa para formar <code>FESTIVAL_CHECK_IN_EVENTOS_01</code> e <code>FESTIVAL_CHECK_IN_INSCRIPCIONES_01</code>.</dd>
-    </div>
   </dl>
   <p>Ejecuta este comando en la misma terminal para ver tus valores, incluido el ARN exacto de tu rol.</p>
-  <pre><code>printf 'STUDENT_CODE=%s\nAWS_REGION=%s\nLAMBDA_ROLE_ARN=%s\nAWS_PROFILE=%s\nTABLE_SUFFIX=%s\n' \
-  "$STUDENT_CODE" "$AWS_REGION" "$LAMBDA_ROLE_ARN" "$AWS_PROFILE" "$TABLE_SUFFIX"</code></pre>
+  <pre><code>printf 'AWS_REGION=%s\nLAMBDA_ROLE_ARN=%s\nAWS_PROFILE=%s\n' \
+  "$AWS_REGION" "$LAMBDA_ROLE_ARN" "$AWS_PROFILE"</code></pre>
   <a href="#rol-laboratorio">Ver los comandos del paso Rol</a>
 </aside>
 <div class="yaml-reader">
@@ -349,7 +339,7 @@ LAMBDA_ROLE_ARN=$(aws iam get-role --role-name LabRole --profile "$perfil" --reg
     <p class="yaml-outcome" hidden>Cada equipo despliega su propio servicio en la región del laboratorio.</p>
     <h4>Nombre, versión y destino del despliegue</h4>
     <dl class="yaml-terms">
-      <div><dt><code>service:</code></dt><dd>Nombre del servicio. <code>festival-check-in-</code> es nuestro prefijo. <code>${env:STUDENT_CODE}</code> pide a Serverless el valor de la variable exportada en la terminal. Con <code>equipo-01</code>, el nombre queda <code>festival-check-in-equipo-01</code>.</dd></div>
+      <div><dt><code>service:</code></dt><dd>Nombre del servicio en Serverless. Con <code>service: festival-check-in</code> y <code>stage: dev</code>, el stack se llama <code>festival-check-in-dev</code>.</dd></div>
       <div><dt><code>frameworkVersion: ~4.45.0</code></dt><dd>Versión de Serverless Framework que admite el proyecto. <code>~</code> permite actualizaciones de parche de la serie 4.45, como 4.45.1.</dd></div>
       <div><dt><code>provider:</code></dt><dd>Abre el bloque de configuración de la plataforma. Las líneas <code>name</code>, <code>runtime</code>, <code>region</code>, <code>stage</code> e <code>iam</code> están dentro de ese bloque.</dd></div>
       <div><dt><code>name: aws</code></dt><dd>Selecciona Amazon Web Services como plataforma.</dd></div>
@@ -360,10 +350,10 @@ LAMBDA_ROLE_ARN=$(aws iam get-role --role-name LabRole --profile "$perfil" --reg
       <div><dt><code>role: ${env:LAMBDA_ROLE_ARN}</code></dt><dd>Indica qué rol del laboratorio usará Lambda. Un ARN identifica ese rol en AWS. Sus permisos determinan qué puede hacer la función, como leer o escribir en DynamoDB.</dd></div>
     </dl>
     <div class="yaml-question">
-      <p><strong>Si exportas STUDENT_CODE=equipo-03, ¿cómo se llama el servicio?</strong></p>
+      <p><strong>Con <code>service: festival-check-in</code> y <code>stage: dev</code>, ¿qué stack buscarás en CloudFormation?</strong></p>
       <div class="actions">
-      <button type="button" data-feedback="Sí. Serverless sustituye ${env:STUDENT_CODE} por equipo-03." aria-pressed="false">festival-check-in-equipo-03</button>
-      <button type="button" data-feedback="dev es el entorno. Mira qué variable aparece al final de service." aria-pressed="false">festival-check-in-dev</button>
+      <button type="button" data-feedback="Ese es el nombre del servicio. Añade el entorno dev para obtener el nombre del stack." aria-pressed="false">festival-check-in</button>
+      <button type="button" data-feedback="Sí. Serverless combina el nombre del servicio y el entorno para formar festival-check-in-dev." aria-pressed="false">festival-check-in-dev</button>
       </div>
       <p class="yaml-feedback" role="status"></p>
     </div>
@@ -435,7 +425,7 @@ LAMBDA_ROLE_ARN=$(aws iam get-role --role-name LabRole --profile "$perfil" --reg
       <div><dt><code>EventsTable:</code></dt><dd>Identificador lógico que elegimos para la tabla de eventos. Es el mismo que aparece en <code>Ref: EventsTable</code>.</dd></div>
       <div><dt><code>Type: AWS::DynamoDB::Table</code></dt><dd>Indica a CloudFormation qué tipo de recurso debe crear: una tabla DynamoDB.</dd></div>
       <div><dt><code>Properties:</code></dt><dd>Agrupa los ajustes de esa tabla.</dd></div>
-      <div><dt><code>TableName:</code></dt><dd>Fija el nombre real en AWS. Con <code>TABLE_SUFFIX=01</code> se crea <code>FESTIVAL_CHECK_IN_EVENTOS_01</code>.</dd></div>
+      <div><dt><code>TableName:</code></dt><dd>Fija el nombre real en AWS, <code>FCI_EVENTOS</code>.</dd></div>
       <div><dt><code>BillingMode: PAY_PER_REQUEST</code></dt><dd>Selecciona el modo bajo demanda. Las lecturas y escrituras se cobran según el uso.</dd></div>
       <div><dt data-lines="AttributeDefinitions:|AttributeName:|AttributeType:"><code>AttributeDefinitions:</code></dt><dd>Lista los atributos que forman las claves y su tipo. <code>AttributeName: eventId</code> da el nombre del atributo y <code>AttributeType: N</code> lo declara de tipo numérico.</dd></div>
       <div><dt data-lines="KeySchema:|KeyType:"><code>KeySchema:</code></dt><dd>Lista qué papel cumple cada atributo en la clave. <code>AttributeName</code> repite el nombre del atributo y <code>KeyType: HASH</code> lo declara clave de partición. En esta tabla, <code>eventId</code> basta para localizar <code>1</code>.</dd></div>
@@ -455,7 +445,7 @@ LAMBDA_ROLE_ARN=$(aws iam get-role --role-name LabRole --profile "$perfil" --reg
     <dl class="yaml-terms">
       <div><dt data-lines="RegistrationsTable:|Type:|Properties:|BillingMode:"><code>RegistrationsTable:</code></dt><dd>Identificador lógico de la tabla de inscripciones. <code>Type</code>, <code>Properties</code> y <code>BillingMode</code> tienen la misma función que en EventsTable.</dd></div>
       <div><dt data-lines="AttributeDefinitions:|AttributeName:|AttributeType:"><code>AttributeDefinitions:</code></dt><dd>Contiene dos elementos: <code>eventId</code> y <code>userId</code>. <code>eventId</code> es numérico (<code>N</code>) y <code>userId</code> es texto (<code>S</code>).</dd></div>
-      <div><dt><code>TableName:</code></dt><dd>Con <code>TABLE_SUFFIX=01</code> se crea <code>FESTIVAL_CHECK_IN_INSCRIPCIONES_01</code>.</dd></div>
+      <div><dt><code>TableName:</code></dt><dd>Fija el nombre real en AWS, <code>FCI_INSCRIPCIONES</code>.</dd></div>
       <div><dt><code>KeySchema:</code></dt><dd>Define la clave compuesta de la tabla. <code>eventId</code> agrupa las inscripciones y <code>userId</code> distingue a cada usuario dentro del grupo.</dd></div>
       <div><dt><code>KeyType: HASH</code></dt><dd><code>eventId</code> es la clave de partición y permite agrupar las inscripciones por evento.</dd></div>
       <div><dt><code>KeyType: RANGE</code></dt><dd><code>userId</code> es la clave de ordenación y distingue a cada usuario dentro del evento. <code>(1, usuario-01)</code> y <code>(1, usuario-02)</code> son dos claves completas distintas.</dd></div>
@@ -499,7 +489,7 @@ LAMBDA_ROLE_ARN=$(aws iam get-role --role-name LabRole --profile "$perfil" --reg
     </div>
   </section>
 </div>
-<pre data-file="serverless.yml" data-reading><code>service: festival-check-in-${env:STUDENT_CODE}
+<pre data-file="serverless.yml" data-reading><code>service: festival-check-in
 frameworkVersion: ~4.45.0
 
 provider:
@@ -557,7 +547,7 @@ resources:
     EventsTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: FESTIVAL_CHECK_IN_EVENTOS_${env:TABLE_SUFFIX}
+        TableName: FCI_EVENTOS
         BillingMode: PAY_PER_REQUEST
         AttributeDefinitions:
           - AttributeName: eventId
@@ -568,7 +558,7 @@ resources:
     RegistrationsTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: FESTIVAL_CHECK_IN_INSCRIPCIONES_${env:TABLE_SUFFIX}
+        TableName: FCI_INSCRIPCIONES
         BillingMode: PAY_PER_REQUEST
         AttributeDefinitions:
           - AttributeName: eventId
@@ -626,7 +616,7 @@ resources:
   <ol class="lambda-env-flow">
     <li><strong>API Gateway elige el archivo</strong><code>Método + ruta → handler</code><span>Para GET invoca el <code>handler</code> de <code>consultar.mjs</code>.</span></li>
     <li><strong>El archivo ejecuta su caso de uso</strong><code>handler(event) → getPass(key)</code><span>Comparte la validación con POST y PATCH. En esta etapa, la operación devuelve <code>501</code> hasta que completes su lógica.</span></li>
-    <li><strong>La configuración llega desde el YAML</strong><code>Ref → variable de Lambda → process.env</code><span>Al cargar <code>dynamo.mjs</code>, Lambda prepara el cliente y lee <code>EVENTS_TABLE</code> y <code>REGISTRATIONS_TABLE</code>. Para el equipo 01 recibe <code>FESTIVAL_CHECK_IN_EVENTOS_01</code> e <code>FESTIVAL_CHECK_IN_INSCRIPCIONES_01</code>. Un <code>.env</code> es otra forma de cargar variables en local.</span></li>
+    <li><strong>La configuración llega desde el YAML</strong><code>Ref → variable de Lambda → process.env</code><span>Al cargar <code>dynamo.mjs</code>, Lambda prepara el cliente y lee <code>EVENTS_TABLE</code> y <code>REGISTRATIONS_TABLE</code>. Lambda recibe <code>FCI_EVENTOS</code> e <code>FCI_INSCRIPCIONES</code>. Un <code>.env</code> es otra forma de cargar variables en local.</span></li>
   </ol>
 </section>
 <section class="lambda-stage" aria-labelledby="lambda-stage-create">
@@ -657,8 +647,8 @@ ls -l serverless.yml package.json</code></pre>
   <template id="index-explanations">
   <div data-prefix="import { DynamoDBClient"><strong>Conexión con DynamoDB</strong><p>Importa el cliente que comunica Lambda con DynamoDB. El paquete se instaló al preparar el proyecto.</p></div>
   <div data-prefix="export const db ="><strong>Cliente de documentos</strong><p>Lambda prepara este cliente al cargar el archivo. Las operaciones pueden reutilizarlo y pasarle objetos de JavaScript, como la clave con eventId y userId.</p></div>
-  <div data-prefix="export const eventsTable ="><strong>Tabla de eventos</strong><p>El despliegue configura EVENTS_TABLE en Lambda a partir de Ref: EventsTable. Si tu sufijo es 01, process.env.EVENTS_TABLE devuelve <code>FESTIVAL_CHECK_IN_EVENTOS_01</code>.</p></div>
-  <div data-prefix="export const registrationsTable ="><strong>Tabla de inscripciones</strong><p>El despliegue configura REGISTRATIONS_TABLE en Lambda a partir de Ref: RegistrationsTable. Para el equipo 01, process.env devuelve <code>FESTIVAL_CHECK_IN_INSCRIPCIONES_01</code>, donde se guardan la inscripción y la hora de entrada.</p></div>
+  <div data-prefix="export const eventsTable ="><strong>Tabla de eventos</strong><p>El despliegue configura EVENTS_TABLE en Lambda a partir de Ref: EventsTable. <code>process.env.EVENTS_TABLE</code> devuelve <code>FCI_EVENTOS</code>.</p></div>
+  <div data-prefix="export const registrationsTable ="><strong>Tabla de inscripciones</strong><p>El despliegue configura REGISTRATIONS_TABLE en Lambda a partir de Ref: RegistrationsTable. <code>process.env.REGISTRATIONS_TABLE</code> devuelve <code>FCI_INSCRIPCIONES</code>, donde se guardan la inscripción y la hora de entrada.</p></div>
   <div data-prefix="export function json("><strong>Una respuesta para la API</strong><p>Esta función reúne el código HTTP, la cabecera y el cuerpo que API Gateway devuelve al navegador.</p></div>
   <div data-prefix="headers: {"><strong>Tipo de contenido</strong><p>La cabecera indica al navegador que el cuerpo de la respuesta es JSON.</p></div>
   <div data-prefix="body: JSON.stringify"><strong>Convierte la respuesta a JSON</strong><p>Si el SDK devuelve un <code>BigInt</code>, <code>json</code> lo envía como texto para conservar todas sus cifras.</p></div>
@@ -832,6 +822,7 @@ export async function handleRequest(event, operation) {
 </article>
 <article id="desplegar-stack" class="guide-step" data-step="Desplegar">
 <h3>Despliega el servicio desde la terminal</h3>
+<p>Si compartís cuenta y región y trabajáis en el mismo Festival Check-in, desplegad un solo stack y usad la misma URL de la API. Para otro proyecto, elegid su propia abreviatura y su propio nombre de servicio.</p>
 <p class="lesson-note"><strong>Si ya desplegaste una edición anterior.</strong> Usa el YAML de esta edición. El servicio <code>festival-check-in</code> crea un stack nuevo con tablas vacías. Tu despliegue anterior conserva sus tablas y sus datos. Si ya programaste las operaciones del pase, conserva sus cuerpos y actualiza sus imports para usar <code>../datos/dynamo.mjs</code>. Copia también la versión de <code>peticion.mjs</code> de esta edición.</p>
 <dl class="command-reasons"><div><dt><code>node --check</code></dt><dd>Comprueba la sintaxis del módulo que indicas.</dd></div><div><dt><code>&amp;&amp;</code></dt><dd>Ejecuta el segundo comando si el primero termina correctamente.</dd></div><div><dt><code>--stage dev</code></dt><dd>Selecciona el entorno de desarrollo de tu servicio.</dd></div></dl>
 <p>Ejecuta el comando en la carpeta <code>festival-checkin</code>. Serverless Framework lee tu YAML y CloudFormation crea las tablas, las cuatro funciones y la HTTP API en el laboratorio.</p><pre><code>(
@@ -845,8 +836,8 @@ export async function handleRequest(event, operation) {
 <h2>Comprobar y sembrar los datos del festival</h2>
 <article id="salidas-stack" class="guide-step" data-step="Salidas">
 <h3>Recupera los nombres reales y la URL</h3>
-<p class="lesson-note"><strong>Del nombre lógico al nombre real.</strong> En el YAML escribiste <code>EventsTable</code>. CloudFormation crea la tabla con el nombre indicado en <code>TableName</code>, por ejemplo <code>FESTIVAL_CHECK_IN_EVENTOS_01</code>. <code>salida EventsTableName</code> lo obtiene del stack y <code>tabla_eventos</code> lo guarda para que tus comandos apunten a esa tabla. <code>api_url</code> guarda la dirección que usarás con <code>curl</code>.</p>
-<p>Ejecuta el bloque en la misma terminal. Las dos primeras líneas impresas son los nombres de DynamoDB. La tercera es la URL base de la HTTP API. Guarda esa URL para la prueba de lectura.</p><pre><code>stack="festival-check-in-${STUDENT_CODE}-dev"
+<p class="lesson-note"><strong>Del nombre lógico al nombre real.</strong> En el YAML escribiste <code>EventsTable</code>. CloudFormation crea la tabla con el nombre indicado en <code>TableName</code>, por ejemplo <code>FCI_EVENTOS</code>. <code>salida EventsTableName</code> lo obtiene del stack y <code>tabla_eventos</code> lo guarda para que tus comandos apunten a esa tabla. <code>api_url</code> guarda la dirección que usarás con <code>curl</code>.</p>
+<p>Ejecuta el bloque en la misma terminal. Las dos primeras líneas impresas son los nombres de DynamoDB. La tercera es la URL base de la HTTP API. Guarda esa URL para la prueba de lectura.</p><pre><code>stack="festival-check-in-dev"
 salida() {
   aws cloudformation describe-stacks --stack-name "$stack" \
     --profile "$perfil" --region "$region" \
@@ -855,7 +846,7 @@ salida() {
 tabla_eventos=$(salida EventsTableName)
 tabla_inscripciones=$(salida RegistrationsTableName)
 api_url=$(salida HttpApiUrl)
-printf '%s\n' "$tabla_eventos" "$tabla_inscripciones" "$api_url"</code></pre><p class="checkpoint"><strong>Antes de avanzar</strong> Con <code>equipo-01</code> ves <code>FESTIVAL_CHECK_IN_EVENTOS_01</code>, <code>FESTIVAL_CHECK_IN_INSCRIPCIONES_01</code> y una URL de API Gateway. Si ves None, verifica el nombre del stack, el perfil y la región antes de crear los eventos.</p>
+printf '%s\n' "$tabla_eventos" "$tabla_inscripciones" "$api_url"</code></pre><p class="checkpoint"><strong>Antes de avanzar</strong> Ves <code>FCI_EVENTOS</code>, <code>FCI_INSCRIPCIONES</code> y una URL de API Gateway. Si ves None, verifica el nombre del stack, el perfil y la región antes de crear los eventos.</p>
 </article>
 <article id="estado-tablas" class="guide-step" data-step="Estado">
 <h3>Espera y comprueba las claves</h3>
@@ -987,13 +978,13 @@ evento_secundario_id=2</code></pre>
       <h4>DynamoDB · Dos lecturas por clave con <code>GetCommand</code></h4>
       <div class="pass-lookups">
         <section aria-labelledby="pass-event-lookup">
-          <h5 id="pass-event-lookup">1. <code>eventsTable</code> → <code>FESTIVAL_CHECK_IN_EVENTOS_01</code></h5>
+          <h5 id="pass-event-lookup">1. <code>eventsTable</code> → <code>FCI_EVENTOS</code></h5>
           <code>{ eventId: 1 }</code>
           <p><code>Item</code> se guarda en <code>event</code>. Si falta, Lambda devuelve <strong>404</strong> y termina aquí.</p>
         </section>
         <span class="pass-next-lookup"><span aria-hidden="true"></span> Si existe</span>
         <section aria-labelledby="pass-registration-lookup">
-          <h5 id="pass-registration-lookup">2. <code>registrationsTable</code> → <code>FESTIVAL_CHECK_IN_INSCRIPCIONES_01</code></h5>
+          <h5 id="pass-registration-lookup">2. <code>registrationsTable</code> → <code>FCI_INSCRIPCIONES</code></h5>
           <code>{ eventId: 1, userId: 'usuario-02' }</code>
           <p><code>Item</code> se guarda en <code>registration</code>. La pareja completa localiza un único pase en la tabla.</p>
         </section>
@@ -1016,12 +1007,12 @@ evento_secundario_id=2</code></pre>
   <template id="get-pass-explanations">
     <div data-prefix="async function getPass("><strong>JavaScript declara la función. Tú eliges los nombres.</strong><p><code>async</code> permite usar <code>await</code>. <code>getPass</code> es el nombre que eliges y <code>key</code> recibe el objeto que le pasa <code>handleRequest</code>, por ejemplo <code>{ eventId: 1, userId: 'usuario-02' }</code>.</p></div>
     <div data-prefix="const { Item: event }"><strong>El SDK devuelve Item. JavaScript lo guarda como event.</strong><p>Lee de dentro hacia fuera. <code>new GetCommand(...)</code>, del SDK de AWS, prepara la lectura. <code>db.send(...)</code> la envía y <code>await</code> espera el resultado. <code>{ Item: event }</code> equivale a guardar <code>respuesta.Item</code> en una variable local llamada <code>event</code>.</p></div>
-    <div data-prefix="TableName: eventsTable"><strong>TableName lo exige AWS. eventsTable sale de tu proyecto.</strong><p><code>dynamo.mjs</code> lee el nombre desde <code>process.env.EVENTS_TABLE</code>. Serverless configura esa variable con la tabla creada, por ejemplo <code>FESTIVAL_CHECK_IN_EVENTOS_01</code>.</p></div>
+    <div data-prefix="TableName: eventsTable"><strong>TableName lo exige AWS. eventsTable sale de tu proyecto.</strong><p><code>dynamo.mjs</code> lee el nombre desde <code>process.env.EVENTS_TABLE</code>. Serverless configura esa variable con la tabla creada, por ejemplo <code>FCI_EVENTOS</code>.</p></div>
     <div data-prefix="Key: { eventId: key.eventId }"><strong>Key contiene la clave primaria de la tabla elegida.</strong><p>A la izquierda, <code>eventId</code> es el nombre del atributo que configuraste en DynamoDB. A la derecha, <code>key.eventId</code> lee el valor que llegó en la ruta. El comando envía <code>{ eventId: 1 }</code>.</p></div>
     <div data-prefix="ConsistentRead: true"><strong>ConsistentRead es una opción de DynamoDB.</strong><p>Con <code>true</code>, la lectura refleja las escrituras confirmadas antes de esa operación. <code>await</code> controla cuándo sigue el código. <code>ConsistentRead</code> controla qué versión de los datos puede leer.</p></div>
     <div data-prefix="if (!event)"><strong>JavaScript comprueba si apareció el evento.</strong><p>Si DynamoDB no encuentra el ítem, <code>event</code> vale <code>undefined</code>. <code>!event</code> se cumple y <code>return</code> termina la función con <code>404</code>, antes de buscar la inscripción.</p></div>
     <div data-prefix="const { Item: registration }"><strong>El SDK vuelve a devolver Item.</strong><p>Esta vez tú llamas <code>registration</code> a la variable porque la respuesta viene de la tabla de inscripciones. Si la pareja no existe, <code>registration</code> vale <code>undefined</code>.</p></div>
-    <div data-prefix="TableName: registrationsTable"><strong>El segundo comando apunta a INSCRIPCIONES.</strong><p><code>dynamo.mjs</code> obtiene el nombre desde <code>process.env.REGISTRATIONS_TABLE</code>. Para el equipo 01, ese nombre es <code>FESTIVAL_CHECK_IN_INSCRIPCIONES_01</code>.</p></div>
+    <div data-prefix="TableName: registrationsTable"><strong>El segundo comando apunta a INSCRIPCIONES.</strong><p><code>dynamo.mjs</code> obtiene el nombre desde <code>process.env.REGISTRATIONS_TABLE</code>. En esta práctica, el nombre es <code>FCI_INSCRIPCIONES</code>.</p></div>
     <div data-prefix="Key: key,"><strong>La inscripción necesita los dos identificadores.</strong><p>El <code>Key</code> de la izquierda es la opción de AWS. El <code>key</code> de la derecha es el parámetro completo de la función. Contiene <code>eventId</code> y <code>userId</code>.</p></div>
     <div data-prefix="return json(200"><strong>json es una función de la práctica.</strong><p>La importas de <code>peticion.mjs</code>. Recibe el código HTTP <code>200</code> y convierte el objeto que le pasas en el cuerpo JSON que verá el navegador.</p></div>
     <div data-prefix="eventId: event.eventId"><strong>El identificador sale del ítem.</strong><p>El primer <code>eventId</code> nombra el campo de la respuesta. <code>event.eventId</code> lee <code>1</code> del objeto devuelto por DynamoDB.</p></div>
