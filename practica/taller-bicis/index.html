@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Taller de bicis · Práctica Serverless</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="taller.js" defer></script>
+</head>
+<body>
+  <main>
+    <header class="top">
+      <a href="../../">← Cuaderno Serverless</a>
+      <a href="../festival-checkin/">Consultar Festival Check-in</a>
+    </header>
+
+    <div class="hero">
+      <div>
+        <p class="eyebrow">Práctica individual</p>
+        <h1>Taller de bicis</h1>
+        <p>En recepción te dan el código de una bici. En el taller te dan el código de un mecánico. Construye un servicio que permita a ambos encontrar sus órdenes de reparación.</p>
+      </div>
+      <div class="work-ticket">
+        <span>Orden de reparación</span>
+        <strong>ORD-031</strong>
+        <dl><div><dt>Bicicleta</dt><dd>bici-014</dd></div><div><dt>Trabajo</dt><dd>Ajustar freno trasero</dd></div></dl>
+      </div>
+    </div>
+
+    <nav class="tabs" aria-label="Pasos del taller">
+      <a href="#caso">Caso</a>
+      <a href="#diseno">Diseñar</a>
+      <a href="#pantalla">Pantalla</a>
+      <a href="#construir">Construir</a>
+      <a href="#pruebas">Probar y ampliar</a>
+    </nav>
+
+    <section class="panel" id="caso" data-step aria-labelledby="caso-titulo">
+      <h2 id="caso-titulo">De recepción al taller</h2>
+      <p>Una bicicleta puede volver al taller varias veces. Cada visita tiene su propia orden y se asigna a un mecánico. Al terminar la reparación, registra la hora de cierre.</p>
+      <ol class="cards">
+        <li><h3>Consulta la orden</h3><p>Con el código de la bici y el número de orden, muestra el trabajo, el mecánico y su estado.</p></li>
+        <li><h3>Abre la orden</h3><p>Guarda el trabajo, el mecánico asignado y la hora de apertura. Repite la misma petición para comprobar que la orden original se conserva.</p></li>
+        <li><h3>Termina la reparación</h3><p>Registra la hora de cierre una vez. Una orden terminada conserva la primera hora de cierre.</p></li>
+      </ol>
+      <p class="checkpoint"><strong>Antes de avanzar</strong> Identifica qué dato permite saber si una orden sigue abierta y qué debe ocurrir al intentar cerrarla dos veces.</p>
+      <a class="next" href="#diseno">Siguiente · Diseñar</a>
+    </section>
+
+    <section class="panel" id="diseno" data-step aria-labelledby="diseno-titulo">
+      <h2 id="diseno-titulo">Diseña desde las preguntas</h2>
+      <div class="relations" role="group" aria-label="Cada orden pertenece a una bicicleta y tiene un mecánico. Una bicicleta o un mecánico puede tener cero o muchas órdenes.">
+        <div><h3>BICICLETA</h3><code>bici-014</code></div>
+        <span aria-hidden="true"><b>1</b><i></i><b>0..N</b></span>
+        <div><h3>ORDEN</h3><code>ord-031</code></div>
+        <span aria-hidden="true"><b>0..N</b><i></i><b>1</b></span>
+        <div><h3>MECÁNICO</h3><code>mec-03</code></div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <caption>Órdenes de ejemplo</caption>
+          <thead><tr><th scope="col">Bicicleta</th><th scope="col">Orden</th><th scope="col">Mecánico</th><th scope="col">Trabajo</th></tr></thead>
+          <tbody>
+            <tr><td>bici-014</td><td>ord-031</td><td>mec-03</td><td>Ajustar freno trasero</td></tr>
+            <tr><td>bici-014</td><td>ord-032</td><td>mec-08</td><td>Cambiar cadena</td></tr>
+            <tr><td>bici-022</td><td>ord-033</td><td>mec-03</td><td>Centrar rueda delantera</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <ol class="cards">
+        <li><h3>Desde la bicicleta</h3><p>¿Qué atributo agrupa todas las órdenes de <code>bici-014</code>? ¿Cuál distingue una orden dentro del grupo?</p></li>
+        <li><h3>Desde el mecánico</h3><p>¿Cómo buscarías todas las órdenes de <code>mec-03</code>? Dibuja las claves de la tabla y las del índice que usarías.</p></li>
+      </ol>
+      <p class="checkpoint"><strong>Antes de avanzar</strong> Anota qué órdenes deberían salir al buscar <code>bici-014</code> y cuáles al buscar <code>mec-03</code>. En «Probar y ampliar» compararás tu predicción con DynamoDB.</p>
+      <a class="next" href="#pantalla">Siguiente · Pantalla</a>
+    </section>
+
+    <section class="panel" id="pantalla" data-step aria-labelledby="pantalla-titulo">
+      <h2 id="pantalla-titulo">Así cambia la pantalla del taller</h2>
+      <p>Selecciona un estado para ver qué debe mostrar tu pantalla o la respuesta de tu API en ese momento.</p>
+      <div class="preview">
+        <div class="state-controls" role="group" aria-label="Estado de ejemplo">
+          <button type="button" data-state="consulta" aria-pressed="true">Consultar antes de abrir</button>
+          <button type="button" data-state="abierta" aria-pressed="false">Después de abrir</button>
+          <button type="button" data-state="terminada" aria-pressed="false">Después de terminar</button>
+        </div>
+        <article class="preview-ticket" aria-labelledby="ticket-title">
+          <div class="ticket-head"><h3 id="ticket-title">Orden ord-031</h3><span id="ticket-state">Sin orden</span></div>
+          <dl>
+            <div><dt>Bicicleta</dt><dd>bici-014</dd></div>
+            <div><dt>Trabajo</dt><dd id="ticket-job">—</dd></div>
+            <div><dt>Mecánico</dt><dd id="ticket-worker">—</dd></div>
+            <div><dt>Apertura</dt><dd id="ticket-open">—</dd></div>
+            <div><dt>Cierre</dt><dd id="ticket-close">—</dd></div>
+          </dl>
+          <p id="ticket-result" role="status">GET · 404 · La orden todavía no existe.</p>
+        </article>
+      </div>
+      <a class="next" href="#construir">Siguiente · Construir</a>
+    </section>
+
+    <section class="panel" id="construir" data-step aria-labelledby="construir-titulo">
+      <h2 id="construir-titulo">Prepara tu proyecto</h2>
+      <p>Comprueba primero tu sesión en <a href="../festival-checkin/#probar-aws">Conectar → Comprobación</a>. Desde tu carpeta de prácticas, abre Git Bash en Windows o Terminal en macOS y crea el proyecto. Usa Node.js 22.</p>
+      <div class="command">
+        <pre><code>node --version
+mkdir -p taller-bicis
+cd taller-bicis
+npm init -y
+npm install --save-dev --save-exact serverless@4.45.0
+npm install @aws-sdk/client-dynamodb @aws-sdk/lib-dynamodb
+mkdir -p src/ordenes
+ls -ld src/ordenes</code></pre>
+      </div>
+      <ol class="cards">
+        <li><h3>Infraestructura</h3><p>Describe en <code>serverless.yml</code> la tabla de órdenes, el índice, las funciones y las rutas. Recupera el rol en <a href="../festival-checkin/#rol-laboratorio">Configurar → Rol</a> y elige nombres propios para el stack y la tabla si compartes la cuenta.</p></li>
+        <li><h3>Operaciones</h3><p>Crea un módulo por acción en <code>src/ordenes</code>. Usa GET, POST y PATCH sobre <code>/bicicletas/{bicicletaId}/ordenes/{ordenId}</code>.</p></li>
+      </ol>
+      <p>Crea y abre cada archivo desde <code>taller-bicis</code>. En <code>vi</code>, pulsa <kbd>i</kbd> para escribir. Guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro.</p>
+      <div class="command">
+        <pre><code>touch serverless.yml &amp;&amp; vi serverless.yml
+touch src/ordenes/consultar.mjs &amp;&amp; vi src/ordenes/consultar.mjs
+touch src/ordenes/abrir.mjs &amp;&amp; vi src/ordenes/abrir.mjs
+touch src/ordenes/terminar.mjs &amp;&amp; vi src/ordenes/terminar.mjs</code></pre>
+      </div>
+      <p>Desde <code>taller-bicis</code>, comprueba los módulos que hayas creado y despliega con el perfil que verificaste en la misma terminal.</p>
+      <div class="command">
+        <pre><code>(
+  for archivo in src/ordenes/*.mjs; do
+    node --check "$archivo" || exit 1
+  done
+) &amp;&amp; npx serverless deploy --stage dev --aws-profile "$perfil"</code></pre>
+      </div>
+      <p class="checkpoint"><strong>Antes de avanzar</strong> La terminal muestra la URL de tu API y las tres rutas. Guarda la URL para probar la orden.</p>
+      <a class="next" href="#pruebas">Siguiente · Probar y ampliar</a>
+    </section>
+
+    <section class="panel" id="pruebas" data-step aria-labelledby="pruebas-titulo">
+      <h2 id="pruebas-titulo">Prueba y amplía tu taller</h2>
+      <p>En la misma terminal, sustituye <code>PEGA_AQUI_LA_URL</code> por la URL de tu despliegue. Usa una orden nueva si repites el recorrido.</p>
+      <div class="command">
+        <pre><code>api_url='PEGA_AQUI_LA_URL'
+orden="$api_url/bicicletas/bici-014/ordenes/ord-031"
+curl -i "$orden"
+curl -i -X POST "$orden" \
+  -H 'Content-Type: application/json' \
+  -d '{"mecanicoId":"mec-03","trabajo":"Ajustar freno trasero"}'
+curl -i -X PATCH "$orden"
+curl -i "$orden"
+curl -i -X POST "$orden" \
+  -H 'Content-Type: application/json' \
+  -d '{"mecanicoId":"mec-03","trabajo":"Ajustar freno trasero"}'
+curl -i -X PATCH "$orden"
+curl -i "$orden"</code></pre>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <caption>Resultados esperados</caption>
+          <thead><tr><th scope="col">Petición</th><th scope="col">Estado</th><th scope="col">Comprueba</th></tr></thead>
+          <tbody>
+            <tr><td>GET inicial</td><td>404</td><td>La orden aún no existe.</td></tr>
+            <tr><td>POST</td><td>201</td><td>Se guardan trabajo, mecánico y hora de apertura.</td></tr>
+            <tr><td>PATCH</td><td>200</td><td>Se guarda la hora de cierre.</td></tr>
+            <tr><td>GET después del cierre</td><td>200</td><td>Se muestran las dos horas de la misma orden.</td></tr>
+            <tr><td>Repite POST y PATCH</td><td>409 en ambos</td><td>El último GET devuelve las mismas horas.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h3>Amplía la búsqueda</h3>
+      <p>Abre las otras dos órdenes del ejemplo y comprueba las dos búsquedas en DynamoDB. Por <code>bici-014</code> deben salir <code>ord-031</code> y <code>ord-032</code>. Por <code>mec-03</code> deben salir <code>ord-031</code> y <code>ord-033</code>.</p>
+      <p class="checkpoint"><strong>Entrega</strong> Guarda en tu repositorio el dibujo de las claves, el código y las salidas de las dos consultas. Añade una comprobación de que la hora de cierre se conserva al repetir PATCH.</p>
+      <a class="next" href="#caso">Volver al caso</a>
+    </section>
+  </main>
+</body>
+</html>
