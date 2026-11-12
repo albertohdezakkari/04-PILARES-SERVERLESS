@@ -201,21 +201,23 @@ npx serverless --version</code></pre><p class="checkpoint"><strong>Antes de avan
 <article id="rol-laboratorio" class="guide-step" data-step="Rol">
 <h3>Selecciona el equipo y el rol de Lambda</h3>
 <p class="lesson-note"><strong>Quién actúa en cada momento.</strong> Tu perfil ejecuta el despliegue. El rol <code>LabRole</code> da permisos a Lambda cuando atiende una petición y necesita acceder a DynamoDB.</p>
-<p>En <a href="#probar-aws">Conectar → Comprobación</a> ya elegiste <code>perfil</code> y <code>region</code>. Comprueba que sigues en la misma terminal antes de exportarlos.</p>
-<pre><code>printf 'perfil=%s\nregion=%s\n' "${perfil:-SIN DEFINIR}" "${region:-SIN DEFINIR}"</code></pre>
-<p>Deberías ver el perfil que elegiste (<code>default</code> o <code>academy</code>) y la región de tu laboratorio. Si ves <code>SIN DEFINIR</code>, vuelve a <strong>Comprobación</strong> y ejecuta allí el bloque para recuperar ambos valores en esta terminal.</p>
+<p>En <a href="#probar-aws">Conectar → Comprobación</a> verificaste tu perfil y tu región. El bloque de abajo vuelve a asignarlos para que puedas ejecutarlo también desde una terminal nueva. Cambia <code>default</code> por <code>academy</code> si guardaste las credenciales bajo <code>[academy]</code>. Si tu laboratorio usa otra región, sustituye <code>us-east-1</code> por la que comprobaste.</p>
 <dl class="command-reasons">
   <div><dt><code>AWS_PROFILE</code></dt><dd>Copia el nombre del perfil de <code>$perfil</code>. Las credenciales temporales están en el perfil que guardaste en <code>~/.aws/credentials</code>.</dd></div>
   <div><dt><code>AWS_REGION</code></dt><dd>Copia <code>$region</code>. Serverless usa ese valor en <code>provider.region</code>.</dd></div>
   <div><dt><code>LAMBDA_ROLE_ARN</code></dt><dd>El comando <code>aws iam get-role</code> consulta el identificador del rol existente <code>LabRole</code> y lo guarda en esta variable.</dd></div>
 </dl>
-<p>Cambia <code>equipo-01</code> por el código asignado a tu equipo. <code>TABLE_SUFFIX</code> toma la parte que sigue a <code>equipo-</code> para distinguir las tablas de cada despliegue.</p><pre><code>export AWS_PROFILE="$perfil"
+<p>Cambia <code>equipo-01</code> por el código asignado a tu equipo. <code>TABLE_SUFFIX</code> toma la parte que sigue a <code>equipo-</code> para distinguir las tablas de cada despliegue. Ejecuta el bloque desde la carpeta <code>festival-checkin</code>.</p>
+<pre><code>perfil=default
+region=us-east-1
+export AWS_PROFILE="$perfil"
 export AWS_REGION="$region"
 export STUDENT_CODE=equipo-01
 export TABLE_SUFFIX="${STUDENT_CODE#equipo-}"
 LAMBDA_ROLE_ARN=$(aws iam get-role --role-name LabRole --profile "$perfil" --region "$region" --query 'Role.Arn' --output text) &amp;&amp;
   export LAMBDA_ROLE_ARN &amp;&amp;
-  printf '%s\n' "$LAMBDA_ROLE_ARN"</code></pre><p>Si el laboratorio deniega <code>iam:GetRole</code>, consulta las instrucciones del laboratorio o solicita el ARN autorizado para tu cuenta. Escríbelo con <code>export LAMBDA_ROLE_ARN="ARN_DEL_LAB"</code>, sustituyendo el valor entre comillas.</p><p class="checkpoint"><strong>Antes de avanzar</strong> Tienes el ARN del rol del laboratorio y sigues usando el perfil y la región que comprobaste en Conexión.</p>
+  printf 'AWS_PROFILE=%s\nAWS_REGION=%s\nLAMBDA_ROLE_ARN=%s\n' \
+    "$AWS_PROFILE" "$AWS_REGION" "$LAMBDA_ROLE_ARN"</code></pre><p>Si el laboratorio deniega <code>iam:GetRole</code>, consulta las instrucciones del laboratorio o solicita el ARN autorizado para tu cuenta. Escríbelo con <code>export LAMBDA_ROLE_ARN="ARN_DEL_LAB"</code>, sustituyendo el valor entre comillas.</p><p class="checkpoint"><strong>Antes de avanzar</strong> Comprueba que la salida muestra tu perfil, tu región y el ARN de <code>LabRole</code>.</p>
 </article>
 <article id="infraestructura" class="guide-step" data-step="Leer el YAML">
 <h3>Lee serverless.yml línea a línea</h3>
