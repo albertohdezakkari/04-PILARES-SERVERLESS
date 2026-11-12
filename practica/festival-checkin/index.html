@@ -638,15 +638,15 @@ ls -l serverless.yml package.json</code></pre>
       <p>Si estás en la carpeta que contiene el proyecto, entra con <code>cd festival-checkin</code> y repite la comprobación.</p>
     </li>
     <li>
-      <strong>Crea la carpeta donde irá el código de pases.</strong> <code>mkdir -p src/pases</code> crea <code>src</code> y su subcarpeta <code>pases</code>. <code>-p</code> permite repetirlo si ya existen. <code>ls -ld</code> comprueba que aparece el directorio <code>src/pases</code>.
-      <pre><code>mkdir -p src/pases &amp;&amp; ls -ld src/pases</code></pre>
+      <strong>Prepara las carpetas del código.</strong> <code>mkdir -p</code> crea las carpetas que falten. <code>ls -ld</code> muestra las tres carpetas donde guardarás los módulos.
+      <pre><code>mkdir -p src/datos src/eventos src/pases &amp;&amp; ls -ld src/datos src/eventos src/pases</code></pre>
     </li>
     <li>
       <strong>Crea y abre el archivo de la pestaña.</strong> El comando de cada pestaña vuelve a asegurar que la carpeta existe. Después, <code>touch</code> crea el archivo si hace falta y <code>vi</code> lo abre. Con <code>&amp;&amp;</code>, cada paso se ejecuta cuando el anterior termina correctamente.
       <p>En <code>vi</code>, usa <code>:set paste</code>, pulsa <kbd>Intro</kbd> y luego <kbd>i</kbd> para pegar. Para guardar, pulsa <kbd>Esc</kbd>, escribe <code>:wq</code> y pulsa <kbd>Intro</kbd>.</p>
     </li>
   </ol>
-  <p>Pasa el ratón o toca una línea resaltada para ver su explicación.</p>
+  <p>Sigue las pestañas de izquierda a derecha. Empieza por <strong>DynamoDB · <code>dynamo.mjs</code></strong>, que exporta <code>nextId</code> y el cliente. <code>crear.mjs</code> importa ese módulo. Guarda <code>peticion.mjs</code> antes de preparar los tres archivos del pase. Pasa el ratón o toca una línea resaltada para ver su explicación.</p>
   <template id="index-explanations">
   <div data-prefix="import { DynamoDBClient"><strong>Conexión con DynamoDB</strong><p>Importa el cliente que comunica Lambda con DynamoDB. El paquete se instaló al preparar el proyecto.</p></div>
   <div data-prefix="export const db ="><strong>Cliente de documentos</strong><p>Lambda prepara este cliente al cargar el archivo. Las operaciones pueden reutilizarlo y pasarle objetos de JavaScript, como la clave con <code>EVENT_ID</code> y <code>USER_ID</code>.</p></div>
@@ -679,15 +679,41 @@ ls -l serverless.yml package.json</code></pre>
   </template>
   <div class="guided-explainer" data-explainer>
     <div class="guided-options" role="group" aria-label="Archivos de Lambda">
+    <button type="button" data-explain="modulo-lambda-4" aria-controls="modulo-lambda-4" aria-pressed="true">DynamoDB · <code>dynamo.mjs</code></button>
     <button type="button" data-explain="modulo-lambda-eventos" aria-controls="modulo-lambda-eventos" aria-pressed="false">Eventos · <code>crear.mjs</code></button>
-    <button type="button" data-explain="modulo-lambda-1" aria-controls="modulo-lambda-1" aria-pressed="true">GET · <code>consultar.mjs</code></button>
+    <button type="button" data-explain="modulo-lambda-5" aria-controls="modulo-lambda-5" aria-pressed="false">HTTP · <code>peticion.mjs</code></button>
+    <button type="button" data-explain="modulo-lambda-1" aria-controls="modulo-lambda-1" aria-pressed="false">GET · <code>consultar.mjs</code></button>
     <button type="button" data-explain="modulo-lambda-2" aria-controls="modulo-lambda-2" aria-pressed="false">POST · <code>inscribir.mjs</code></button>
     <button type="button" data-explain="modulo-lambda-3" aria-controls="modulo-lambda-3" aria-pressed="false">PATCH · <code>entrada.mjs</code></button>
-    <button type="button" data-explain="modulo-lambda-4" aria-controls="modulo-lambda-4" aria-pressed="false">DynamoDB · <code>dynamo.mjs</code></button>
-    <button type="button" data-explain="modulo-lambda-5" aria-controls="modulo-lambda-5" aria-pressed="false">HTTP · <code>peticion.mjs</code></button>
     </div>
+  <section id="modulo-lambda-4" data-explanation>
+    <h5><code>src/datos/dynamo.mjs</code></h5>
+    <p>Prepara el cliente, los nombres de las tablas y la función que comparten los dos contadores.</p>
+    <pre><code>mkdir -p src/datos &amp;&amp; touch src/datos/dynamo.mjs &amp;&amp; vi src/datos/dynamo.mjs</code></pre>
+    <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/datos/dynamo.mjs"><code>import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
+import { DynamoDBDocumentClient, UpdateCommand } from '@aws-sdk/lib-dynamodb';
+
+export const maxEventId = 9223372036854775807n;
+export const db = DynamoDBDocumentClient.from(new DynamoDBClient({}));
+export const tablaEventosFCI = process.env.FCI_TABLA_EVENTOS;
+export const tablaInscripcionesFCI = process.env.FCI_TABLA_INSCRIPCIONES;
+
+export async function nextId(counterName) {
+  const { Attributes } = await db.send(new UpdateCommand({
+    TableName: tablaEventosFCI,
+    Key: { EVENT_ID: 0 },
+    UpdateExpression: 'ADD #contador :uno',
+    ConditionExpression: 'attribute_not_exists(#contador) OR #contador &lt; :limite',
+    ExpressionAttributeNames: { '#contador': counterName },
+    ExpressionAttributeValues: { ':uno': 1, ':limite': maxEventId },
+    ReturnValues: 'UPDATED_NEW'
+  }));
+  return Attributes[counterName];
+}</code></pre></div>
+  </section>
   <section id="modulo-lambda-eventos" data-explanation hidden>
     <h5><code>src/eventos/crear.mjs</code></h5>
+    <p>Antes de abrir este archivo, guarda <code>src/datos/dynamo.mjs</code> en la pestaña anterior. <code>crear.mjs</code> importa <code>nextId</code> desde ahí.</p>
     <p>Invocarás esta función desde AWS CLI. La fila reservada con <code>EVENT_ID: 0</code> guarda un contador para eventos y otro para inscripciones. Cada evento nuevo recibe un identificador positivo.</p>
     <p><code>Ref: FestivalCheckInEventos</code> resuelve <code>FCI_EVENTOS</code>. La variable <code>FCI_TABLA_EVENTOS</code> entrega ese nombre a Lambda y <code>tablaEventosFCI</code> se lo pasa a <code>PutCommand</code>.</p>
     <pre><code>mkdir -p src/eventos &amp;&amp; touch src/eventos/crear.mjs &amp;&amp; vi src/eventos/crear.mjs</code></pre>
@@ -709,7 +735,40 @@ export async function handler({ title } = {}) {
   return { eventId: eventId.toString(), title: title.trim() };
 }</code></pre></div>
   </section>
-  <section id="modulo-lambda-1" data-explanation>
+  <section id="modulo-lambda-5" data-explanation hidden>
+    <h5><code>src/pases/peticion.mjs</code></h5>
+    <p>Comparte el formato de respuesta y el tratamiento de errores de estas rutas. Si ya creaste el archivo con una versión anterior, sustituye la condición y el mensaje <code>400</code> por los de este ejemplo y actualiza <code>json</code> para serializar los identificadores grandes.</p>
+    <pre><code>mkdir -p src/pases &amp;&amp; touch src/pases/peticion.mjs &amp;&amp; vi src/pases/peticion.mjs</code></pre>
+    <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/pases/peticion.mjs"><code>import { maxEventId } from '../datos/dynamo.mjs';
+
+export function json(statusCode, body) {
+  return {
+    statusCode,
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body, (_name, value) =&gt;
+      typeof value === 'bigint' ? value.toString() : value)
+  };
+}
+
+export async function handleRequest(event, operation) {
+  const { eventId: routeId, userId } = event.pathParameters ?? {};
+  const eventId = /^[1-9]\d{0,18}$/.test(routeId ?? '') ? BigInt(routeId) : 0n;
+  if (!eventId || eventId &gt; maxEventId || !userId) {
+    return json(400, { message: 'Indica un ID de evento entero positivo y un usuario' });
+  }
+
+  try {
+    return await operation({ eventId, userId });
+  } catch (error) {
+    if (error.name === 'ConditionalCheckFailedException') {
+      return json(409, { message: 'La operación no se puede aplicar a este estado' });
+    }
+    console.error(error.name, error.message);
+    return json(500, { message: 'Revisa los logs de la función' });
+  }
+}</code></pre></div>
+  </section>
+  <section id="modulo-lambda-1" data-explanation hidden>
     <h5><code>src/pases/consultar.mjs</code></h5>
     <p>Consultar el pase. El YAML enlaza la ruta con el handler de este archivo.</p>
     <pre><code>mkdir -p src/pases &amp;&amp; touch src/pases/consultar.mjs &amp;&amp; vi src/pases/consultar.mjs</code></pre>
@@ -760,76 +819,25 @@ async function checkIn(key) {
   return json(501, { message: 'Entrada por construir' });
 }</code></pre></div>
   </section>
-  <section id="modulo-lambda-4" data-explanation hidden>
-    <h5><code>src/datos/dynamo.mjs</code></h5>
-    <p>Prepara el cliente, los nombres de las tablas y la función que comparten los dos contadores.</p>
-    <pre><code>mkdir -p src/datos &amp;&amp; touch src/datos/dynamo.mjs &amp;&amp; vi src/datos/dynamo.mjs</code></pre>
-    <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/datos/dynamo.mjs"><code>import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { DynamoDBDocumentClient, UpdateCommand } from '@aws-sdk/lib-dynamodb';
-
-export const maxEventId = 9223372036854775807n;
-export const db = DynamoDBDocumentClient.from(new DynamoDBClient({}));
-export const tablaEventosFCI = process.env.FCI_TABLA_EVENTOS;
-export const tablaInscripcionesFCI = process.env.FCI_TABLA_INSCRIPCIONES;
-
-export async function nextId(counterName) {
-  const { Attributes } = await db.send(new UpdateCommand({
-    TableName: tablaEventosFCI,
-    Key: { EVENT_ID: 0 },
-    UpdateExpression: 'ADD #contador :uno',
-    ConditionExpression: 'attribute_not_exists(#contador) OR #contador &lt; :limite',
-    ExpressionAttributeNames: { '#contador': counterName },
-    ExpressionAttributeValues: { ':uno': 1, ':limite': maxEventId },
-    ReturnValues: 'UPDATED_NEW'
-  }));
-  return Attributes[counterName];
-}</code></pre></div>
-  </section>
-  <section id="modulo-lambda-5" data-explanation hidden>
-    <h5><code>src/pases/peticion.mjs</code></h5>
-    <p>Comparte el formato de respuesta y el tratamiento de errores de estas rutas. Si ya creaste el archivo con una versión anterior, sustituye la condición y el mensaje <code>400</code> por los de este ejemplo y actualiza <code>json</code> para serializar los identificadores grandes.</p>
-    <pre><code>mkdir -p src/pases &amp;&amp; touch src/pases/peticion.mjs &amp;&amp; vi src/pases/peticion.mjs</code></pre>
-    <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/pases/peticion.mjs"><code>import { maxEventId } from '../datos/dynamo.mjs';
-
-export function json(statusCode, body) {
-  return {
-    statusCode,
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(body, (_name, value) =&gt;
-      typeof value === 'bigint' ? value.toString() : value)
-  };
-}
-
-export async function handleRequest(event, operation) {
-  const { eventId: routeId, userId } = event.pathParameters ?? {};
-  const eventId = /^[1-9]\d{0,18}$/.test(routeId ?? '') ? BigInt(routeId) : 0n;
-  if (!eventId || eventId &gt; maxEventId || !userId) {
-    return json(400, { message: 'Indica un ID de evento entero positivo y un usuario' });
-  }
-
-  try {
-    return await operation({ eventId, userId });
-  } catch (error) {
-    if (error.name === 'ConditionalCheckFailedException') {
-      return json(409, { message: 'La operación no se puede aplicar a este estado' });
-    }
-    console.error(error.name, error.message);
-    return json(500, { message: 'Revisa los logs de la función' });
-  }
-}</code></pre></div>
-  </section>
   </div>
 </section>
 <section class="lambda-stage" aria-labelledby="lambda-stage-check">
   <h4 id="lambda-stage-check"><span>03</span> Comprueba antes de desplegar</h4>
-  <p><code>ls -l</code> muestra el manifiesto, el YAML y los módulos. <code>node --check</code> comprueba la sintaxis de cada archivo JavaScript.</p>
-  <pre><code>ls -l serverless.yml package.json src/pases/*.mjs src/datos/*.mjs src/eventos/*.mjs
+  <p><code>ls -l</code> muestra el manifiesto, el YAML y los módulos. <code>node --check</code> comprueba la sintaxis. El último comando importa los cuatro puntos de entrada para verificar que cada dependencia existe y exporta lo que pide el código.</p>
+  <pre><code>ls -l serverless.yml package.json src/pases/*.mjs src/datos/*.mjs src/eventos/*.mjs &amp;&amp;
 (
   for archivo in src/pases/*.mjs src/datos/*.mjs src/eventos/*.mjs; do
     node --check "$archivo" || exit 1
   done
-)</code></pre>
-  <p class="checkpoint"><strong>Antes de avanzar</strong> Ves los seis módulos y la comprobación de sintaxis termina sin errores. En el YAML, verifica que GET apunta a <code>src/pases/consultar.handler</code>.</p>
+) &amp;&amp;
+node --input-type=module -e '
+  await import("./src/eventos/crear.mjs");
+  await import("./src/pases/consultar.mjs");
+  await import("./src/pases/inscribir.mjs");
+  await import("./src/pases/entrada.mjs");
+  console.log("Imports comprobados");
+'</code></pre>
+  <p class="checkpoint"><strong>Antes de avanzar</strong> Ves los seis módulos y la terminal muestra <code>Imports comprobados</code>. En el YAML, verifica que GET apunta a <code>src/pases/consultar.handler</code>.</p>
 </section>
 </article>
 <article id="desplegar-stack" class="guide-step" data-step="Desplegar">
