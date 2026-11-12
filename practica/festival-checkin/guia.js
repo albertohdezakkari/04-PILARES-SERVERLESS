@@ -223,7 +223,7 @@ function addCodeControls(pre) {
     return;
   }
   toolbar.append(copyButton(fileName ? 'Copiar archivo completo' : pre.hasAttribute('data-example') ? 'Copiar código' : 'Copiar comando', fullText,
-    fileName ? 'Pulsa Ver archivo entero para copiarlo manualmente.' : 'Selecciona el texto y cópialo con el teclado.'));
+    fileName ? 'Abre la vista completa y selecciona el código para copiarlo con el teclado.' : 'Selecciona el texto y cópialo con el teclado.'));
   const indexNote = pre.parentElement.querySelector(':scope > .index-note');
   if (fileName || indexNote) {
     const lines = fullText.split('\n');
@@ -235,7 +235,8 @@ function addCodeControls(pre) {
     const count = starts.length;
     const pageLabel = document.createElement('span');
     let page = 0;
-    let full = !fileName;
+    const canPaginate = Boolean(fileName && count > 1);
+    let full = !canPaginate || Boolean(pre.closest('#archivo-lambda'));
     const previous = button('Página anterior', () => { page--; render(); });
     const following = button('Página siguiente', () => { page++; render(); });
     const toggle = button('Ver archivo entero', () => { full = !full; render(); });
@@ -275,14 +276,15 @@ function addCodeControls(pre) {
           code.append(line);
         }
       }
-      pageLabel.textContent = full ? 'Archivo completo' : 'Página ' + (page + 1) + ' de ' + count;
+      pageLabel.textContent = full ? 'Archivo completo · ' + lines.length + ' líneas' : 'Página ' + (page + 1) + ' de ' + count;
       previous.hidden = following.hidden = full;
       previous.disabled = page === 0;
       following.disabled = page === count - 1;
-      toggle.textContent = full ? 'Volver a páginas' : 'Ver archivo entero';
+      toggle.textContent = full ? 'Ver por páginas' : 'Ver archivo entero';
       pre.scrollLeft = 0;
     }
-    if (fileName) toolbar.append(toggle, previous, following, pageLabel);
+    if (canPaginate) toolbar.append(toggle, previous, following);
+    if (fileName) toolbar.append(pageLabel);
     render();
   }
   toolbar.append(feedback);

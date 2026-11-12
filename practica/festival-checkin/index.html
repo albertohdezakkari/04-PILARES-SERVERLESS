@@ -6,7 +6,7 @@
 <title>Festival Check-in · práctica guiada</title>
 <link rel="stylesheet" href="style.css?v=tablas-fci">
 <script type="module" src="app.js?v=max-id-guardado"></script>
-<script type="module" src="guia.js?v=atributos-mayusculas"></script>
+<script type="module" src="guia.js?v=archivos-lambda-completos"></script>
 <script type="module" src="visor-modelo.js?v=atributos-mayusculas"></script>
 <script type="module" src="entrenamiento-dynamo.js?v=atributos-mayusculas"></script>
 </head>
@@ -646,7 +646,7 @@ ls -l serverless.yml package.json</code></pre>
       <p>En <code>vi</code>, usa <code>:set paste</code>, pulsa <kbd>Intro</kbd> y luego <kbd>i</kbd> para pegar. Para guardar, pulsa <kbd>Esc</kbd>, escribe <code>:wq</code> y pulsa <kbd>Intro</kbd>.</p>
     </li>
   </ol>
-  <p>Sigue las pestañas de izquierda a derecha. Empieza por <strong>DynamoDB · <code>dynamo.mjs</code></strong>, que exporta <code>obtenerSiguienteIdGuardado</code> y el cliente. <code>crear.mjs</code> importa ese módulo. Guarda <code>peticion.mjs</code> antes de preparar los tres archivos del pase. Pasa el ratón o toca una línea resaltada para ver su explicación.</p>
+  <p>Sigue las pestañas de izquierda a derecha. Empieza por <strong>DynamoDB · <code>dynamo.mjs</code></strong>, que exporta <code>obtenerSiguienteIdGuardado</code> y el cliente. <code>crear.mjs</code> importa ese módulo. Guarda <code>peticion.mjs</code> antes de preparar los tres archivos del pase. Cada pestaña abre el archivo completo. Puedes usar <strong>Ver por páginas</strong> para leer los archivos largos por partes. Pasa el ratón o toca una línea resaltada para ver su explicación.</p>
   <template id="index-explanations">
   <div data-prefix="import { DynamoDBClient"><strong>Conexión con DynamoDB</strong><p>Importa el cliente que comunica Lambda con DynamoDB. El paquete se instaló al preparar el proyecto.</p></div>
   <div data-prefix="export const db ="><strong>Cliente de documentos</strong><p>Lambda prepara este cliente al cargar el archivo. Las operaciones pueden reutilizarlo y pasarle objetos de JavaScript, como la clave con <code>EVENT_ID</code> y <code>USER_ID</code>.</p></div>
@@ -801,7 +801,7 @@ export async function handleRequest(event, operation) {
   </section>
   <section id="modulo-lambda-1" data-explanation hidden>
     <h5><code>src/pases/consultar.mjs</code></h5>
-    <p>Consultar el pase. El YAML enlaza la ruta con el handler de este archivo.</p>
+    <p>Prepara el archivo base de GET. Por ahora responde <code>501</code>. Lo completarás en <a href="#leer-pase">6 · Consultar</a>.</p>
     <pre><code>mkdir -p src/pases &amp;&amp; touch src/pases/consultar.mjs &amp;&amp; vi src/pases/consultar.mjs</code></pre>
     <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/pases/consultar.mjs"><code>import { GetCommand } from '@aws-sdk/lib-dynamodb';
 import { db, TABLA_EVENTOS_FCI, TABLA_INSCRIPCIONES_FCI } from '../datos/dynamo.mjs';
@@ -818,7 +818,7 @@ async function getPass(key) {
   </section>
   <section id="modulo-lambda-2" data-explanation hidden>
     <h5><code>src/pases/inscribir.mjs</code></h5>
-    <p>Inscribir al usuario. El YAML enlaza la ruta con el handler de este archivo.</p>
+    <p>Prepara el archivo base de POST. Por ahora responde <code>501</code>. Lo completarás en <a href="#construir-post">7 · Inscribir</a>.</p>
     <pre><code>mkdir -p src/pases &amp;&amp; touch src/pases/inscribir.mjs &amp;&amp; vi src/pases/inscribir.mjs</code></pre>
     <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/pases/inscribir.mjs"><code>import { handleRequest, json } from './peticion.mjs';
 
@@ -833,7 +833,7 @@ async function register(key) {
   </section>
   <section id="modulo-lambda-3" data-explanation hidden>
     <h5><code>src/pases/entrada.mjs</code></h5>
-    <p>Registrar la entrada. El YAML enlaza la ruta con el handler de este archivo.</p>
+    <p>Prepara el archivo base de PATCH. Por ahora responde <code>501</code>. Lo completarás en <a href="#construir-patch">8 · Dar entrada</a>.</p>
     <pre><code>mkdir -p src/pases &amp;&amp; touch src/pases/entrada.mjs &amp;&amp; vi src/pases/entrada.mjs</code></pre>
     <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/pases/entrada.mjs"><code>import { UpdateCommand } from '@aws-sdk/lib-dynamodb';
 import { db, TABLA_INSCRIPCIONES_FCI } from '../datos/dynamo.mjs';
