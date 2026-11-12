@@ -713,7 +713,7 @@ code { overflow-wrap: anywhere; }
   background: var(--background);
   color: var(--ink);
 }
-#model-result h3 { margin-bottom: .5rem; }
+#model-result h3 { margin-bottom: .5rem; overflow-wrap: anywhere; }
 .model-reading dt { font-weight: 650; color: var(--accent); }
 .model-reading dd { margin: 4px 0 12px; line-height: 1.5; }
 .model-practice { margin-bottom: 12px; }
