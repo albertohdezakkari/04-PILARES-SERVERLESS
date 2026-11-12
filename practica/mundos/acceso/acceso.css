@@ -1,0 +1,8 @@
+.acceso { width: min(660px, calc(100% - 32px)); margin-top: clamp(18px, 7vh, 68px); }
+.acceso .hero { grid-template-columns: 1fr; margin-bottom: 14px; }
+.acceso .hero h1 { font-size: clamp(2.5rem, 8vw, 4.8rem); }
+#selector { display: grid; gap: 10px; }
+#selector label { font-weight: 650; }
+#selector select { width: 100%; min-height: 44px; padding: 8px 12px; font: inherit; color: inherit; border: 1px solid #718371; border-radius: 8px; background: #fff; }
+#selector button { justify-self: start; background: var(--ink); color: var(--white); }
+#selector button:disabled { opacity: .55; cursor: default; }

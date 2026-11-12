@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>Elige tu mundo · Serverless</title>
+  <link rel="stylesheet" href="../../taller-bicis/style.css">
+  <link rel="stylesheet" href="acceso.css">
+  <script type="module" src="acceso.js"></script>
+</head>
+<body>
+  <main class="acceso">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Práctica individual</p>
+        <h1>Tu mundo Serverless</h1>
+        <p>Elige tu correo institucional y abre la práctica que tienes asignada.</p>
+      </div>
+    </header>
+    <section class="panel" aria-labelledby="titulo-acceso">
+      <h2 id="titulo-acceso">Elige tu correo</h2>
+      <form id="selector" hidden>
+        <label for="correo">Correo institucional</label>
+        <select id="correo" required>
+          <option value="">Selecciona tu correo</option>
+        </select>
+        <button type="submit" disabled>Entrar en mi mundo →</button>
+      </form>
+      <p id="mensaje" role="status">Abre el enlace que compartió tu profesor en Classroom.</p>
+    </section>
+  </main>
+</body>
+</html>
