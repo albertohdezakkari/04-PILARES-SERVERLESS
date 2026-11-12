@@ -2,9 +2,9 @@ const form = document.querySelector('#dynamo-practice');
 const feedback = document.querySelector('#dynamo-feedback');
 const results = document.querySelector('#dynamo-results');
 
-const event = { eventId: 'evt-001', title: 'Festival de otoño' };
+const event = { eventId: 1, title: 'Festival de otoño' };
 const registration = {
-  eventId: 'evt-001',
+  eventId: 1,
   userId: 'usuario-02',
   registeredAt: '2026-11-01T10:00:00.000Z'
 };

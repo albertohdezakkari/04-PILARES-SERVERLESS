@@ -20,7 +20,7 @@
 <p>Un usuario puede tener cero o muchas inscripciones; cada inscripción corresponde a un usuario. Un evento puede tener cero o muchas inscripciones; cada inscripción corresponde a un evento. Un organizador puede organizar muchos eventos.</p>
 </details>
 <details open><summary>PK y SK con un ejemplo</summary>
-<p>La PK agrupa o identifica registros. Cuando la tabla tiene SK, esta distingue y ordena los registros que comparten PK. En Registrations, <code>eventId = evt-001</code> y <code>userId = usr-042</code> identifican una inscripción concreta.</p>
+<p>La PK agrupa o identifica registros. Cuando la tabla tiene SK, esta distingue y ordena los registros que comparten PK. En Registrations, <code>eventId = 1</code> y <code>userId = usr-042</code> identifican una inscripción concreta.</p>
 <p>Consulta la tabla por <code>eventId</code> para ver los inscritos de un evento. Consulta el índice <code>PorUsuario</code> por <code>userId</code> para ver los eventos de un usuario. En el índice, <code>eventId</code> es la clave de ordenación. Una inscripción recién escrita puede tardar unos segundos en aparecer. <a href="../../practica/festival-checkin/#consultar-indice">Prueba las dos consultas en el cuaderno</a>.</p>
 </details>
 <details open><summary>Inscripción y asistencia son cosas distintas</summary>

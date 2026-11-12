@@ -8,9 +8,9 @@
   },
   "DataModel": [
     {
-      "TableName": "EVENTO_01",
+      "TableName": "EVENTO_NUM_01",
       "KeyAttributes": {
-        "PartitionKey": { "AttributeName": "eventId", "AttributeType": "S" },
+        "PartitionKey": { "AttributeName": "eventId", "AttributeType": "N" },
         "SortKey": { "AttributeName": "", "AttributeType": "S" }
       },
       "NonKeyAttributes": [
@@ -19,13 +19,13 @@
       "GlobalSecondaryIndexes": [],
       "DataAccess": {},
       "TableData": [
-        { "eventId": { "S": "evt-001" }, "title": { "S": "Festival de otoño" } }
+        { "eventId": { "N": "1" }, "title": { "S": "Festival de otoño" } }
       ]
     },
     {
-      "TableName": "INSCRIPCION_01",
+      "TableName": "INSCRIPCION_NUM_01",
       "KeyAttributes": {
-        "PartitionKey": { "AttributeName": "eventId", "AttributeType": "S" },
+        "PartitionKey": { "AttributeName": "eventId", "AttributeType": "N" },
         "SortKey": { "AttributeName": "userId", "AttributeType": "S" }
       },
       "NonKeyAttributes": [
@@ -37,7 +37,7 @@
           "IndexName": "PorUsuario",
           "KeyAttributes": {
             "PartitionKey": { "AttributeName": "userId", "AttributeType": "S" },
-            "SortKey": { "AttributeName": "eventId", "AttributeType": "S" }
+            "SortKey": { "AttributeName": "eventId", "AttributeType": "N" }
           },
           "Projection": { "ProjectionType": "KEYS_ONLY" }
         }
@@ -45,12 +45,12 @@
       "DataAccess": {},
       "TableData": [
         {
-          "eventId": { "S": "evt-001" },
+          "eventId": { "N": "1" },
           "userId": { "S": "usuario-01" },
           "registeredAt": { "S": "2026-11-12T09:05:00Z" }
         },
         {
-          "eventId": { "S": "evt-001" },
+          "eventId": { "N": "1" },
           "userId": { "S": "usuario-02" },
           "registeredAt": { "S": "2026-11-12T09:06:00Z" },
           "checkedInAt": { "S": "2026-11-12T09:12:00Z" }

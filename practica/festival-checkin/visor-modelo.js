@@ -90,14 +90,14 @@ function createPractice(renderedRows) {
   function query(onlyOne) {
     let count = 0;
     for (const { row, line } of renderedRows) {
-      const match = formatValue(row.eventId) === 'evt-001' &&
+      const match = formatValue(row.eventId) === '1' &&
         (!onlyOne || formatValue(row.userId) === 'usuario-02');
       line.hidden = !match;
       if (match) count++;
     }
     all.setAttribute('aria-pressed', String(!onlyOne));
     one.setAttribute('aria-pressed', String(onlyOne));
-    condition.textContent = "WHERE eventId = 'evt-001'" + (onlyOne ? " AND userId = 'usuario-02'" : '');
+    condition.textContent = 'WHERE eventId = 1' + (onlyOne ? " AND userId = 'usuario-02'" : '');
     const rows = count === 1 ? '1 inscripción' : count + ' inscripciones';
     output.textContent = rows + (onlyOne ? ' al buscar por evento y persona.' : ' al buscar por evento.');
   }
@@ -125,7 +125,7 @@ function showModel(message = status, practice = false) {
   }
   try {
     result.replaceChildren(...model.DataModel.map(table => renderTable(table, practice)));
-    status.textContent = 'Tablas del modelo: ' + model.DataModel.length + '. PK = partición, SK = ordenación, S = texto.';
+    status.textContent = 'Tablas del modelo: ' + model.DataModel.length + '. PK = partición, SK = ordenación, N = número, S = texto.';
     if (message === feedback) feedback.textContent = 'Tablas actualizadas en Diseñar → Probar el diseño.';
   } catch (error) {
     message.textContent = error.message;
@@ -135,7 +135,7 @@ function showModel(message = status, practice = false) {
 async function loadExample(message, onlyIfEmpty = false) {
   example.disabled = true;
   try {
-    const response = await fetch('modelo-dynamodb.json?v=usuario');
+    const response = await fetch('modelo-dynamodb.json?v=eventos-numericos');
     if (!response.ok) throw new Error('El ejemplo no está disponible en este momento.');
     const source = await response.text();
     if (onlyIfEmpty && input.value.trim()) return;

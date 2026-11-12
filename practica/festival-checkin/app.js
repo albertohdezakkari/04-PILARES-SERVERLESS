@@ -1,6 +1,7 @@
 const methodButtons = document.querySelectorAll('[data-method]');
 const mode = document.querySelector('#mode');
 const endpoint = document.querySelector('#endpoint');
+const eventInput = document.querySelector('#event-id');
 const user = document.querySelector('#user');
 const response = document.querySelector('#response');
 const feedback = document.querySelector('#feedback');
@@ -16,13 +17,14 @@ const routes = {
 };
 const passState = document.querySelector('#pass-state');
 const title = document.querySelector('#screen-title');
-const eventId = 'evt-001';
+const demoEventId = 1;
 const demoTitle = 'Festival de otoño';
 const demoRegistrations = new Map();
 
 function clearScreen() {
   const demo = mode.value === 'demo';
   document.querySelector('#endpoint-field').hidden = demo;
+  document.querySelector('#event-id-field').hidden = demo;
   requestTrace.hidden = true;
   readFeedback.hidden = true;
   title.textContent = demo ? demoTitle : 'Evento del equipo';
@@ -33,14 +35,15 @@ function clearScreen() {
 mode.addEventListener('change', clearScreen);
 user.addEventListener('input', clearScreen);
 endpoint.addEventListener('input', clearScreen);
+eventInput.addEventListener('input', clearScreen);
 
 function demoRequest(method, userId) {
   const registration = demoRegistrations.get(userId);
   if (method === 'GET') {
-    return { status: 200, body: { eventId, title: demoTitle, registration: registration ?? null } };
+    return { status: 200, body: { eventId: demoEventId, title: demoTitle, registration: registration ?? null } };
   }
   if (method === 'POST' && !registration) {
-    demoRegistrations.set(userId, { userId, registeredAt: new Date().toISOString() });
+    demoRegistrations.set(userId, { eventId: demoEventId, userId, registeredAt: new Date().toISOString() });
     return { status: 201, body: { message: 'Inscripción creada' } };
   }
   if (method === 'PATCH' && registration && !registration.checkedInAt) {
@@ -58,7 +61,7 @@ function apiBase() {
   return value;
 }
 
-function passPath(userId) {
+function passPath(eventId, userId) {
   return '/events/' + eventId + '/registrations/' + encodeURIComponent(userId);
 }
 
@@ -80,15 +83,21 @@ function showPass(body) {
 async function run(method) {
   const userId = user.value.trim();
   const demo = mode.value === 'demo';
+  const eventId = demo ? String(demoEventId) : eventInput.value.trim();
   const label = demo ? 'Ensayo' : 'AWS';
   if (!userId) {
     feedback.textContent = 'Escribe un código como usuario-01.';
     return;
   }
 
-  const controls = [...methodButtons, mode, user, endpoint];
+  if (!/^[1-9]\d{0,18}$/.test(eventId)) {
+    feedback.textContent = 'Escribe el ID numérico que devolvió la creación del evento.';
+    return;
+  }
+
+  const controls = [...methodButtons, mode, user, endpoint, eventInput];
   for (const control of controls) control.disabled = true;
-  const path = passPath(userId);
+  const path = passPath(eventId, userId);
   readFeedback.hidden = true;
   requestPath.textContent = method + ' ' + path;
   requestModule.textContent = 'src/pases/' + routes[method].module + '.mjs';
