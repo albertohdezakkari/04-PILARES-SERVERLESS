@@ -201,7 +201,15 @@ npx serverless --version</code></pre><p class="checkpoint"><strong>Antes de avan
 <article id="rol-laboratorio" class="guide-step" data-step="Rol">
 <h3>Selecciona el equipo y el rol de Lambda</h3>
 <p class="lesson-note"><strong>Quién actúa en cada momento.</strong> Tu perfil ejecuta el despliegue. El rol <code>LabRole</code> da permisos a Lambda cuando atiende una petición y necesita acceder a DynamoDB.</p>
-<p>Cambia <code>equipo-01</code> por el código asignado a tu equipo. <code>TABLE_SUFFIX</code> toma la parte que sigue a <code>equipo-</code> para distinguir las tablas de cada despliegue. El último comando localiza el ARN de <code>LabRole</code>, el rol existente que usará Lambda para leer y escribir en DynamoDB.</p><pre><code>export AWS_PROFILE="$perfil"
+<p>En <a href="#probar-aws">Conectar → Comprobación</a> ya elegiste <code>perfil</code> y <code>region</code>. Comprueba que sigues en la misma terminal antes de exportarlos.</p>
+<pre><code>printf 'perfil=%s\nregion=%s\n' "${perfil:-SIN DEFINIR}" "${region:-SIN DEFINIR}"</code></pre>
+<p>Deberías ver el perfil que elegiste (<code>default</code> o <code>academy</code>) y la región de tu laboratorio. Si ves <code>SIN DEFINIR</code>, vuelve a <strong>Comprobación</strong> y ejecuta allí el bloque para recuperar ambos valores en esta terminal.</p>
+<dl class="command-reasons">
+  <div><dt><code>AWS_PROFILE</code></dt><dd>Copia el nombre del perfil de <code>$perfil</code>. Las credenciales temporales están en el perfil que guardaste en <code>~/.aws/credentials</code>.</dd></div>
+  <div><dt><code>AWS_REGION</code></dt><dd>Copia <code>$region</code>. Serverless usa ese valor en <code>provider.region</code>.</dd></div>
+  <div><dt><code>LAMBDA_ROLE_ARN</code></dt><dd>El comando <code>aws iam get-role</code> consulta el identificador del rol existente <code>LabRole</code> y lo guarda en esta variable.</dd></div>
+</dl>
+<p>Cambia <code>equipo-01</code> por el código asignado a tu equipo. <code>TABLE_SUFFIX</code> toma la parte que sigue a <code>equipo-</code> para distinguir las tablas de cada despliegue.</p><pre><code>export AWS_PROFILE="$perfil"
 export AWS_REGION="$region"
 export STUDENT_CODE=equipo-01
 export TABLE_SUFFIX="${STUDENT_CODE#equipo-}"
