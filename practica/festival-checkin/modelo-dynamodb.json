@@ -8,7 +8,7 @@
   },
   "DataModel": [
     {
-      "TableName": "EVENTO_NUM_01",
+      "TableName": "EVENTOS_01",
       "KeyAttributes": {
         "PartitionKey": { "AttributeName": "eventId", "AttributeType": "N" },
         "SortKey": { "AttributeName": "", "AttributeType": "S" }
@@ -23,7 +23,7 @@
       ]
     },
     {
-      "TableName": "INSCRIPCION_NUM_01",
+      "TableName": "INSCRIPCIONES_01",
       "KeyAttributes": {
         "PartitionKey": { "AttributeName": "eventId", "AttributeType": "N" },
         "SortKey": { "AttributeName": "userId", "AttributeType": "S" }
