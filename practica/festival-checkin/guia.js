@@ -329,6 +329,6 @@ for (const choice of accessButtons) {
   });
 }
 
-const commands = '#conexion .guide-step:not(#pegar-aws) pre, #infra pre, #datos pre, #lectura pre[data-command], #lectura pre[data-example], #conectar-api pre, #inscripcion pre, #entrada pre, #prueba pre';
+const commands = '#conexion .guide-step:not(#pegar-aws) pre, #infra pre, #datos pre, #lectura pre[data-command], #lectura pre[data-file], #conectar-api pre, #inscripcion pre, #entrada pre, #prueba pre';
 for (const pre of document.querySelectorAll(commands)) addCodeControls(pre);
 showRoute();

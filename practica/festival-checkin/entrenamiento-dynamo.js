@@ -31,13 +31,22 @@ form.addEventListener('submit', submission => {
   const eventFound = scenario !== 'sin-evento';
   const item = scenario === 'inscrito' ? registration : null;
 
-  putObject('dynamo-event', eventFound ? { Item: event } : {});
+  putObject('dynamo-event', eventFound ? {
+    Item: { EVENT_ID: event.eventId, TITLE: event.title }
+  } : {});
   putText('dynamo-event-value', eventFound
     ? 'Item se guarda en la variable event.'
     : 'La respuesta carece de Item. event queda como undefined.');
 
   if (eventFound) {
-    putObject('dynamo-registration', item ? { Item: item } : {});
+    putObject('dynamo-registration', item ? {
+      Item: {
+        EVENT_ID: item.eventId,
+        USER_ID: item.userId,
+        REGISTRATION_ID: item.registrationId,
+        REGISTERED_AT: item.registeredAt
+      }
+    } : {});
     putText('dynamo-registration-value', item
       ? 'Item se guarda en la variable registration.'
       : 'La respuesta carece de Item. registration queda como undefined.');
@@ -51,7 +60,7 @@ form.addEventListener('submit', submission => {
     ? { ...event, registration: item }
     : { message: 'Evento no encontrado' });
   putText('dynamo-response-value', eventFound
-    ? 'registration ?? null conserva el objeto si existe y envía null cuando falta.'
+    ? 'La respuesta traduce los atributos de DynamoDB al formato JSON de la API. Si falta la inscripción, envía null.'
     : 'El 404 indica que falta el evento.');
 
   results.hidden = false;

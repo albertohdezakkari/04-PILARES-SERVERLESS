@@ -10,35 +10,35 @@
     {
       "TableName": "FCI_EVENTOS",
       "KeyAttributes": {
-        "PartitionKey": { "AttributeName": "eventId", "AttributeType": "N" },
+        "PartitionKey": { "AttributeName": "EVENT_ID", "AttributeType": "N" },
         "SortKey": { "AttributeName": "", "AttributeType": "S" }
       },
       "NonKeyAttributes": [
-        { "AttributeName": "title", "AttributeType": "S" }
+        { "AttributeName": "TITLE", "AttributeType": "S" }
       ],
       "GlobalSecondaryIndexes": [],
       "DataAccess": {},
       "TableData": [
-        { "eventId": { "N": "1" }, "title": { "S": "Festival de otoño" } }
+        { "EVENT_ID": { "N": "1" }, "TITLE": { "S": "Festival de otoño" } }
       ]
     },
     {
       "TableName": "FCI_INSCRIPCIONES",
       "KeyAttributes": {
-        "PartitionKey": { "AttributeName": "eventId", "AttributeType": "N" },
-        "SortKey": { "AttributeName": "userId", "AttributeType": "S" }
+        "PartitionKey": { "AttributeName": "EVENT_ID", "AttributeType": "N" },
+        "SortKey": { "AttributeName": "USER_ID", "AttributeType": "S" }
       },
       "NonKeyAttributes": [
-        { "AttributeName": "registrationId", "AttributeType": "N" },
-        { "AttributeName": "registeredAt", "AttributeType": "S" },
-        { "AttributeName": "checkedInAt", "AttributeType": "S" }
+        { "AttributeName": "REGISTRATION_ID", "AttributeType": "N" },
+        { "AttributeName": "REGISTERED_AT", "AttributeType": "S" },
+        { "AttributeName": "CHECKED_IN_AT", "AttributeType": "S" }
       ],
       "GlobalSecondaryIndexes": [
         {
           "IndexName": "PorUsuario",
           "KeyAttributes": {
-            "PartitionKey": { "AttributeName": "userId", "AttributeType": "S" },
-            "SortKey": { "AttributeName": "eventId", "AttributeType": "N" }
+            "PartitionKey": { "AttributeName": "USER_ID", "AttributeType": "S" },
+            "SortKey": { "AttributeName": "EVENT_ID", "AttributeType": "N" }
           },
           "Projection": { "ProjectionType": "KEYS_ONLY" }
         }
@@ -46,17 +46,17 @@
       "DataAccess": {},
       "TableData": [
         {
-          "eventId": { "N": "1" },
-          "userId": { "S": "usuario-01" },
-          "registrationId": { "N": "1" },
-          "registeredAt": { "S": "2026-11-12T09:05:00Z" }
+          "EVENT_ID": { "N": "1" },
+          "USER_ID": { "S": "usuario-01" },
+          "REGISTRATION_ID": { "N": "1" },
+          "REGISTERED_AT": { "S": "2026-11-12T09:05:00Z" }
         },
         {
-          "eventId": { "N": "1" },
-          "userId": { "S": "usuario-02" },
-          "registrationId": { "N": "2" },
-          "registeredAt": { "S": "2026-11-12T09:06:00Z" },
-          "checkedInAt": { "S": "2026-11-12T09:12:00Z" }
+          "EVENT_ID": { "N": "1" },
+          "USER_ID": { "S": "usuario-02" },
+          "REGISTRATION_ID": { "N": "2" },
+          "REGISTERED_AT": { "S": "2026-11-12T09:06:00Z" },
+          "CHECKED_IN_AT": { "S": "2026-11-12T09:12:00Z" }
         }
       ]
     }

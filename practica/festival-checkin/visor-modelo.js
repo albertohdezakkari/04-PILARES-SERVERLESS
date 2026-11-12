@@ -26,7 +26,7 @@ function renderTable(model, practice = false) {
   const name = model?.TableName;
   const partitionKey = model?.KeyAttributes?.PartitionKey;
   const sortKey = model?.KeyAttributes?.SortKey;
-  const showPractice = practice && partitionKey?.AttributeName === 'eventId' && sortKey?.AttributeName === 'userId';
+  const showPractice = practice && partitionKey?.AttributeName === 'EVENT_ID' && sortKey?.AttributeName === 'USER_ID';
   const rows = model?.TableData ?? [];
   const attributes = model?.NonKeyAttributes ?? [];
   if (typeof name !== 'string' || !name.trim() || !partitionKey?.AttributeName) {
@@ -62,7 +62,7 @@ function renderTable(model, practice = false) {
       const value = Object.hasOwn(row, column) ? row[column] : undefined;
       const cell = line.insertCell();
       cell.textContent = formatValue(value);
-      if (showPractice && column === 'checkedInAt') {
+      if (showPractice && column === 'CHECKED_IN_AT') {
         cell.append(element('span', value === undefined ? 'Sin entrada registrada' : 'Entrada registrada', 'model-key'));
       }
     }
@@ -90,14 +90,14 @@ function createPractice(renderedRows) {
   function query(onlyOne) {
     let count = 0;
     for (const { row, line } of renderedRows) {
-      const match = formatValue(row.eventId) === '1' &&
-        (!onlyOne || formatValue(row.userId) === 'usuario-02');
+      const match = formatValue(row.EVENT_ID) === '1' &&
+        (!onlyOne || formatValue(row.USER_ID) === 'usuario-02');
       line.hidden = !match;
       if (match) count++;
     }
     all.setAttribute('aria-pressed', String(!onlyOne));
     one.setAttribute('aria-pressed', String(onlyOne));
-    condition.textContent = 'WHERE eventId = 1' + (onlyOne ? " AND userId = 'usuario-02'" : '');
+    condition.textContent = 'WHERE EVENT_ID = 1' + (onlyOne ? " AND USER_ID = 'usuario-02'" : '');
     const rows = count === 1 ? '1 inscripción' : count + ' inscripciones';
     output.textContent = rows + (onlyOne ? ' al buscar por evento y persona.' : ' al buscar por evento.');
   }
@@ -135,7 +135,7 @@ function showModel(message = status, practice = false) {
 async function loadExample(message, onlyIfEmpty = false) {
   example.disabled = true;
   try {
-    const response = await fetch('modelo-dynamodb.json?v=registro-numerico');
+    const response = await fetch('modelo-dynamodb.json?v=atributos-mayusculas');
     if (!response.ok) throw new Error('El ejemplo no está disponible en este momento.');
     const source = await response.text();
     if (onlyIfEmpty && input.value.trim()) return;
