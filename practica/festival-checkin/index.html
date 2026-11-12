@@ -646,7 +646,7 @@ ls -l serverless.yml package.json</code></pre>
       <p>En <code>vi</code>, usa <code>:set paste</code>, pulsa <kbd>Intro</kbd> y luego <kbd>i</kbd> para pegar. Para guardar, pulsa <kbd>Esc</kbd>, escribe <code>:wq</code> y pulsa <kbd>Intro</kbd>.</p>
     </li>
   </ol>
-  <p>Sigue las pestañas de izquierda a derecha. Empieza por <strong>DynamoDB · <code>dynamo.mjs</code></strong>, que exporta <code>nextId</code> y el cliente. <code>crear.mjs</code> importa ese módulo. Guarda <code>peticion.mjs</code> antes de preparar los tres archivos del pase. Pasa el ratón o toca una línea resaltada para ver su explicación.</p>
+  <p>Sigue las pestañas de izquierda a derecha. Empieza por <strong>DynamoDB · <code>dynamo.mjs</code></strong>, que exporta <code>obtenerSiguienteIdDeSecuencia</code> y el cliente. <code>crear.mjs</code> importa ese módulo. Guarda <code>peticion.mjs</code> antes de preparar los tres archivos del pase. Pasa el ratón o toca una línea resaltada para ver su explicación.</p>
   <template id="index-explanations">
   <div data-prefix="import { DynamoDBClient"><strong>Conexión con DynamoDB</strong><p>Importa el cliente que comunica Lambda con DynamoDB. El paquete se instaló al preparar el proyecto.</p></div>
   <div data-prefix="export const db ="><strong>Cliente de documentos</strong><p>Lambda prepara este cliente al cargar el archivo. Las operaciones pueden reutilizarlo y pasarle objetos de JavaScript, como la clave con <code>EVENT_ID</code> y <code>USER_ID</code>.</p></div>
@@ -662,9 +662,9 @@ ls -l serverless.yml package.json</code></pre>
   <div data-prefix="export async function handleRequest"><strong>Validación y errores compartidos</strong><p>Los tres handlers usan esta función. Recibe la petición y la operación elegida, valida los identificadores y convierte los errores en respuestas HTTP.</p></div>
   <div data-prefix="const { eventId: routeId"><strong>La ruta entrega texto</strong><p>En <code>/events/1/registrations/usuario-02</code>, <code>routeId</code> recibe <code>"1"</code> y <code>userId</code> recibe <code>"usuario-02"</code>.</p></div>
   <div data-prefix="const eventId ="><strong>Convierte el ID a entero</strong><p>La expresión comprueba que el texto tenga entre una y 19 cifras y empiece por una cifra distinta de cero. <code>BigInt</code> conserva la precisión de un <code>long</code>.</p></div>
-  <div data-prefix="const eventId = await nextId"><strong>Obtiene el siguiente número de evento</strong><p><code>nextId</code> incrementa <code>LAST_EVENT_ID</code> en la fila de contadores.</p></div>
-  <div data-prefix="export async function nextId"><strong>Reutiliza la misma operación para dos secuencias</strong><p><code>counterName</code> elige el atributo que aumenta. Cada secuencia tiene su propio valor.</p></div>
-  <div data-prefix="ExpressionAttributeNames: { '#contador'"><strong>Indica qué contador se incrementa</strong><p><code>#contador</code> representa el nombre que recibe <code>nextId</code>.</p></div>
+  <div data-prefix="const eventId = await obtenerSiguienteIdDeSecuencia"><strong>Obtiene el siguiente número de evento</strong><p><code>obtenerSiguienteIdDeSecuencia</code> pide a DynamoDB que incremente <code>LAST_EVENT_ID</code> en la fila de contadores.</p></div>
+  <div data-prefix="export async function obtenerSiguienteIdDeSecuencia"><strong>Reutiliza la misma operación para dos secuencias</strong><p><code>nombreSecuencia</code> elige el contador. La función devuelve el siguiente número de esa secuencia. <code>LAST_EVENT_ID</code> y <code>LAST_REGISTRATION_ID</code> avanzan de forma independiente.</p></div>
+  <div data-prefix="ExpressionAttributeNames: { '#contador'"><strong>Indica qué contador se incrementa</strong><p><code>#contador</code> representa el nombre que recibe <code>obtenerSiguienteIdDeSecuencia</code>.</p></div>
   <div data-prefix="TableName: TABLA_EVENTOS_FCI"><strong>Usa la tabla FCI_EVENTOS</strong><p><code>TABLA_EVENTOS_FCI</code> contiene el valor de <code>FCI_TABLA_EVENTOS</code>. En el YAML, <code>Ref: FestivalCheckInEventos</code> obtiene el nombre <code>FCI_EVENTOS</code>.</p></div>
   <div data-prefix="export const MAX_ID_LONG"><strong>Fija el máximo de un long</strong><p>Usa el mismo límite para los identificadores de la ruta y los dos contadores.</p></div>
   <div data-prefix="const ID_ITEM_CONTADORES"><strong>Da nombre al cero reservado</strong><p>Esta constante identifica el ítem que guarda los contadores en <code>FCI_EVENTOS</code>.</p></div>
@@ -691,7 +691,7 @@ ls -l serverless.yml package.json</code></pre>
   <section id="modulo-lambda-4" data-explanation>
     <h5><code>src/datos/dynamo.mjs</code></h5>
     <p>Prepara el cliente, los nombres de las tablas y la función que comparten los dos contadores.</p>
-    <p>Escribe en mayúsculas con guion bajo los valores fijos y la configuración del módulo. Usa camelCase para los valores que obtiene cada petición, como <code>const eventId = await nextId(...)</code>.</p>
+    <p>Escribe en mayúsculas con guion bajo los valores fijos y la configuración del módulo. Usa camelCase para los valores que obtiene cada petición, como <code>const eventId = await obtenerSiguienteIdDeSecuencia(...)</code>.</p>
     <pre><code>mkdir -p src/datos &amp;&amp; touch src/datos/dynamo.mjs &amp;&amp; vi src/datos/dynamo.mjs</code></pre>
     <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/datos/dynamo.mjs"><code>import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, UpdateCommand } from '@aws-sdk/lib-dynamodb';
@@ -703,34 +703,34 @@ export const db = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 export const TABLA_EVENTOS_FCI = process.env.FCI_TABLA_EVENTOS;
 export const TABLA_INSCRIPCIONES_FCI = process.env.FCI_TABLA_INSCRIPCIONES;
 
-export async function nextId(counterName) {
+export async function obtenerSiguienteIdDeSecuencia(nombreSecuencia) {
   const { Attributes } = await db.send(new UpdateCommand({
     TableName: TABLA_EVENTOS_FCI,
     Key: { EVENT_ID: ID_ITEM_CONTADORES },
     UpdateExpression: 'ADD #contador :uno',
     ConditionExpression: 'attribute_not_exists(#contador) OR #contador &lt; :limite',
-    ExpressionAttributeNames: { '#contador': counterName },
+    ExpressionAttributeNames: { '#contador': nombreSecuencia },
     ExpressionAttributeValues: { ':uno': 1, ':limite': MAX_ID_LONG },
     ReturnValues: 'UPDATED_NEW'
   }));
-  return Attributes[counterName];
+  return Attributes[nombreSecuencia];
 }</code></pre></div>
   </section>
   <section id="modulo-lambda-eventos" data-explanation hidden>
     <h5><code>src/eventos/crear.mjs</code></h5>
-    <p>Antes de abrir este archivo, guarda <code>src/datos/dynamo.mjs</code> en la pestaña anterior. <code>crear.mjs</code> importa <code>nextId</code> desde ahí.</p>
+    <p>Antes de abrir este archivo, guarda <code>src/datos/dynamo.mjs</code> en la pestaña anterior. <code>crear.mjs</code> importa <code>obtenerSiguienteIdDeSecuencia</code> desde ahí.</p>
     <p>Invocarás esta función desde AWS CLI. La fila reservada con <code>EVENT_ID: 0</code> guarda un contador para eventos y otro para inscripciones. Cada evento nuevo recibe un identificador positivo.</p>
     <p><code>Ref: FestivalCheckInEventos</code> resuelve <code>FCI_EVENTOS</code>. La variable <code>FCI_TABLA_EVENTOS</code> entrega ese nombre a Lambda y <code>TABLA_EVENTOS_FCI</code> se lo pasa a <code>PutCommand</code>.</p>
     <pre><code>mkdir -p src/eventos &amp;&amp; touch src/eventos/crear.mjs &amp;&amp; vi src/eventos/crear.mjs</code></pre>
     <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/eventos/crear.mjs"><code>import { PutCommand } from '@aws-sdk/lib-dynamodb';
-import { db, TABLA_EVENTOS_FCI, nextId } from '../datos/dynamo.mjs';
+import { db, TABLA_EVENTOS_FCI, obtenerSiguienteIdDeSecuencia } from '../datos/dynamo.mjs';
 
 export async function handler({ title } = {}) {
   if (typeof title !== 'string' || !title.trim()) {
     throw new Error('Indica el título del evento');
   }
 
-  const eventId = await nextId('LAST_EVENT_ID');
+  const eventId = await obtenerSiguienteIdDeSecuencia('LAST_EVENT_ID');
   await db.send(new PutCommand({
     TableName: TABLA_EVENTOS_FCI,
     Item: { EVENT_ID: eventId, TITLE: title.trim() },
@@ -1121,12 +1121,12 @@ async function getPass(key) {
   <ol role="list">
     <li><h4>Navegador → API Gateway</h4><code>POST /events/1/registrations/usuario-02</code></li>
     <li><h4>Lambda · <code>src/pases/inscribir.mjs</code></h4><p><code>handleRequest</code> valida los identificadores y llama a <code>register(key)</code>.</p><code>key = { eventId: 1, userId: 'usuario-02' }</code></li>
-    <li><h4>DynamoDB</h4><p><code>GetCommand</code> busca <code>1</code> en <code>EVENTOS</code>. Si falta, responde <strong>404</strong>. Si existe, <code>nextId</code> asigna un <code>registrationId</code> y <code>PutCommand</code> guarda la inscripción con ese número, la pareja de claves y <code>registeredAt</code>.</p></li>
+    <li><h4>DynamoDB</h4><p><code>GetCommand</code> busca <code>1</code> en <code>EVENTOS</code>. Si falta, responde <strong>404</strong>. Si existe, <code>obtenerSiguienteIdDeSecuencia</code> asigna un <code>registrationId</code> y <code>PutCommand</code> guarda la inscripción con ese número, la pareja de claves y <code>registeredAt</code>.</p></li>
     <li><h4>Lambda → API Gateway → Navegador</h4><p><strong>201</strong> con el número de inscripción si la guarda. Si ya existe esa pareja, DynamoDB rechaza la escritura y <code>handleRequest</code> responde <strong>409</strong>.</p></li>
   </ol>
 </figure>
 <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-command data-explanations="prueba-command-notes"><code>vi '+/async function register(' src/pases/inscribir.mjs</code></pre></div>
-<p>Desde la raíz de <code>festival-checkin</code>, abre el módulo de POST. Copia el archivo completo para incluir el import de <code>nextId</code>. Si preparaste <code>dynamo.mjs</code> antes de este cambio, actualízalo con el archivo de <a href="#archivo-lambda">Archivos Lambda → DynamoDB</a>. Guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro y vuelve a desplegar.</p>
+<p>Desde la raíz de <code>festival-checkin</code>, abre el módulo de POST. Copia el archivo completo para incluir el import de <code>obtenerSiguienteIdDeSecuencia</code>. Si preparaste <code>dynamo.mjs</code> antes de este cambio, actualízalo con el archivo de <a href="#archivo-lambda">Archivos Lambda → DynamoDB</a>. Guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro y vuelve a desplegar.</p>
 <section class="lesson-example" aria-labelledby="ejemplo-register">
   <h4 id="ejemplo-register">Archivo completo <code>src/pases/inscribir.mjs</code></h4>
   <p><code>REGISTRATION_ID</code> va dentro de <code>Item</code>. En el YAML, <code>AttributeDefinitions</code> sigue declarando los atributos que se usan como claves. Si un intento incrementa el contador y después falla el guardado, puede quedar un salto en la numeración.</p>
@@ -1138,7 +1138,7 @@ async function getPass(key) {
     <div data-prefix="Key: { EVENT_ID"><strong>El evento se identifica con una clave.</strong><p><code>key.eventId</code> lee el valor de la ruta, por ejemplo <code>1</code>.</p></div>
     <div data-prefix="ConsistentRead:"><strong>Pide una lectura fuerte de la tabla.</strong><p>La lectura refleja las escrituras confirmadas antes de esa operación.</p></div>
     <div data-prefix="if (!event)"><strong>Si falta el evento, termina con 404.</strong><p>El <code>return</code> evita que se intente guardar la inscripción.</p></div>
-    <div data-prefix="const registrationId ="><strong>Asigna el siguiente número a la inscripción.</strong><p><code>nextId('LAST_REGISTRATION_ID')</code> incrementa el contador de inscripciones. <code>eventId</code> y <code>userId</code> ya vienen en la ruta.</p></div>
+    <div data-prefix="const registrationId ="><strong>Asigna el siguiente número a la inscripción.</strong><p><code>obtenerSiguienteIdDeSecuencia('LAST_REGISTRATION_ID')</code> incrementa el contador de inscripciones. <code>eventId</code> y <code>userId</code> ya vienen en la ruta.</p></div>
     <div data-prefix="await db.send(new PutCommand"><strong>Envía un ítem nuevo a DynamoDB.</strong><p>El SDK ejecuta <code>PutCommand</code> y JavaScript espera su resultado antes de responder.</p></div>
     <div data-prefix="TableName: TABLA_INSCRIPCIONES_FCI"><strong>La escritura va a INSCRIPCIONES.</strong><p><code>TABLA_INSCRIPCIONES_FCI</code> contiene el nombre recibido en <code>FCI_TABLA_INSCRIPCIONES</code>.</p></div>
     <div data-prefix="Item: {"><strong>Construye el ítem con la pareja, el número y la hora.</strong><p>El ítem guarda <code>EVENT_ID</code> y <code>USER_ID</code> a partir de la clave de la petición. <code>REGISTRATION_ID</code> guarda el número asignado. <code>toISOString()</code> escribe la hora UTC en <code>REGISTERED_AT</code>.</p></div>
@@ -1146,7 +1146,7 @@ async function getPass(key) {
     <div data-prefix="return json(201"><strong>Devuelve 201 después de guardar.</strong><p><code>json</code> es la función de <code>peticion.mjs</code> que prepara el estado HTTP y el cuerpo de la respuesta.</p></div>
   </template>
   <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/pases/inscribir.mjs" data-explanations="register-explanations"><code>import { GetCommand, PutCommand } from '@aws-sdk/lib-dynamodb';
-import { db, TABLA_EVENTOS_FCI, TABLA_INSCRIPCIONES_FCI, nextId } from '../datos/dynamo.mjs';
+import { db, TABLA_EVENTOS_FCI, TABLA_INSCRIPCIONES_FCI, obtenerSiguienteIdDeSecuencia } from '../datos/dynamo.mjs';
 import { handleRequest, json } from './peticion.mjs';
 
 export function handler(event) {
@@ -1161,7 +1161,7 @@ async function register(key) {
   }));
   if (!event) return json(404, { message: 'Evento no encontrado' });
 
-  const registrationId = await nextId('LAST_REGISTRATION_ID');
+  const registrationId = await obtenerSiguienteIdDeSecuencia('LAST_REGISTRATION_ID');
   await db.send(new PutCommand({
     TableName: TABLA_INSCRIPCIONES_FCI,
     Item: {
