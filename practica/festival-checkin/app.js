@@ -20,7 +20,6 @@ const title = document.querySelector('#screen-title');
 const DEMO_EVENT_ID = 1;
 const DEMO_TITLE = 'Festival de otoño';
 const demoRegistrations = new Map();
-let lastDemoRegistrationId = 0;
 
 function clearScreen() {
   const demo = mode.value === 'demo';
@@ -44,7 +43,8 @@ function demoRequest(method, userId) {
     return { status: 200, body: { eventId: DEMO_EVENT_ID, title: DEMO_TITLE, registration: registration ?? null } };
   }
   if (method === 'POST' && !registration) {
-    const registrationId = ++lastDemoRegistrationId;
+    const numerosGuardados = [...demoRegistrations.values()].map(({ registrationId }) => registrationId);
+    const registrationId = Math.max(0, ...numerosGuardados) + 1;
     demoRegistrations.set(userId, {
       eventId: DEMO_EVENT_ID,
       userId,
