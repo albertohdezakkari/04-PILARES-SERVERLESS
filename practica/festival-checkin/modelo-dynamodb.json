@@ -4,7 +4,7 @@
     "Author": "Festival Check-in",
     "Description": "Modelo de aula con registros ficticios para comparar inscripción y asistencia.",
     "AWSService": "Amazon DynamoDB",
-    "Version": "5.0"
+    "Version": "6.0"
   },
   "DataModel": [
     {
@@ -29,7 +29,8 @@
         "SortKey": { "AttributeName": "USER_ID", "AttributeType": "S" }
       },
       "NonKeyAttributes": [
-        { "AttributeName": "REGISTERED_AT", "AttributeType": "S" }
+        { "AttributeName": "REGISTERED_AT", "AttributeType": "S" },
+        { "AttributeName": "CHECKED_IN_AT", "AttributeType": "S" }
       ],
       "GlobalSecondaryIndexes": [
         {
@@ -51,7 +52,8 @@
         {
           "EVENT_ID": { "N": "1" },
           "USER_ID": { "S": "usuario-02" },
-          "REGISTERED_AT": { "S": "2026-11-12T09:06:00Z" }
+          "REGISTERED_AT": { "S": "2026-11-12T09:06:00Z" },
+          "CHECKED_IN_AT": { "S": "2026-11-12T09:12:00Z" }
         },
         {
           "EVENT_ID": { "N": "2" },

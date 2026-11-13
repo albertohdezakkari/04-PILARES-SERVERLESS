@@ -6,7 +6,8 @@ const event = { eventId: 1, title: 'Festival de otoño' };
 const registration = {
   eventId: 1,
   userId: 'usuario-02',
-  registeredAt: '2026-11-01T10:00:00.000Z'
+  registeredAt: '2026-11-01T10:00:00.000Z',
+  checkedInAt: '2026-11-01T10:15:00.000Z'
 };
 
 function putText(id, text) {
@@ -42,7 +43,8 @@ form.addEventListener('submit', submission => {
       Item: {
         EVENT_ID: item.eventId,
         USER_ID: item.userId,
-        REGISTERED_AT: item.registeredAt
+        REGISTERED_AT: item.registeredAt,
+        CHECKED_IN_AT: item.checkedInAt
       }
     } : {});
     putText('dynamo-registration-value', item
