@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="style.css?v=tablas-fci">
 <script type="module" src="app.js?v=clave-evento"></script>
 <script type="module" src="guia.js?v=capas-eventos"></script>
-<script type="module" src="visor-modelo.js?v=clave-evento"></script>
+<script type="module" src="visor-modelo.js?v=perfiles"></script>
 <script type="module" src="entrenamiento-dynamo.js?v=clave-evento"></script>
 </head>
 <body>
@@ -63,7 +63,7 @@
   <div class="er-edge" aria-hidden="true"><b>1</b><i></i><b>0..N</b></div>
   <section><h4>INSCRIPCION</h4><code>EVENT_ID + USER_ID</code><span>Fecha de inscripción</span><span>Fecha de entrada, opcional</span></section>
   <div class="er-edge" aria-hidden="true"><b>0..N</b><i></i><b>1</b></div>
-  <section><h4>USUARIO</h4><code>USER_ID</code><span>Identificador del usuario</span></section>
+  <section><h4>USUARIO</h4><code>USER_ID</code><span>Nombre visible</span><span>Ciudad</span></section>
 </div>
 <h4 class="design-label" id="dynamo-mapping">Cómo se guardan en DynamoDB</h4>
 <div class="dynamo-map" role="group" aria-labelledby="dynamo-mapping">
@@ -87,11 +87,15 @@
     </dl>
     <p><strong>PK</strong> agrupa a los inscritos del evento. <strong>SK</strong> distingue a cada usuario dentro de ese grupo.</p>
   </section>
-  <section class="dynamo-map-card dynamo-map-reference">
-    <p class="dynamo-map-origin"><span aria-hidden="true">↓</span> De USUARIO guardas su referencia</p>
-    <h5><abbr class="dynamo-sk" title="Clave de ordenación">SK</abbr> <code>USER_ID</code></h5>
-    <p class="dynamo-map-target">En <code>FCI_INSCRIPCIONES</code></p>
-    <p>El pase recibe <code>usuario-02</code> y guarda ese código en la inscripción. Crearías una tabla <code>USUARIOS</code> si el festival necesitara guardar perfiles.</p>
+  <section class="dynamo-map-card">
+    <p class="dynamo-map-origin"><span aria-hidden="true">↓</span> USUARIO se convierte en tabla</p>
+    <h5><code>FCI_USUARIOS</code></h5>
+    <dl>
+      <div><dt><abbr class="dynamo-pk" title="Clave de partición">PK</abbr> <code>USER_ID</code></dt><dd><code>usuario-02</code></dd></div>
+      <div><dt><code>DISPLAY_NAME</code></dt><dd>Leo Martín</dd></div>
+      <div><dt><code>CITY</code></dt><dd>Huesca</dd></div>
+    </dl>
+    <p>Lee el perfil con <code>USER_ID</code>. Ese mismo código aparece en las inscripciones de Leo.</p>
   </section>
 </div>
 <h4 class="design-label">Dos consultas sobre las mismas inscripciones</h4>
@@ -135,21 +139,18 @@
 <p class="checkpoint"><strong>Antes de avanzar</strong> Compara «¿Quién se ha inscrito al evento?» con «¿En qué eventos está inscrito usuario-02?». En la primera, entra por <code>EVENT_ID</code> en la tabla. En la segunda, entra por <code>USER_ID</code> en el índice. Probarás ambas búsquedas en <a href="#consultar-indice">Validar → Consultar índice</a>.</p>
 </article>
 <article id="modelo-titulo" class="guide-step" data-step="Probar el diseño">
-<h3>Convierte el modelo en dos tablas y pruébalo</h3>
+<h3>Convierte el modelo en tres tablas y pruébalo</h3>
 <p>Escribe los atributos de DynamoDB en mayúsculas con guion bajo, como <code>EVENT_ID</code>. Cuando la API recibe o devuelve JSON, usa nombres como <code>eventId</code>. Verás cómo traducirlos en <a href="#leer-pase">Lectura</a>.</p>
-<p class="lesson-note"><strong>Convención de Base de Datos.</strong> Llama a las entidades <strong>Evento</strong> e <strong>Inscripción</strong>. Usa la abreviatura del proyecto, un guion bajo y el nombre de la tabla en plural. En Festival Check-in obtienes <code>FCI_EVENTOS</code> y <code>FCI_INSCRIPCIONES</code>. «San Valentín» sería el título de un evento guardado en <code>FCI_EVENTOS</code>.</p>
+<p class="lesson-note"><strong>Convención de Base de Datos.</strong> Llama a las entidades <strong>Evento</strong>, <strong>Inscripción</strong> y <strong>Usuario</strong>. Usa la abreviatura del proyecto, un guion bajo y el nombre de la tabla en plural. En Festival Check-in obtienes <code>FCI_EVENTOS</code>, <code>FCI_INSCRIPCIONES</code> y <code>FCI_USUARIOS</code>. «San Valentín» sería el título de un evento guardado en <code>FCI_EVENTOS</code>.</p>
 <p><strong>Evento → EVENTOS.</strong> Guarda <code>EVENT_ID</code> y <code>TITLE</code>. <strong>Inscripción → INSCRIPCIONES.</strong> Guarda la pareja de identificadores, <code>REGISTERED_AT</code> y, al entrar, <code>CHECKED_IN_AT</code>.</p>
 <p><code>EVENT_ID</code> y <code>USER_ID</code> son referencias al evento y a la persona, como dos claves foráneas en un modelo relacional. La clave primaria de la inscripción es la pareja <code>EVENT_ID</code> + <code>USER_ID</code>, que garantiza una inscripción por persona y evento.</p>
-<p>En este caso, <strong>USUARIO</strong> es una entidad del diagrama. El pase recibe su <code>USER_ID</code> y <strong>INSCRIPCIONES</strong> guarda esa referencia. Si el festival necesita guardar perfiles, podrá añadir una tabla <code>USUARIOS</code>. En un modelo relacional, la clave foránea de la inscripción referencia al evento y la base de datos puede exigir que exista. Aquí <code>EVENT_ID</code> forma parte de la clave de DynamoDB y POST comprueba en la API que el evento existe antes de inscribir al usuario.</p>
-<div class="relation" aria-label="Un evento tiene cero o muchas inscripciones">
-  <div><strong>EVENTOS</strong><br><code>EVENT_ID</code> · PK</div><span aria-hidden="true">1 ─── 0..N</span>
-  <div><strong>INSCRIPCIONES</strong><br><code>EVENT_ID</code> · PK<br><code>USER_ID</code> · SK</div>
-</div>
+<p><strong>Usuario → USUARIOS.</strong> Guarda <code>USER_ID</code>, <code>DISPLAY_NAME</code> y <code>CITY</code>. Si Leo cambia de ciudad, actualiza su perfil una vez. Sus inscripciones conservan el mismo <code>USER_ID</code>.</p>
+<p>En DynamoDB la aplicación decide qué referencias comprueba. En esta práctica, POST comprueba que el evento existe y acepta el código de usuario de la ruta. Consulta y edita los perfiles desde <a href="#sembrar-usuarios">Sembrar datos → Usuarios</a>.</p>
 <p id="model-status" role="status">Cargando el ejemplo…</p>
 <div id="model-result">
 </div>
 <p><strong>Lee los datos de ejemplo.</strong> Un valor en <code>CHECKED_IN_AT</code> indica que el usuario ya entró. En el laboratorio, la tabla de inscripciones empezará vacía y se llenará al probar POST.</p>
-<p class="checkpoint"><strong>Antes de avanzar</strong> Pulsa <strong>Ver inscritos del evento</strong>. Aparecen dos filas con <code>EVENT_ID = 1</code> y dos <code>USER_ID</code> distintos. Pulsa <strong>Buscar a usuario-02</strong>. Ahora solo aparece la fila de <code>usuario-02</code>.</p>
+<p class="checkpoint"><strong>Antes de avanzar</strong> En <code>FCI_USUARIOS</code>, localiza a Leo con <code>USER_ID = usuario-02</code>. Pulsa <strong>Ver inscritos del evento</strong>. Aparecen dos filas con <code>EVENT_ID = 1</code> y dos <code>USER_ID</code> distintos. Pulsa <strong>Buscar a usuario-02</strong>. Ahora solo aparece la fila de <code>usuario-02</code>.</p>
 </article>
 </section>
 <section id="conexion" class="phase" hidden>
@@ -322,11 +323,13 @@ LAMBDA_ROLE_ARN=$(aws iam get-role --role-name LabRole --profile "$perfil" --reg
                   </li>
               </ul>
             </li>
+            <li><button type="button" data-yaml-block="Usuarios" data-yaml-line="FestivalCheckInUsuarios:" aria-pressed="false"><code>FestivalCheckInUsuarios</code></button></li>
           </ul>
         </li>
         <li><button type="button" data-yaml-block="Salidas" data-yaml-line="Outputs:" aria-pressed="false"><code>Outputs</code></button>
           <ul>
             <li><button type="button" data-yaml-block="Salidas" data-yaml-line="NombreTablaEventosFCI:" aria-pressed="false"><code>NombreTablaEventosFCI</code></button></li>
+            <li><button type="button" data-yaml-block="Salidas" data-yaml-line="NombreTablaUsuariosFCI:" aria-pressed="false"><code>NombreTablaUsuariosFCI</code></button></li>
             <li><button type="button" data-yaml-block="Salidas" data-yaml-line="NombreTablaInscripcionesFCI:" aria-pressed="false"><code>NombreTablaInscripcionesFCI</code></button></li>
           </ul>
         </li>
@@ -471,12 +474,21 @@ LAMBDA_ROLE_ARN=$(aws iam get-role --role-name LabRole --profile "$perfil" --reg
       <div><dt data-lines="Projection:|ProjectionType:"><code>ProjectionType: KEYS_ONLY</code></dt><dd>El índice guarda <code>USER_ID</code> y <code>EVENT_ID</code>. Con esa pareja puedes leer las fechas en la tabla de inscripciones.</dd></div>
     </dl>
   </section>
+  <section data-code-start="    FestivalCheckInUsuarios:" data-label="Usuarios" hidden>
+    <p class="yaml-outcome" hidden>Puedes leer el perfil con el mismo USER_ID que aparece en la inscripción.</p>
+    <h4>Cómo se crea USUARIOS</h4>
+    <dl class="yaml-terms">
+      <div><dt><code>FestivalCheckInUsuarios:</code></dt><dd>Nombre lógico del recurso que crea <code>FCI_USUARIOS</code>.</dd></div>
+      <div><dt data-lines="AttributeDefinitions:|AttributeType:"><code>AttributeDefinitions:</code></dt><dd><code>USER_ID</code> es de tipo <code>S</code>, texto. Añadirás <code>DISPLAY_NAME</code> y <code>CITY</code> al escribir cada ítem.</dd></div>
+      <div><dt data-lines="KeySchema:|KeyType:"><code>KeySchema:</code></dt><dd><code>HASH</code> declara <code>USER_ID</code> como única clave. Cada código corresponde a un perfil.</dd></div>
+    </dl>
+  </section>
   <section data-code-start="  Outputs:" data-label="Salidas" hidden>
     <p class="yaml-outcome" hidden>La terminal puede recuperar los nombres de las tablas para consultarlas.</p>
     <h4>Qué devuelve el despliegue a la terminal</h4>
     <dl class="yaml-terms">
       <div><dt><code>Outputs:</code></dt><dd>Declara los valores que CloudFormation muestra como resultado del despliegue. Está al mismo nivel que <code>Resources</code>.</dd></div>
-      <div><dt data-lines="NombreTablaEventosFCI:|NombreTablaInscripcionesFCI:"><code>NombreTablaEventosFCI:</code></dt><dd>Nombre que elegimos para la salida de la tabla de eventos. <code>NombreTablaInscripcionesFCI</code> es la salida de la otra tabla.</dd></div>
+      <div><dt data-lines="NombreTablaEventosFCI:|NombreTablaInscripcionesFCI:|NombreTablaUsuariosFCI:"><code>NombreTablaEventosFCI:</code></dt><dd>Nombre que elegimos para la salida de la tabla de eventos. <code>NombreTablaInscripcionesFCI</code> y <code>NombreTablaUsuariosFCI</code> devuelven los nombres de las tablas de inscripciones y usuarios.</dd></div>
       <div><dt data-lines="Value:|Ref:"><code>Value:</code></dt><dd>Indica qué dato devuelve cada salida. Con <code>Ref: FestivalCheckInEventos</code>, devuelve el nombre real de la tabla de eventos. Lo recuperarás desde la terminal en <a href="#salidas-stack">Salidas</a>.</dd></div>
     </dl>
     <div class="yaml-question">
@@ -579,13 +591,27 @@ resources:
                 KeyType: RANGE
             Projection:
               ProjectionType: KEYS_ONLY
+    FestivalCheckInUsuarios:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: FCI_USUARIOS
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: USER_ID
+            AttributeType: S
+        KeySchema:
+          - AttributeName: USER_ID
+            KeyType: HASH
   Outputs:
     NombreTablaEventosFCI:
       Value:
         Ref: FestivalCheckInEventos
     NombreTablaInscripcionesFCI:
       Value:
-        Ref: FestivalCheckInInscripciones</code></pre>
+        Ref: FestivalCheckInInscripciones
+    NombreTablaUsuariosFCI:
+      Value:
+        Ref: FestivalCheckInUsuarios</code></pre>
 </div>
 <p class="checkpoint"><strong>Antes de avanzar</strong> En el árbol, abre <strong>FestivalCheckInInscripciones → Properties</strong>. Compara <strong>KeySchema</strong> con <strong>GlobalSecondaryIndexes</strong>. Localiza <code>EVENT_ID</code> como <code>HASH</code> de la tabla y <code>USER_ID</code> como <code>HASH</code> del índice.</p>
 </article>
@@ -603,7 +629,7 @@ resources:
 <div class="lambda-hero">
   <div>
     <h3>Una carpeta por dominio, un archivo por operación</h3>
-    <p>Busca todo lo relacionado con pases en <code>src/pases/</code>. Si mañana añades un dominio de eventos o usuarios, tendrá su propia carpeta.</p>
+    <p>Busca todo lo relacionado con pases en <code>src/pases/</code>. El caso de uso de alta de eventos vive en <code>src/eventos/crear-evento/</code>.</p>
   </div>
   <div class="lambda-ticket">
     <strong>Así localizas una petición</strong>
@@ -814,7 +840,7 @@ node --input-type=module -e '
 <p>Si compartís cuenta, región y proyecto, una persona ejecuta los despliegues y comparte la URL y los IDs de los eventos. Cada pareja usa códigos de usuario distintos para que sus pruebas de inscripción y entrada partan de un pase libre.</p>
 
 <dl class="command-reasons"><div><dt><code>node --check</code></dt><dd>Comprueba la sintaxis del módulo que indicas.</dd></div><div><dt><code>&amp;&amp;</code></dt><dd>Ejecuta el segundo comando si el primero termina correctamente.</dd></div><div><dt><code>--stage dev</code></dt><dd>Selecciona el entorno de desarrollo de tu servicio.</dd></div></dl>
-<p>Ejecuta el comando en la carpeta <code>festival-checkin</code>. Serverless Framework lee tu YAML y CloudFormation crea las tablas, las cuatro funciones y la HTTP API en el laboratorio.</p><pre><code>(
+<p>Ejecuta el comando en la carpeta <code>festival-checkin</code>. Serverless Framework lee tu YAML y CloudFormation crea las tres tablas, las cuatro funciones y la HTTP API en el laboratorio.</p><pre><code>(
   for archivo in src/pases/*.mjs src/datos/*.mjs src/eventos/crear-evento/*.mjs; do
     node --check "$archivo" || exit 1
   done
@@ -826,7 +852,7 @@ node --input-type=module -e '
 <article id="salidas-stack" class="guide-step" data-step="Salidas">
 <h3>Recupera los nombres reales y la URL</h3>
 <p class="lesson-note"><strong>Del nombre lógico al nombre real.</strong> En el YAML escribiste <code>FestivalCheckInEventos</code>. CloudFormation crea la tabla con el nombre indicado en <code>TableName</code>, por ejemplo <code>FCI_EVENTOS</code>. <code>salida NombreTablaEventosFCI</code> lo obtiene del stack y <code>tabla_eventos</code> lo guarda para que tus comandos apunten a esa tabla. <code>api_url</code> guarda la dirección que usarás con <code>curl</code>.</p>
-<p>Ejecuta el bloque en la misma terminal. Las dos primeras líneas impresas son los nombres de DynamoDB. La tercera es la URL base de la HTTP API. Guarda esa URL para la prueba de lectura.</p><pre><code>stack="festival-check-in-dev"
+<p>Ejecuta el bloque en la misma terminal. Las tres primeras líneas son los nombres de DynamoDB. La cuarta es la URL base de la HTTP API. Guarda esa URL para la prueba de lectura.</p><pre><code>stack="festival-check-in-dev"
 salida() {
   aws cloudformation describe-stacks --stack-name "$stack" \
     --profile "$perfil" --region "$region" \
@@ -834,13 +860,14 @@ salida() {
 }
 tabla_eventos=$(salida NombreTablaEventosFCI)
 tabla_inscripciones=$(salida NombreTablaInscripcionesFCI)
+tabla_usuarios=$(salida NombreTablaUsuariosFCI)
 api_url=$(salida HttpApiUrl)
-printf '%s\n' "$tabla_eventos" "$tabla_inscripciones" "$api_url"</code></pre><p class="checkpoint"><strong>Antes de avanzar</strong> Ves <code>FCI_EVENTOS</code>, <code>FCI_INSCRIPCIONES</code> y una URL de API Gateway. Si ves None, verifica el nombre del stack, el perfil y la región antes de crear los eventos.</p>
+printf '%s\n' "$tabla_eventos" "$tabla_inscripciones" "$tabla_usuarios" "$api_url"</code></pre><p class="checkpoint"><strong>Antes de avanzar</strong> Ves <code>FCI_EVENTOS</code>, <code>FCI_INSCRIPCIONES</code>, <code>FCI_USUARIOS</code> y una URL de API Gateway. Si ves None, verifica el nombre del stack, el perfil y la región antes de crear los eventos.</p>
 </article>
 <article id="estado-tablas" class="guide-step" data-step="Estado">
 <h3>Espera y comprueba las claves</h3>
 <p class="lesson-note"><strong>Comprueba el diseño en AWS.</strong> <code>describe-table</code> muestra el esquema desplegado. Busca el <code>HASH</code> que elegiste para agrupar por evento y el <code>RANGE</code> que distingue las inscripciones.</p>
-<p>Ejecuta el bloque. <code>wait</code> vuelve al prompt sin imprimir nada cuando la tabla está lista. <code>describe-table</code> muestra las claves.</p><pre><code>for tabla in "$tabla_eventos" "$tabla_inscripciones"; do
+<p>Ejecuta el bloque. <code>wait</code> vuelve al prompt sin imprimir nada cuando la tabla está lista. <code>describe-table</code> muestra las claves.</p><pre><code>for tabla in "$tabla_eventos" "$tabla_inscripciones" "$tabla_usuarios"; do
   aws dynamodb wait table-exists \
     --profile "$perfil" --region "$region" --table-name "$tabla" || break
   aws dynamodb describe-table \
@@ -853,7 +880,31 @@ done</code></pre>
   --query "Table.GlobalSecondaryIndexes[?IndexName=='PorUsuario'].{Estado:IndexStatus,Claves:KeySchema}" \
   --output json</code></pre>
 <p>Si ves <code>CREATING</code>, repite este último comando hasta ver <code>ACTIVE</code>. Si ves <code>[]</code> o <code>null</code>, comprueba que el YAML incluye <code>PorUsuario</code> y despliega de nuevo.</p>
-<p class="checkpoint"><strong>Antes de avanzar</strong> Las dos tablas y el índice están <code>ACTIVE</code>. En <code>Tipos</code>, <code>EVENT_ID</code> es <code>N</code> en ambas tablas. En <code>EVENTOS</code>, <code>EVENT_ID</code> es la única clave y figura como <code>HASH</code>. En <code>INSCRIPCIONES</code>, <code>EVENT_ID</code> es <code>HASH</code> y <code>USER_ID</code> es <code>RANGE</code>. En <code>PorUsuario</code> los papeles se invierten.</p>
+<p class="checkpoint"><strong>Antes de avanzar</strong> Las tres tablas y el índice están <code>ACTIVE</code>. En <code>USUARIOS</code>, <code>USER_ID</code> es la única clave, con tipo <code>S</code> y papel <code>HASH</code>. En <code>EVENTOS</code>, <code>EVENT_ID</code> es la única clave y figura como <code>HASH</code>. En <code>INSCRIPCIONES</code>, <code>EVENT_ID</code> es <code>HASH</code> y <code>USER_ID</code> es <code>RANGE</code>. En <code>PorUsuario</code> los papeles se invierten.</p>
+</article>
+<article id="sembrar-usuarios" class="guide-step" data-step="Usuarios">
+<h3>Crea, consulta y actualiza un perfil</h3>
+<ol class="route-map" aria-label="Recorrido del perfil en DynamoDB">
+  <li><strong>INSERT · Crea el perfil</strong><p><code>USER_ID</code> identifica a Leo. <code>DISPLAY_NAME</code> y <code>CITY</code> son atributos del perfil.</p></li>
+  <li><strong>SELECT · Busca por su clave</strong><p>Usa <code>usuario-02</code>, el mismo código que podrás usar para su inscripción.</p></li>
+  <li><strong>UPDATE · Cambia su ciudad</strong><p>Modifica <code>CITY</code> con la misma clave. Si Leo tiene varios pases, todos conservan el mismo <code>USER_ID</code>.</p></li>
+</ol>
+<p>Desde <code>festival-checkin</code>, en Git Bash o Terminal, usa las variables del paso <a href="#salidas-stack">Salidas</a>. Crea el perfil ficticio de Leo. Si ya existe <code>usuario-02</code>, continúa con la consulta del perfil.</p>
+<pre><code>aws dynamodb execute-statement \
+  --profile "$perfil" --region "$region" \
+  --statement "INSERT INTO \"$tabla_usuarios\" VALUE {'USER_ID': 'usuario-02', 'DISPLAY_NAME': 'Leo Martín', 'CITY': 'Huesca'}"</code></pre>
+<p>Lee el perfil. <code>?</code> recibe el código de usuario con tipo <code>S</code>.</p>
+<pre><code>aws dynamodb execute-statement \
+  --profile "$perfil" --region "$region" --consistent-read \
+  --statement "SELECT * FROM \"$tabla_usuarios\" WHERE \"USER_ID\" = ?" \
+  --parameters '[{"S":"usuario-02"}]'</code></pre>
+<p>Actualiza la ciudad de Leo y vuelve a ejecutar el <code>SELECT</code>.</p>
+<pre><code>aws dynamodb execute-statement \
+  --profile "$perfil" --region "$region" \
+  --statement "UPDATE \"$tabla_usuarios\" SET \"CITY\" = ? WHERE \"USER_ID\" = ?" \
+  --parameters '[{"S":"Zaragoza"},{"S":"usuario-02"}]'</code></pre>
+<p class="checkpoint"><strong>Antes de avanzar</strong> El <code>SELECT</code> devuelve un ítem con <code>USER_ID = usuario-02</code>, <code>DISPLAY_NAME = Leo Martín</code> y <code>CITY = Zaragoza</code>. Puedes abrir <a href="#modelo-titulo">Probar el diseño</a> para comparar con los datos de ejemplo.</p>
+<p><a href="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ql-reference.insert.html">Documentación de INSERT</a> · <a href="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ql-reference.update.html">Documentación de UPDATE</a></p>
 </article>
 <article id="guardar-evento" class="guide-step" data-step="Crear eventos">
 <h3>Crea dos eventos y guarda sus identificadores</h3>
@@ -1575,10 +1626,11 @@ aws dynamodb execute-statement \
 <h3>Del modelo al primer registro</h3>
 <figure class="infra-flow">
   <ol>
-    <li><a href="#modelo-titulo">Elige las claves</a><span>EVENTOS · EVENT_ID<br>INSCRIPCIONES · EVENT_ID + USER_ID</span></li>
-    <li><a href="#infraestructura">Escribe serverless.yml</a><span>Dos tablas, cuatro funciones y las rutas del pase</span></li>
+    <li><a href="#modelo-titulo">Elige las claves</a><span>EVENTOS · EVENT_ID<br>INSCRIPCIONES · EVENT_ID + USER_ID<br>USUARIOS · USER_ID</span></li>
+    <li><a href="#infraestructura">Escribe serverless.yml</a><span>Tres tablas, cuatro funciones y las rutas del pase</span></li>
     <li><a href="#desplegar-stack">Despliega en AWS</a><span>Serverless Framework → CloudFormation → recursos del laboratorio</span></li>
-    <li><a href="#guardar-evento">Carga el primer evento</a><span>AWS CLI → Lambda → máximo guardado y evento</span></li>
+    <li><a href="#guardar-evento">Carga el primer evento</a><span>AWS CLI → Lambda → evento con el ID enviado</span></li>
+    <li><a href="#sembrar-usuarios">Mantén un perfil</a><span>PartiQL → USER_ID → nombre visible y ciudad</span></li>
     <li><a href="#entrenar-dynamo">Entrena la lectura</a><span>Clave → ítem → objeto JavaScript → respuesta HTTP</span></li>
     <li><a href="#consultar-indice">Busca en las dos direcciones</a><span>Tabla → inscritos de un evento<br>PorUsuario → eventos de un usuario</span></li>
   </ol>

@@ -4,7 +4,7 @@
     "Author": "Festival Check-in",
     "Description": "Modelo de aula con registros ficticios para comparar inscripción y asistencia.",
     "AWSService": "Amazon DynamoDB",
-    "Version": "4.0"
+    "Version": "5.0"
   },
   "DataModel": [
     {
@@ -60,6 +60,22 @@
           "USER_ID": { "S": "usuario-02" },
           "REGISTERED_AT": { "S": "2026-11-12T09:15:00Z" }
         }
+      ]
+    },
+    {
+      "TableName": "FCI_USUARIOS",
+      "KeyAttributes": {
+        "PartitionKey": { "AttributeName": "USER_ID", "AttributeType": "S" }
+      },
+      "NonKeyAttributes": [
+        { "AttributeName": "DISPLAY_NAME", "AttributeType": "S" },
+        { "AttributeName": "CITY", "AttributeType": "S" }
+      ],
+      "GlobalSecondaryIndexes": [],
+      "DataAccess": {},
+      "TableData": [
+        { "USER_ID": { "S": "usuario-01" }, "DISPLAY_NAME": { "S": "Ana Ruiz" }, "CITY": { "S": "Zaragoza" } },
+        { "USER_ID": { "S": "usuario-02" }, "DISPLAY_NAME": { "S": "Leo Martín" }, "CITY": { "S": "Huesca" } }
       ]
     }
   ]

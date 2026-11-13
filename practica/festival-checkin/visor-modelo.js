@@ -135,7 +135,7 @@ function showModel(message = status) {
 async function loadExample(message, onlyIfEmpty = false) {
   example.disabled = true;
   try {
-    const response = await fetch('modelo-dynamodb.json?v=clave-evento');
+    const response = await fetch('modelo-dynamodb.json?v=perfiles');
     if (!response.ok) throw new Error('El ejemplo no está disponible en este momento.');
     const source = await response.text();
     if (onlyIfEmpty && input.value.trim()) return;
