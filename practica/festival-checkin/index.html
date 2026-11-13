@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Festival Check-in · práctica guiada</title>
-<link rel="stylesheet" href="style.css?v=tabs-en-filas">
+<link rel="stylesheet" href="style.css?v=lienzo-alta">
 <script type="module" src="app.js?v=pases-orm"></script>
-<script type="module" src="guia.js?v=tabs-en-filas"></script>
+<script type="module" src="guia.js?v=lienzo-alta"></script>
 <script type="module" src="visor-modelo.js?v=pases-orm"></script>
 <script type="module" src="entrenamiento-dynamo.js?v=clave-evento"></script>
 </head>
@@ -911,16 +911,93 @@ evento_secundario_id=2</code></pre>
 <article id="capas-eventos" class="guide-step" data-step="Crear por capas">
 <h3>Crear un evento con Handler, Service y Repository</h3>
 <p>Acabas de crear dos eventos y de leerlos en DynamoDB. Ahora reorganiza <code>handler.mjs</code> para que puedas localizar por separado la entrada de Lambda, las decisiones del caso de uso y el acceso a la tabla.</p>
-<ol class="route-map" aria-label="Recorrido para crear un evento">
-  <li><span>Handler · <code>handler.mjs</code></span><strong>Recibe el ID y el título</strong><p>AWS CLI invoca la Lambda con <code>{ "eventId": 3, "title": "Noche de ciencia" }</code>. El handler pasa ambos valores al service y devuelve <code>eventId</code> y <code>title</code>.</p></li>
-  <li><span>Service · <code>service.mjs</code></span><strong>Decide cómo crear el evento</strong><p>Pasa el ID y el título a <code>guardarEvento(eventId, title)</code> y prepara el resultado.</p></li>
-  <li><span>Repository · <code>repository.mjs</code></span><strong>Escribe en DynamoDB</strong><p>Usa el ID recibido y <code>PutCommand</code> para guardar el evento. La condición protege los eventos ya guardados.</p></li>
-</ol>
+<section class="architecture-canvas" aria-labelledby="arquitectura-alta">
+  <h4 id="arquitectura-alta">Sigue el alta de un evento</h4>
+  <p>Usa la misma petición en los dos recorridos. Selecciona un nodo para ver qué hace y qué líneas lo ejecutan.</p>
+  <code class="architecture-payload">{ "eventId": 3, "title": "Noche de ciencia" }</code>
+  <figure class="architecture-flow">
+  <figcaption><strong>1. Escritura directa</strong><span>El handler recibe el evento, prepara el ítem y lo guarda.</span></figcaption>
+  <ol class="architecture-nodes" data-architecture aria-label="1. Escritura directa">
+    <li class="architecture-node">
+      <button type="button" aria-expanded="false" aria-controls="arquitectura-directa-1">
+        <strong>Lambda · Handler</strong><code>handler.mjs</code>
+      </button>
+      <div id="arquitectura-directa-1" class="architecture-callout" hidden>
+        <p>AWS invoca <code>handler</code>. Aquí lees <code>eventId</code> y <code>title</code>, construyes el <code>PutCommand</code> y esperas a que DynamoDB confirme la escritura.</p>
+        <pre data-diagram><code>const comando = new PutCommand({
+  TableName: TABLA_EVENTOS_FCI,
+  Item: { EVENT_ID: eventId, TITLE: title },
+  ConditionExpression: &#x27;attribute_not_exists(EVENT_ID)&#x27;
+});
+await db.send(comando);</code></pre>
+      </div>
+    </li>
+    <li class="architecture-node">
+      <button type="button" aria-expanded="false" aria-controls="arquitectura-directa-2">
+        <strong>DynamoDB</strong><code>FCI_EVENTOS</code>
+      </button>
+      <div id="arquitectura-directa-2" class="architecture-callout" hidden>
+        <p>La tabla recibe el ítem y usa <code>EVENT_ID</code> como clave. Si el ID ya existe, la condición de escritura protege el evento guardado.</p>
+        <pre data-diagram><code>{ &quot;EVENT_ID&quot;: 3, &quot;TITLE&quot;: &quot;Noche de ciencia&quot; }</code></pre>
+      </div>
+    </li>
+  </ol>
+</figure>
+  <figure class="architecture-flow">
+  <figcaption><strong>2. Escritura por capas</strong><span>Handler, Service y Repository son módulos de la misma Lambda.</span></figcaption>
+  <ol class="architecture-nodes" data-architecture aria-label="2. Escritura por capas">
+    <li class="architecture-node">
+      <button type="button" aria-expanded="false" aria-controls="arquitectura-capas-1">
+        <strong>Lambda · Handler</strong><code>handler.mjs</code>
+      </button>
+      <div id="arquitectura-capas-1" class="architecture-callout" hidden>
+        <p>AWS sigue invocando este archivo. El handler extrae los datos y devuelve el resultado que produce el service.</p>
+        <pre data-diagram><code>export function handler({ eventId, title } = {}) {
+  return crearEvento(eventId, title);
+}</code></pre>
+      </div>
+    </li>
+    <li class="architecture-node">
+      <button type="button" aria-expanded="false" aria-controls="arquitectura-capas-2">
+        <strong>Service</strong><code>service.mjs</code>
+      </button>
+      <div id="arquitectura-capas-2" class="architecture-callout" hidden>
+        <p><code>crearEvento</code> coordina el alta. Espera a que el repository guarde el evento y después devuelve los datos de la respuesta.</p>
+        <pre data-diagram><code>await guardarEvento(eventId, title);
+return { eventId, title };</code></pre>
+      </div>
+    </li>
+    <li class="architecture-node">
+      <button type="button" aria-expanded="false" aria-controls="arquitectura-capas-3">
+        <strong>Repository</strong><code>repository.mjs</code>
+      </button>
+      <div id="arquitectura-capas-3" class="architecture-callout" hidden>
+        <p><code>guardarEvento</code> prepara los atributos de DynamoDB, construye el comando con la condición de escritura y lo envía.</p>
+        <pre data-diagram><code>const comando = new PutCommand({
+  TableName: TABLA_EVENTOS_FCI,
+  Item: itemEvento,
+  ConditionExpression: 'attribute_not_exists(EVENT_ID)'
+});
+await db.send(comando);</code></pre>
+      </div>
+    </li>
+    <li class="architecture-node">
+      <button type="button" aria-expanded="false" aria-controls="arquitectura-capas-4">
+        <strong>DynamoDB</strong><code>FCI_EVENTOS</code>
+      </button>
+      <div id="arquitectura-capas-4" class="architecture-callout" hidden>
+        <p>El ítem tiene los mismos atributos que en la escritura directa. Al confirmarse la operación, el control vuelve al service y luego al handler.</p>
+        <pre data-diagram><code>{ &quot;EVENT_ID&quot;: 3, &quot;TITLE&quot;: &quot;Noche de ciencia&quot; }</code></pre>
+      </div>
+    </li>
+  </ol>
+</figure>
+</section>
 <h4>Del dominio al caso de uso</h4>
-<p><code>eventos/</code> agrupa el dominio. Dentro, <code>crear-evento/</code> reúne los archivos del alta. Si añades una edición, tendrás una carpeta hermana <code>modificar-evento/</code> con sus propios archivos. Así, para encontrar la flujo del alta, vas directamente a <code>eventos/crear-evento/service.mjs</code>.</p>
+<p><code>eventos/</code> agrupa el dominio. Dentro, <code>crear-evento/</code> reúne los archivos del alta. Si añades una edición, tendrás una carpeta hermana <code>modificar-evento/</code> con sus propios archivos. Así, para encontrar el flujo del alta, vas directamente a <code>eventos/crear-evento/service.mjs</code>.</p>
 <pre data-diagram><code>src/
 ├── datos/
-│   └── dynamo.mjs                 cliente y consulta compartida
+│   └── dynamo.mjs                 cliente compartido
 └── eventos/
     └── crear-evento/
         ├── handler.mjs            entrada de Lambda
@@ -933,7 +1010,7 @@ evento_secundario_id=2</code></pre>
 <template id="capas-eventos-notas">
   <div data-prefix="const itemEvento ="><strong>Traduce los datos a los atributos de DynamoDB</strong><p>El valor de <code>eventId</code> se guarda como <code>EVENT_ID</code> y <code>title</code> como <code>TITLE</code>.</p></div>
   <div data-prefix="ConditionExpression:"><strong>Inserta solo si la clave está libre</strong><p>DynamoDB comprueba la condición al escribir. Si dos peticiones usan el mismo ID, solo una puede guardar el evento.</p></div>
-  <div data-prefix="await db.send(comando)"><strong>Envía la escritura</strong><p>El repository espera la confirmación de DynamoDB antes de devolver el ID.</p></div>
+  <div data-prefix="await db.send(comando)"><strong>Envía la escritura</strong><p>El repository espera la confirmación de DynamoDB antes de que el service devuelva el ID.</p></div>
 </template>
 <div class="guided-explainer" data-explainer>
   <div class="guided-options" role="group" aria-label="Archivos de creación de eventos">

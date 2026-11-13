@@ -255,6 +255,101 @@ button[aria-pressed="true"] > .phase-number { color: inherit; }
   border-radius: 10px;
   background: var(--surface);
 }
+.architecture-canvas {
+  margin-block: 18px;
+  padding: clamp(12px, 2.5vw, 26px);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: radial-gradient(circle, #544563 1px, transparent 1px) 0 0 / 18px 18px, var(--background);
+}
+.architecture-canvas h4 { margin: 0; font-size: clamp(1.2rem, 2.8vw, 1.8rem); }
+.architecture-canvas > p { margin: 6px 0 10px; }
+.architecture-payload {
+  display: inline-block;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  overflow-wrap: anywhere;
+}
+.architecture-flow { margin: 16px 0 0; padding: 12px; background: #191323; border-radius: 12px; }
+.architecture-flow figcaption { display: grid; gap: 3px; margin-bottom: 12px; }
+.architecture-flow figcaption strong { color: #9ee4d8; }
+.architecture-flow figcaption span { color: var(--muted); }
+.architecture-nodes { display: flex; gap: 28px; margin: 0; padding: 0; list-style: none; }
+.architecture-node { flex: 1; min-width: 0; margin: 0; position: relative; }
+.architecture-node + .architecture-node::before {
+  content: '→';
+  position: absolute;
+  top: 18px;
+  right: calc(100% + 5px);
+  color: #9ee4d8;
+  font-weight: 750;
+}
+.architecture-node button {
+  position: relative;
+  display: grid;
+  width: 100%;
+  min-height: 66px;
+  gap: 3px;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+.architecture-node button[aria-expanded="true"] { border-color: #9ee4d8; background: #203233; }
+.architecture-node button code { color: var(--muted); }
+.architecture-callout {
+  position: relative;
+  margin-top: 12px;
+  padding: 10px;
+  border: 1px solid #9ee4d8;
+  border-radius: 8px;
+  background: #203233;
+}
+.architecture-callout::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: 18px;
+  width: 10px;
+  height: 10px;
+  transform: rotate(45deg);
+  border-top: 1px solid #9ee4d8;
+  border-left: 1px solid #9ee4d8;
+  background: inherit;
+}
+.architecture-callout p { margin: 0 0 8px; }
+.architecture-callout pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+@media (min-width: 721px) {
+  .architecture-nodes {
+    --columns: 2;
+    display: grid;
+    grid-template-columns: repeat(var(--columns), minmax(0, 1fr));
+    gap: 12px 28px;
+  }
+  .architecture-nodes:has(.architecture-node:nth-child(4)) { --columns: 4; }
+  .architecture-node { display: contents; }
+  .architecture-node button { grid-row: 1; }
+  .architecture-node + .architecture-node::before { content: none; }
+  .architecture-node + .architecture-node button::before {
+    content: '→';
+    position: absolute;
+    top: 18px;
+    right: calc(100% + 5px);
+    color: #9ee4d8;
+    font-weight: 750;
+  }
+  .architecture-node:nth-child(2) { --column-offset: 1; }
+  .architecture-node:nth-child(3) { --column-offset: 2; }
+  .architecture-node:nth-child(4) { --column-offset: 3; }
+  .architecture-callout { grid-column: 1 / -1; grid-row: 2; margin-top: 0; }
+  .architecture-callout::before {
+    left: calc((100% + 28px) / var(--columns) * var(--column-offset, 0) + 18px);
+  }
+}
+@media (max-width: 720px) {
+  .architecture-nodes { flex-direction: column; }
+  .architecture-node + .architecture-node::before { content: '↓'; top: -26px; right: auto; left: 18px; }
+}
 .guided-options {
   display: flex;
   flex-wrap: wrap;

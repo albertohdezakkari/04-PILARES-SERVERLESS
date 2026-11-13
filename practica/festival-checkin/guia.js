@@ -338,6 +338,27 @@ for (const explainer of document.querySelectorAll('[data-explainer]')) {
   }
 }
 
+for (const diagram of document.querySelectorAll('[data-architecture]')) {
+  const nodes = [...diagram.querySelectorAll('button[aria-controls]')];
+  function openNote(active) {
+    for (const node of nodes) {
+      const open = node === active;
+      node.setAttribute('aria-expanded', String(open));
+      document.getElementById(node.getAttribute('aria-controls')).hidden = !open;
+    }
+  }
+
+  for (const node of nodes) {
+    node.addEventListener('click', () => {
+      openNote(node.getAttribute('aria-expanded') === 'true' ? null : node);
+    });
+  }
+
+  diagram.addEventListener('keydown', event => {
+    if (event.key === 'Escape') openNote(null);
+  });
+}
+
 const accessButtons = [...document.querySelectorAll('[data-access]')];
 const accessPanels = document.querySelectorAll('[data-access-panel]');
 for (const choice of accessButtons) {
