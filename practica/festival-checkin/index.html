@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Festival Check-in · práctica guiada</title>
-<link rel="stylesheet" href="style.css?v=lienzo-alta">
+<link rel="stylesheet" href="style.css?v=recorrido-lambda">
 <script type="module" src="app.js?v=pases-orm"></script>
-<script type="module" src="guia.js?v=lienzo-alta"></script>
+<script type="module" src="guia.js?v=recorrido-lambda"></script>
 <script type="module" src="visor-modelo.js?v=referencias"></script>
 <script type="module" src="entrenamiento-dynamo.js?v=referencias"></script>
 </head>
@@ -15,16 +15,12 @@
 <header class="course-header">
   <div><a href="../../">← Cuaderno Serverless</a><h1>Festival <em>Check-in</em></h1>
 </div>
-  <div class="actions"><a href="#infografia-terminal">Infografía</a><a href="#json-modelo">Modelo JSON</a>
+  <div class="actions"><a href="#iniciar-lab">Preparar AWS</a><a href="#nombres-tablas">Preparar proyecto</a><a href="#entidad-relacion">Modelo de datos</a><a href="#infografia-terminal">Infografía</a><a href="#json-modelo">Modelo JSON</a>
 </div>
 </header>
 <nav class="phases" aria-label="Fases de la práctica">
-  <button type="button" data-phase="mision" aria-pressed="true"><span class="phase-number">1</span> Caso</button>
-  <button type="button" data-phase="diseno" aria-pressed="false"><span class="phase-number">2</span> Diseñar</button>
-  <button type="button" data-phase="conexion" aria-pressed="false"><span class="phase-number">3</span> Conectar</button>
-  <button type="button" data-phase="infra" aria-pressed="false"><span class="phase-number">4</span> Programar y desplegar</button>
-  <button type="button" data-phase="datos" aria-pressed="false"><span class="phase-number">5</span> Datos y casos de uso</button>
-  <button type="button" data-phase="prueba" aria-pressed="false"><span class="phase-number">6</span> Validar</button>
+  <button type="button" data-phase="datos" aria-pressed="true">Lambdas</button>
+  <button type="button" data-phase="prueba" aria-pressed="false">Validar</button>
   <button type="button" data-phase="pantalla" aria-pressed="false">Pantalla de prueba</button>
 </nav>
 <div id="guide-toolbar">
@@ -33,7 +29,7 @@
   <nav id="guide-steps" class="actions" aria-label="Pasos de esta fase"></nav>
 </div>
 <div class="course-content" id="course-content">
-<section id="mision" class="phase" hidden>
+<section id="mision" class="phase" data-reference hidden>
 <h2>La puerta del festival</h2>
 <article id="objetivo" class="guide-step" data-step="Caso de uso">
 <div class="lesson-intro">
@@ -45,19 +41,10 @@
   <li><span>1</span><div><h4>Consultar el pase</h4><p>Pulsa <strong>Consultar</strong>. Con un código nuevo, ves el título del evento y <strong>Sin inscripción</strong>.</p></div><code>GET · 200</code></li>
   <li><span>2</span><div><h4>Inscribirse</h4><p>Pulsa <strong>Inscribirse</strong>. El pase pasa a <strong>Inscrito</strong>. Repite la acción para comprobar que la primera inscripción se conserva.</p></div><code>POST · 201 → 409</code></li>
 </ol>
-<h4>Qué consigues en cada fase</h4>
-<ol class="route-map" aria-label="Recorrido de la práctica">
-  <li><span>1 · Caso</span><strong>Prueba el pase</strong><p>En el móvil de ensayo ves qué ocurre al consultar e inscribirte.</p></li>
-  <li><span>2 · Diseñar</span><strong>Dibuja los datos</strong><p>Decides qué guardan Eventos, Usuarios e Inscripciones y con qué claves vas a buscarlos.</p></li>
-  <li><span>3 · Conectar</span><strong>Entra en AWS Academy</strong><p>La terminal comprueba tu sesión y la región en la que vas a desplegar.</p></li>
-  <li><span>4 · Programar y desplegar</span><strong>Escribe la primera Lambda</strong><p>Creas <code>serverless.yml</code> y, en <a href="#archivo-lambda">Programar Lambda</a>, escribes el handler que guarda un evento.</p></li>
-  <li><span>5 · Datos y casos de uso</span><strong>Guarda datos y completa los pases</strong><p>Creas perfiles y eventos. Después programas la consulta y la inscripción por capas y con Toolbox.</p></li>
-  <li><span>6 · Validar</span><strong>Prueba la aplicación</strong><p>Compruebas la API, la persistencia en DynamoDB y el índice <code>PorUsuario</code>.</p></li>
-</ol>
 <p class="checkpoint"><strong>Antes de avanzar</strong> En modo Ensayo, el mismo código pasa por los dos estados. En la siguiente fase diseñarás qué debe guardar la base de datos para distinguirlos.</p>
 </article>
 </section>
-<section id="diseno" class="phase" hidden>
+<section id="diseno" class="phase" data-reference hidden>
 <h2>Del caso de uso al diseño de datos</h2>
 <article id="entidad-relacion" class="guide-step" data-step="Entidad–relación">
 <h3>Del diagrama entidad–relación a DynamoDB</h3>
@@ -150,7 +137,7 @@
 <p><strong>Evento → EVENTOS.</strong> Guarda <code>EVENT_ID</code> y <code>TITLE</code>, ambos obligatorios. <strong>Inscripción → INSCRIPCIONES.</strong> Guarda <code>EVENT_ID</code>, <code>USER_ID</code>, <code>REGISTERED_AT</code> y, si hay una fecha de entrada registrada, <code>CHECKED_IN_AT</code>.</p>
 <p><code>EVENT_ID</code> y <code>USER_ID</code> son referencias al evento y a la persona, como dos claves foráneas en un modelo relacional. La clave primaria de la inscripción es la pareja <code>EVENT_ID</code> + <code>USER_ID</code>, que garantiza una inscripción por persona y evento.</p>
 <p><strong>Usuario → USUARIOS.</strong> Guarda <code>USER_ID</code>, <code>DISPLAY_NAME</code> y <code>CITY</code>. Si Leo cambia de ciudad, actualiza su perfil una vez. Sus inscripciones conservan el mismo <code>USER_ID</code>.</p>
-<p>Las referencias funcionan como claves foráneas en el dibujo. En DynamoDB las comprueba el service antes de guardar la inscripción. Si falta el evento o el usuario, POST devuelve <code>404</code>. Consulta y edita los perfiles desde <a href="#sembrar-usuarios">Datos y casos de uso → Usuarios</a>.</p>
+<p>Las referencias funcionan como claves foráneas en el dibujo. En DynamoDB las comprueba el service antes de guardar la inscripción. Si falta el evento o el usuario, POST devuelve <code>404</code>. Crea y consulta los perfiles desde <a href="#sembrar-usuarios">Lambdas → Usuarios</a>.</p>
 <p id="model-status" role="status">Cargando el ejemplo…</p>
 <div id="model-result">
 </div>
@@ -158,7 +145,7 @@
 <p class="checkpoint"><strong>Antes de avanzar</strong> En <code>FCI_USUARIOS</code>, localiza a Leo con <code>USER_ID = usuario-02</code>. Pulsa <strong>Ver inscritos del evento</strong>. Aparecen dos filas con <code>EVENT_ID = 1</code> y dos <code>USER_ID</code> distintos. Pulsa <strong>Buscar a usuario-02</strong>. Ahora solo aparece la fila de <code>usuario-02</code>.</p>
 </article>
 </section>
-<section id="conexion" class="phase" hidden>
+<section id="conexion" class="phase" data-reference hidden>
 <h2>Conectar con AWS Academy</h2>
 <article id="iniciar-lab" class="guide-step" data-step="Laboratorio">
 <h3>Abre el laboratorio</h3>
@@ -193,8 +180,8 @@ aws dynamodb list-tables --profile "$perfil" --region "$region"</code></pre><p><
 <p class="checkpoint"><strong>Antes de avanzar</strong> STS devuelve la identidad y DynamoDB muestra TableNames. Puede estar vacía.</p>
 </article>
 </section>
-<section id="infra" class="phase" hidden>
-<h2>Programar y desplegar la aplicación</h2>
+<section id="infra" class="phase" data-reference hidden>
+<h2>Preparar el proyecto y su infraestructura</h2>
 <article id="nombres-tablas" class="guide-step" data-step="Proyecto">
 <h3>Prepara la carpeta de trabajo</h3>
 <p class="lesson-note"><strong>Tu primera Lambda se escribe en esta fase.</strong> Prepara la carpeta y el rol, crea <code>serverless.yml</code> y abre <a href="#archivo-lambda">Programar Lambda</a> para escribir el alta de eventos.</p>
@@ -285,6 +272,7 @@ LAMBDA_ROLE_ARN=$(aws iam get-role --role-name LabRole --profile "$perfil" --reg
     <li><button type="button" data-yaml-block="Rutas" data-yaml-line="functions:" aria-pressed="false"><code>functions</code></button>
       <ul>
         <li><button type="button" data-yaml-block="Rutas" data-yaml-line="crearEvento:" aria-pressed="false"><code>crearEvento</code></button></li>
+        <li><button type="button" data-yaml-block="Rutas" data-yaml-line="crearUsuario:" aria-pressed="false"><code>crearUsuario</code></button></li>
         <li><button type="button" data-yaml-block="Rutas" data-yaml-line="consultarPase:" aria-pressed="false"><code>consultarPase</code></button>
           <ul>
             <li><button type="button" data-yaml-block="Rutas" data-yaml-line="handler: src/pases/consultar-pase/handler.handler" aria-pressed="false"><code>handler</code></button></li>
@@ -407,6 +395,7 @@ LAMBDA_ROLE_ARN=$(aws iam get-role --role-name LabRole --profile "$perfil" --reg
       <div><dt><code>inscribirUsuario:</code></dt><dd>Lambda que crea la inscripción cuando API Gateway recibe <code>POST</code> en la ruta del pase.</dd></div>
       <div><dt><code>handler: src/pases/inscribir-usuario/handler.handler</code></dt><dd><code>src/pases/inscribir-usuario/handler</code> identifica el archivo <code>handler.mjs</code>. Lambda ejecuta su función exportada <code>handler</code>.</dd></div>
       <div><dt data-lines="crearEvento:|handler: src/eventos/crear-evento/handler.handler"><code>crearEvento:</code></dt><dd>Lambda que invocas desde la terminal para guardar un evento con el ID que envías. En <code>handler.handler</code>, el primer <code>handler</code> identifica el archivo <code>handler.mjs</code> y el segundo, la función que exporta. <code>name</code> fija el nombre usado por AWS CLI.</dd></div>
+      <div><dt data-lines="crearUsuario:|handler: src/usuarios/crear-usuario/handler.handler"><code>crearUsuario:</code></dt><dd>Lambda que guarda un perfil en <code>FCI_USUARIOS</code>. La invocas desde AWS CLI con el código, el nombre visible y la ciudad.</dd></div>
       <div><dt data-lines="events:|httpApi:"><code>events:</code></dt><dd>Lista lo que puede activar esa Lambda. Cada <code>- httpApi:</code> añade una ruta HTTP.</dd></div>
       <div><dt><code>method:</code></dt><dd>Selecciona el método HTTP de la ruta. Junto con <code>path</code>, identifica la ruta que activa el handler de ese bloque.</dd></div>
       <div><dt><code>path:</code></dt><dd>Define la dirección que se compara con la petición. En <code>/events/1/registrations/usuario-02</code>, las llaves de la plantilla marcan los huecos: <code>{eventId}</code> recibe <code>1</code> y <code>{userId}</code> recibe <code>usuario-02</code>.</dd></div>
@@ -536,6 +525,9 @@ functions:
   crearEvento:
     name: ${self:service}-${sls:stage}-crearEvento
     handler: src/eventos/crear-evento/handler.handler
+  crearUsuario:
+    name: ${self:service}-${sls:stage}-crearUsuario
+    handler: src/usuarios/crear-usuario/handler.handler
   consultarPase:
     handler: src/pases/consultar-pase/handler.handler
     events:
@@ -620,11 +612,15 @@ resources:
 <pre><code>grep -nE '^(service:|functions:|resources:|[[:space:]]+(KeyType:|IndexName:))' serverless.yml</code></pre>
 <p class="checkpoint"><strong>Antes de avanzar</strong> La terminal muestra <code>service:</code>, <code>functions:</code>, <code>resources:</code> e <code>IndexName: PorUsuario</code>. En el archivo, comprueba que <code>EVENT_ID</code> figura como única clave (<code>HASH</code>) en la tabla de eventos.</p>
 </article>
+</section>
+<section id="datos" class="phase" hidden>
+<h2>Programa las Lambdas del festival</h2>
 <article id="archivo-lambda" class="guide-step" data-step="Programar Lambda">
 <div class="lambda-hero">
   <div>
     <h3>Programa tu primera Lambda</h3>
-    <p>Primero escribe el cliente de DynamoDB y el <code>handler.mjs</code> que guarda un evento. Después prepara los puntos de entrada de los pases en <code>src/pases/</code>. Completarás su lógica en <strong>5 · Datos y casos de uso</strong>.</p>
+    <p>Trabaja en <code>festival-checkin</code>. Si empiezas de cero, abre <a href="#iniciar-lab">Preparar AWS</a> y <a href="#nombres-tablas">Preparar proyecto</a> para dejar lista la sesión, la carpeta y <code>serverless.yml</code>.</p>
+    <p>Primero escribe el cliente de DynamoDB y el <code>handler.mjs</code> que guarda un evento. Después prepara los puntos de entrada de los pases en <code>src/pases/</code>. Completarás su lógica en <strong>Consultar · Capas</strong> e <strong>Inscribir · Capas</strong>.</p>
   </div>
   <div class="lambda-ticket">
     <strong>Así localizas una petición</strong>
@@ -692,6 +688,7 @@ ls -l serverless.yml package.json</code></pre>
     <div class="guided-options" role="group" aria-label="Archivos de Lambda">
     <button type="button" data-explain="modulo-lambda-4" aria-controls="modulo-lambda-4" aria-pressed="true">DynamoDB · <code>dynamo.mjs</code></button>
     <button type="button" data-explain="modulo-lambda-eventos" aria-controls="modulo-lambda-eventos" aria-pressed="false">Eventos · <code>handler.mjs</code></button>
+    <button type="button" data-explain="modulo-lambda-usuarios" aria-controls="modulo-lambda-usuarios" aria-pressed="false">Usuarios · <code>handler.mjs</code></button>
     <button type="button" data-explain="modulo-lambda-5" aria-controls="modulo-lambda-5" aria-pressed="false">HTTP · <code>peticion.mjs</code></button>
     <button type="button" data-explain="modulo-lambda-1" aria-controls="modulo-lambda-1" aria-pressed="false">GET · Consultar pase</button>
     <button type="button" data-explain="modulo-lambda-2" aria-controls="modulo-lambda-2" aria-pressed="false">POST · Inscribir usuario</button>
@@ -712,7 +709,7 @@ export const TABLA_USUARIOS_FCI = process.env.FCI_TABLA_USUARIOS;</code></pre></
   </section>
   <section id="modulo-lambda-eventos" data-explanation hidden>
     <h5><code>src/eventos/crear-evento/handler.mjs</code></h5>
-    <p>Antes de abrir este archivo, guarda <code>src/datos/dynamo.mjs</code> en la pestaña anterior. <code>handler.mjs</code> importa el cliente y el nombre de la tabla desde ahí. Después de crear y comprobar los primeros eventos, reorganizarás este archivo en <a href="#capas-eventos">Datos y casos de uso → Crear por capas</a>.</p>
+    <p>Antes de abrir este archivo, guarda <code>src/datos/dynamo.mjs</code> en la pestaña anterior. <code>handler.mjs</code> importa el cliente y el nombre de la tabla desde ahí. Después de crear y comprobar los primeros eventos, reorganizarás este archivo en <a href="#capas-eventos">Lambdas → Crear por capas</a>.</p>
     <p>Invoca la función desde AWS CLI con <code>eventId</code> numérico y un <code>title</code> con texto. El handler comprueba el título antes de escribir. <code>EVENT_ID</code> identifica el evento y la condición de escritura protege un ID que ya está ocupado.</p>
     <p><code>Ref: FestivalCheckInEventos</code> resuelve <code>FCI_EVENTOS</code>. La variable <code>FCI_TABLA_EVENTOS</code> entrega ese nombre a Lambda y <code>TABLA_EVENTOS_FCI</code> se lo pasa a <code>PutCommand</code>.</p>
     <pre><code>mkdir -p src/eventos/crear-evento &amp;&amp; ls -ld src/eventos/crear-evento &amp;&amp;
@@ -734,6 +731,30 @@ export async function handler({ eventId, title } = {}) {
   await db.send(comando);
   return { eventId, title };
 }</code></pre></div>
+  </section>
+  <section id="modulo-lambda-usuarios" data-explanation hidden>
+    <h5><code>src/usuarios/crear-usuario/handler.mjs</code></h5>
+    <p>La Lambda guarda el perfil que luego referencia la inscripción. La condición protege un <code>USER_ID</code> que ya existe.</p>
+    <pre><code>mkdir -p src/usuarios/crear-usuario &amp;&amp; ls -ld src/usuarios/crear-usuario &amp;&amp;
+touch src/usuarios/crear-usuario/handler.mjs &amp;&amp; vi src/usuarios/crear-usuario/handler.mjs</code></pre>
+    <pre data-file="src/usuarios/crear-usuario/handler.mjs"><code>import { PutCommand } from &#x27;@aws-sdk/lib-dynamodb&#x27;;
+import { db, TABLA_USUARIOS_FCI } from &#x27;../../datos/dynamo.mjs&#x27;;
+
+export async function handler({ userId, displayName, city }) {
+  const perfil = {
+    USER_ID: userId,
+    DISPLAY_NAME: displayName,
+    CITY: city
+  };
+
+  await db.send(new PutCommand({
+    TableName: TABLA_USUARIOS_FCI,
+    Item: perfil,
+    ConditionExpression: &#x27;attribute_not_exists(USER_ID)&#x27;
+  }));
+
+  return { userId, displayName, city };
+}</code></pre>
   </section>
   <section id="modulo-lambda-5" data-explanation hidden>
     <h5><code>src/pases/peticion.mjs</code></h5>
@@ -764,7 +785,7 @@ export async function handleRequest(event, operation) {
   </section>
   <section id="modulo-lambda-1" data-explanation hidden>
     <h5><code>src/pases/consultar-pase/handler.mjs</code></h5>
-    <p>Prepara el archivo base de GET. Por ahora responde <code>501</code>. Lo completarás en <a href="#leer-pase">Datos y casos de uso → Consultar · Capas</a>.</p>
+    <p>Prepara el archivo base de GET. Por ahora responde <code>501</code>. Lo completarás en <a href="#leer-pase">Lambdas → Consultar · Capas</a>.</p>
     <pre><code>mkdir -p src/pases/consultar-pase &amp;&amp; ls -ld src/pases/consultar-pase &amp;&amp; touch src/pases/consultar-pase/handler.mjs &amp;&amp; vi src/pases/consultar-pase/handler.mjs</code></pre>
     <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/pases/consultar-pase/handler.mjs"><code>import { handleRequest, json } from '../peticion.mjs';
 
@@ -779,7 +800,7 @@ async function consultarPase(key) {
   </section>
   <section id="modulo-lambda-2" data-explanation hidden>
     <h5><code>src/pases/inscribir-usuario/handler.mjs</code></h5>
-    <p>Prepara el archivo base de POST. Por ahora responde <code>501</code>. Lo completarás en <a href="#construir-post">Datos y casos de uso → Inscribir · Capas</a>.</p>
+    <p>Prepara el archivo base de POST. Por ahora responde <code>501</code>. Lo completarás en <a href="#construir-post">Lambdas → Inscribir · Capas</a>.</p>
     <pre><code>mkdir -p src/pases/inscribir-usuario &amp;&amp; ls -ld src/pases/inscribir-usuario &amp;&amp; touch src/pases/inscribir-usuario/handler.mjs &amp;&amp; vi src/pases/inscribir-usuario/handler.mjs</code></pre>
     <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/pases/inscribir-usuario/handler.mjs"><code>import { handleRequest, json } from '../peticion.mjs';
 
@@ -796,20 +817,21 @@ async function register(key) {
 </section>
 <section class="lambda-stage" aria-labelledby="lambda-stage-check">
   <h4 id="lambda-stage-check"><span>03</span> Comprueba antes de desplegar</h4>
-  <p><code>ls -l</code> muestra el manifiesto, el YAML y los módulos. <code>node --check</code> comprueba la sintaxis. El último comando importa los tres puntos de entrada para verificar que cada dependencia existe y exporta lo que pide el código.</p>
-  <pre><code>ls -l serverless.yml package.json src/pases/*.mjs src/pases/consultar-pase/*.mjs src/pases/inscribir-usuario/*.mjs src/datos/*.mjs src/eventos/crear-evento/*.mjs &amp;&amp;
+  <p><code>ls -l</code> muestra el manifiesto, el YAML y los módulos. <code>node --check</code> comprueba la sintaxis. El último comando importa los cuatro puntos de entrada para verificar que cada dependencia existe y exporta lo que pide el código.</p>
+  <pre><code>ls -l serverless.yml package.json src/pases/*.mjs src/pases/consultar-pase/*.mjs src/pases/inscribir-usuario/*.mjs src/datos/*.mjs src/eventos/crear-evento/*.mjs src/usuarios/crear-usuario/*.mjs &amp;&amp;
 (
-  for archivo in src/pases/*.mjs src/pases/consultar-pase/*.mjs src/pases/inscribir-usuario/*.mjs src/datos/*.mjs src/eventos/crear-evento/*.mjs; do
+  for archivo in src/pases/*.mjs src/pases/consultar-pase/*.mjs src/pases/inscribir-usuario/*.mjs src/datos/*.mjs src/eventos/crear-evento/*.mjs src/usuarios/crear-usuario/*.mjs; do
     node --check "$archivo" || exit 1
   done
 ) &amp;&amp;
 node --input-type=module -e '
   await import("./src/eventos/crear-evento/handler.mjs");
+  await import("./src/usuarios/crear-usuario/handler.mjs");
   await import("./src/pases/consultar-pase/handler.mjs");
   await import("./src/pases/inscribir-usuario/handler.mjs");
   console.log("Imports comprobados");
 '</code></pre>
-  <p class="checkpoint"><strong>Antes de avanzar</strong> Ves los cinco módulos y la terminal muestra <code>Imports comprobados</code>. En el YAML, verifica que <code>crearEvento</code> apunta a <code>src/eventos/crear-evento/handler.handler</code> y GET a <code>src/pases/consultar-pase/handler.handler</code>.</p>
+  <p class="checkpoint"><strong>Antes de avanzar</strong> Ves los seis módulos y la terminal muestra <code>Imports comprobados</code>. En el YAML, verifica que <code>crearEvento</code> apunta a <code>src/eventos/crear-evento/handler.handler</code> y GET a <code>src/pases/consultar-pase/handler.handler</code>.</p>
 </section>
 </article>
 <article id="desplegar-stack" class="guide-step" data-step="Desplegar">
@@ -818,15 +840,12 @@ node --input-type=module -e '
 <p>Si compartís cuenta, región y proyecto, una persona ejecuta los despliegues y comparte la URL y los IDs de los eventos. Cada pareja usa códigos de usuario distintos para que sus pruebas de inscripción partan de un pase libre.</p>
 
 <dl class="command-reasons"><div><dt><code>node --check</code></dt><dd>Comprueba la sintaxis del módulo que indicas.</dd></div><div><dt><code>&amp;&amp;</code></dt><dd>Ejecuta el segundo comando si el primero termina correctamente.</dd></div><div><dt><code>--stage dev</code></dt><dd>Selecciona el entorno de desarrollo de tu servicio.</dd></div></dl>
-<p>Ejecuta el comando en la carpeta <code>festival-checkin</code>. Serverless Framework lee tu YAML y CloudFormation crea las tres tablas, las tres funciones y la HTTP API en el laboratorio.</p><pre><code>(
-  for archivo in src/pases/*.mjs src/pases/consultar-pase/*.mjs src/pases/inscribir-usuario/*.mjs src/datos/*.mjs src/eventos/crear-evento/*.mjs; do
+<p>Ejecuta el comando en la carpeta <code>festival-checkin</code>. Serverless Framework lee tu YAML y CloudFormation crea las tres tablas, las cuatro funciones y la HTTP API en el laboratorio.</p><pre><code>(
+  for archivo in src/pases/*.mjs src/pases/consultar-pase/*.mjs src/pases/inscribir-usuario/*.mjs src/datos/*.mjs src/eventos/crear-evento/*.mjs src/usuarios/crear-usuario/*.mjs; do
     node --check "$archivo" || exit 1
   done
 ) &amp;&amp; npx serverless deploy --stage dev --aws-profile "$perfil"</code></pre><p>Si Framework pide iniciar sesión, usa el mismo acceso de la lección <a href="../../#primer-serverless">01 · Primer Serverless</a>. Si falla CloudFormation, lee el primer recurso y permiso que aparecen en el error. Si la sesión de AWS caducó, renueva los tres valores y repite la comprobación de Conexión.</p><p class="checkpoint"><strong>Antes de avanzar</strong> La terminal muestra el despliegue terminado y las dos rutas de la API.</p>
 </article>
-</section>
-<section id="datos" class="phase" hidden>
-<h2>Cargar datos y completar los casos de uso</h2>
 <article id="salidas-stack" class="guide-step" data-step="Salidas">
 <h3>Recupera los nombres reales y la URL</h3>
 <p class="lesson-note"><strong>Del nombre lógico al nombre real.</strong> En el YAML escribiste <code>FestivalCheckInEventos</code>. CloudFormation crea la tabla con el nombre indicado en <code>TableName</code>, por ejemplo <code>FCI_EVENTOS</code>. <code>salida NombreTablaEventosFCI</code> lo obtiene del stack y <code>tabla_eventos</code> lo guarda para que tus comandos apunten a esa tabla. <code>api_url</code> guarda la dirección que usarás con <code>curl</code>.</p>
@@ -860,43 +879,40 @@ done</code></pre>
 <p>Si ves <code>CREATING</code>, repite este último comando hasta ver <code>ACTIVE</code>. Si ves <code>[]</code> o <code>null</code>, comprueba que el YAML incluye <code>PorUsuario</code> y despliega de nuevo.</p>
 <p class="checkpoint"><strong>Antes de avanzar</strong> Las tres tablas y el índice están <code>ACTIVE</code>. En <code>USUARIOS</code>, <code>USER_ID</code> es la única clave, con tipo <code>S</code> y papel <code>HASH</code>. En <code>EVENTOS</code>, <code>EVENT_ID</code> es la única clave y figura como <code>HASH</code>. En <code>INSCRIPCIONES</code>, <code>EVENT_ID</code> es <code>HASH</code> y <code>USER_ID</code> es <code>RANGE</code>. En <code>PorUsuario</code> los papeles se invierten.</p>
 </article>
-<article id="sembrar-usuarios" class="guide-step" data-step="Usuarios">
-<h3>Crea, consulta y actualiza un perfil</h3>
-<ol class="route-map" aria-label="Recorrido del perfil en DynamoDB">
-  <li><strong>INSERT · Crea el perfil</strong><p><code>USER_ID</code> identifica a Leo. <code>DISPLAY_NAME</code> y <code>CITY</code> son atributos del perfil.</p></li>
-  <li><strong>SELECT · Busca por su clave</strong><p>Usa <code>usuario-02</code>, el mismo código que podrás usar para su inscripción.</p></li>
-  <li><strong>UPDATE · Cambia su ciudad</strong><p>Modifica <code>CITY</code> con la misma clave. Si Leo tiene varios pases, todos conservan el mismo <code>USER_ID</code>.</p></li>
-</ol>
-<p>Desde <code>festival-checkin</code>, en Git Bash o Terminal, usa las variables del paso <a href="#salidas-stack">Salidas</a>. Crea el perfil ficticio de Leo. Si ya existe <code>usuario-02</code>, continúa con la consulta del perfil.</p>
-<pre><code>aws dynamodb execute-statement \
-  --profile "$perfil" --region "$region" \
-  --statement "INSERT INTO \"$tabla_usuarios\" VALUE {'USER_ID': 'usuario-02', 'DISPLAY_NAME': 'Leo Martín', 'CITY': 'Huesca'}"</code></pre>
-<p>Lee el perfil. <code>?</code> recibe el código de usuario con tipo <code>S</code>.</p>
+<article id="sembrar-usuarios" class="guide-step" data-step="Invocar crearUsuario">
+<h3>Crea los perfiles con la Lambda</h3>
+<p>Desde <code>festival-checkin</code>, usa la terminal del paso <a href="#salidas-stack">Salidas</a>. Cada llamada entrega un perfil ficticio al handler <code>crearUsuario</code>. Ejecuta el bloque una vez. Si un código ya existe, DynamoDB conserva su perfil.</p>
+<pre><code>crear_usuario() (
+  respuesta=$(mktemp) || exit 1
+  trap &#x27;rm -f &quot;$respuesta&quot;&#x27; EXIT
+  aws lambda invoke \
+    --profile &quot;$perfil&quot; --region &quot;$region&quot; \
+    --function-name &quot;$stack-crearUsuario&quot; \
+    --cli-binary-format raw-in-base64-out \
+    --payload &quot;$1&quot; &quot;$respuesta&quot; &gt;/dev/null || exit 1
+  node -e &#x27;
+    const fs = require("node:fs");
+    const { userId, errorMessage } = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+    if (!userId) {
+      console.error(errorMessage || "Lambda no devolvió un usuario");
+      process.exit(1);
+    }
+    console.log(userId);
+  &#x27; &quot;$respuesta&quot;
+)
+
+crear_usuario &#x27;{&quot;userId&quot;:&quot;usuario-01&quot;,&quot;displayName&quot;:&quot;Ana Ruiz&quot;,&quot;city&quot;:&quot;Zaragoza&quot;}&#x27;
+crear_usuario &#x27;{&quot;userId&quot;:&quot;usuario-02&quot;,&quot;displayName&quot;:&quot;Leo Martín&quot;,&quot;city&quot;:&quot;Huesca&quot;}&#x27;
+crear_usuario &#x27;{&quot;userId&quot;:&quot;usuario-03&quot;,&quot;displayName&quot;:&quot;Eva Gil&quot;,&quot;city&quot;:&quot;Teruel&quot;}&#x27;
+crear_usuario &#x27;{&quot;userId&quot;:&quot;usuario-04&quot;,&quot;displayName&quot;:&quot;Hugo Sol&quot;,&quot;city&quot;:&quot;Huesca&quot;}&#x27;
+crear_usuario &#x27;{&quot;userId&quot;:&quot;usuario-05&quot;,&quot;displayName&quot;:&quot;Irene Rey&quot;,&quot;city&quot;:&quot;Zaragoza&quot;}&#x27;
+crear_usuario &#x27;{&quot;userId&quot;:&quot;usuario-06&quot;,&quot;displayName&quot;:&quot;Pablo Vidal&quot;,&quot;city&quot;:&quot;Teruel&quot;}&#x27;</code></pre>
+<p>Comprueba que el perfil de Leo se guardó con el mismo <code>USER_ID</code> que utilizarás al inscribirlo.</p>
 <pre><code>aws dynamodb execute-statement \
   --profile "$perfil" --region "$region" --consistent-read \
   --statement "SELECT * FROM \"$tabla_usuarios\" WHERE \"USER_ID\" = ?" \
   --parameters '[{"S":"usuario-02"}]'</code></pre>
-<p>Actualiza la ciudad de Leo y vuelve a ejecutar el <code>SELECT</code>.</p>
-<pre><code>aws dynamodb execute-statement \
-  --profile "$perfil" --region "$region" \
-  --statement "UPDATE \"$tabla_usuarios\" SET \"CITY\" = ? WHERE \"USER_ID\" = ?" \
-  --parameters '[{"S":"Zaragoza"},{"S":"usuario-02"}]'</code></pre>
-<h4>Prepara los perfiles de las pruebas</h4>
-<p>Carga una vez estos perfiles ficticios para las pruebas de consulta, inscripción y validación. Si un código ya existe, PartiQL conserva el perfil guardado.</p>
-<pre><code>while IFS=&#x27;|&#x27; read -r id nombre ciudad; do
-  aws dynamodb execute-statement \
-    --profile &quot;$perfil&quot; --region &quot;$region&quot; \
-    --statement &quot;INSERT INTO \&quot;$tabla_usuarios\&quot; VALUE {&#x27;USER_ID&#x27;: ?, &#x27;DISPLAY_NAME&#x27;: ?, &#x27;CITY&#x27;: ?}&quot; \
-    --parameters &quot;[{\&quot;S\&quot;:\&quot;$id\&quot;},{\&quot;S\&quot;:\&quot;$nombre\&quot;},{\&quot;S\&quot;:\&quot;$ciudad\&quot;}]&quot;
-done &lt;&lt;&#x27;PERFILES&#x27;
-usuario-01|Ana Ruiz|Zaragoza
-usuario-03|Eva Gil|Teruel
-usuario-04|Hugo Sol|Huesca
-usuario-05|Irene Rey|Zaragoza
-usuario-06|Pablo Vidal|Teruel
-PERFILES</code></pre>
-<p class="checkpoint"><strong>Antes de avanzar</strong> El <code>SELECT</code> devuelve un ítem con <code>USER_ID = usuario-02</code>, <code>DISPLAY_NAME = Leo Martín</code> y <code>CITY = Zaragoza</code>. Cambia el parámetro del <code>SELECT</code> a <code>usuario-06</code> y comprueba que también aparece el perfil de Pablo Vidal.</p>
-<p><a href="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ql-reference.insert.html">Documentación de INSERT</a> · <a href="https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ql-reference.update.html">Documentación de UPDATE</a></p>
+<p class="checkpoint"><strong>Antes de avanzar</strong> El resultado muestra <code>usuario-02</code>, «Leo Martín» y «Huesca». Los perfiles de las otras pruebas ya están disponibles.</p>
 </article>
 <article id="guardar-evento" class="guide-step" data-step="Crear eventos">
 <h3>Crea dos eventos y guarda sus identificadores</h3>
@@ -1047,7 +1063,7 @@ await db.send(comando);</code></pre>
         └── repository.mjs        escritura del alta</code></pre>
 <p class="lesson-note"><strong>Sigue los imports.</strong> <code>serverless.yml</code> apunta a <code>src/eventos/crear-evento/handler.handler</code>. Desde ahí, el handler importa el service, el service importa el repository y el repository usa <code>../../datos/dynamo.mjs</code>. Los dos <code>../</code> suben de <code>crear-evento</code> a <code>eventos</code> y luego a <code>src</code>. El repository convierte <code>eventId</code> en <code>EVENT_ID</code> al preparar la escritura. Si más adelante añades reglas de negocio para el alta, incorpóralas en el service.</p>
 <p><code>crearEvento</code> nombra el caso de uso. <code>guardarEvento</code> nombra la operación del repository. El comando <code>PutCommand</code> indica cómo se escribe el registro en DynamoDB. Si dos altas usan el mismo ID, DynamoDB acepta una y rechaza la otra. Para crear otro evento, elige otro ID.</p>
-<p>Si ya tenías el proyecto de una versión anterior, actualiza también <code>src/datos/dynamo.mjs</code> en <a href="#archivo-lambda">Programar y desplegar → Programar Lambda</a>, en la pestaña <strong>DynamoDB</strong>. Busca <code>removeUndefinedValues</code> para comprobar que estás usando el cliente actualizado.</p>
+<p>Si ya tenías el proyecto de una versión anterior, actualiza también <code>src/datos/dynamo.mjs</code> en <a href="#archivo-lambda">Lambdas → Programar Lambda</a>, en la pestaña <strong>DynamoDB</strong>. Busca <code>removeUndefinedValues</code> para comprobar que estás usando el cliente actualizado.</p>
 <p>Desde la raíz de <code>festival-checkin</code>, crea primero el <strong>Repository</strong> y después el <strong>Service</strong>. En cada pestaña, ejecuta el comando de apertura y copia el archivo completo. En <code>vi</code>, escribe <code>:set paste</code>, pulsa Intro y después <kbd>i</kbd> para pegar. Guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro. Actualiza el <strong>Handler</strong> al final.</p>
 <template id="capas-eventos-notas">
   <div data-prefix="if (typeof title"><strong>Exige un título con texto</strong><p><code>typeof</code> comprueba que el valor sea texto. <code>trim()</code> permite detectar un título formado solo por espacios. Si falla la comprobación, la función termina antes de escribir en DynamoDB.</p></div>
@@ -1675,17 +1691,17 @@ aws dynamodb execute-statement \
 <p class="checkpoint"><strong>Antes de avanzar</strong> La primera consulta incluye tu usuario. La segunda incluye los dos identificadores que devolvió Lambda. Si acabas de escribir la segunda inscripción, dale unos segundos al índice y vuelve a consultar. Si sigue faltando un evento, comprueba el resultado del <code>POST</code> y el código que usaste en Recorrido.</p>
 </article>
 </section>
-<section id="referencias" class="phase" hidden>
+<section id="referencias" class="phase" data-reference hidden>
 <h2>Referencias de la práctica</h2>
 <article id="infografia-terminal" class="guide-step" data-step="Infografía">
 <h3>Del modelo al primer registro</h3>
 <figure class="infra-flow">
   <ol>
     <li><a href="#modelo-titulo">Elige las claves</a><span>EVENTOS · EVENT_ID<br>INSCRIPCIONES · EVENT_ID + USER_ID<br>USUARIOS · USER_ID</span></li>
-    <li><a href="#infraestructura">Escribe serverless.yml</a><span>Tres tablas, tres funciones y las rutas del pase</span></li>
+    <li><a href="#infraestructura">Escribe serverless.yml</a><span>Tres tablas, cuatro funciones y las rutas del pase</span></li>
     <li><a href="#desplegar-stack">Despliega en AWS</a><span>Serverless Framework → CloudFormation → recursos del laboratorio</span></li>
     <li><a href="#guardar-evento">Carga el primer evento</a><span>AWS CLI → Lambda → evento con el ID enviado</span></li>
-    <li><a href="#sembrar-usuarios">Mantén un perfil</a><span>PartiQL → USER_ID → nombre visible y ciudad</span></li>
+    <li><a href="#sembrar-usuarios">Crea los perfiles</a><span>AWS CLI → Lambda → nombre visible y ciudad</span></li>
     <li><a href="#entrenar-dynamo">Entrena la lectura</a><span>Clave → ítem → objeto JavaScript → respuesta HTTP</span></li>
     <li><a href="#consultar-indice">Busca en las dos direcciones</a><span>Tabla → inscritos de un evento<br>PorUsuario → eventos de un usuario</span></li>
   </ol>

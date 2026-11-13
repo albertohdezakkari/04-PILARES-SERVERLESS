@@ -8,7 +8,7 @@ const phoneLayout = document.querySelector('.phone-layout');
 const testScreen = document.querySelector('#pantalla');
 const previewScreen = document.querySelector('#ensayo-pantalla');
 const steps = [...document.querySelectorAll('.guide-step')];
-const courseSteps = steps.filter(step => step.closest('.phase').id !== 'referencias');
+const courseSteps = steps.filter(step => !step.closest('.phase').hasAttribute('data-reference'));
 let activeStep = courseSteps[0];
 let lastCourseStep = activeStep;
 
@@ -80,8 +80,9 @@ function showRoute() {
   const courseIndex = courseSteps.indexOf(activeStep);
   back.textContent = courseIndex < 0 ? '← Volver al paso' : '← Atrás';
   back.disabled = courseIndex === 0;
-  next.hidden = courseIndex < 0 && (index < 0 || index === phaseSteps.length - 1);
-  next.textContent = courseIndex === courseSteps.length - 1 ? 'Abrir pantalla de prueba →' : 'Siguiente →';
+  next.hidden = index < 0;
+  next.textContent = courseIndex === courseSteps.length - 1 ? 'Abrir pantalla de prueba →'
+    : courseIndex < 0 && index === phaseSteps.length - 1 ? 'Volver a Lambdas →' : 'Siguiente →';
   window.scrollTo(0, 0);
   const heading = activeStep?.querySelector('h3') ?? phase.querySelector('h2');
   heading.tabIndex = -1;
@@ -101,7 +102,7 @@ next.addEventListener('click', () => {
     navigate(courseSteps[index + 1]?.id ?? 'pantalla');
   } else {
     const sibling = activeStep?.nextElementSibling;
-    if (sibling?.matches('.guide-step')) navigate(sibling.id);
+    navigate(sibling?.matches('.guide-step') ? sibling.id : 'archivo-lambda');
   }
 });
 window.addEventListener('hashchange', showRoute);
