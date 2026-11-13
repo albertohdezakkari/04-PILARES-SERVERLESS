@@ -6,7 +6,7 @@
 <title>Festival Check-in · práctica guiada</title>
 <link rel="stylesheet" href="style.css?v=tablas-fci">
 <script type="module" src="app.js?v=max-id-guardado"></script>
-<script type="module" src="guia.js?v=archivos-lambda-completos"></script>
+<script type="module" src="guia.js?v=capas-eventos"></script>
 <script type="module" src="visor-modelo.js?v=modelo-interactivo"></script>
 <script type="module" src="entrenamiento-dynamo.js?v=consulta-maximo"></script>
 </head>
@@ -728,7 +728,7 @@ export async function obtenerSiguienteIdGuardado(grupo) {
   </section>
   <section id="modulo-lambda-eventos" data-explanation hidden>
     <h5><code>src/eventos/crear.mjs</code></h5>
-    <p>Antes de abrir este archivo, guarda <code>src/datos/dynamo.mjs</code> en la pestaña anterior. <code>crear.mjs</code> importa <code>obtenerSiguienteIdGuardado</code> desde ahí.</p>
+    <p>Antes de abrir este archivo, guarda <code>src/datos/dynamo.mjs</code> en la pestaña anterior. <code>crear.mjs</code> importa <code>obtenerSiguienteIdGuardado</code> desde ahí. Después de crear y comprobar los primeros eventos, reorganizarás este archivo en <a href="#capas-eventos">Sembrar datos → Crear por capas</a>.</p>
     <p>Invocarás esta función desde AWS CLI. La Lambda calcula <code>MAX(EVENT_ID) + 1</code> sobre los eventos guardados. Si el número ya está ocupado al escribir, vuelve a calcularlo hasta un máximo de cinco intentos.</p>
     <p><code>Ref: FestivalCheckInEventos</code> resuelve <code>FCI_EVENTOS</code>. La variable <code>FCI_TABLA_EVENTOS</code> entrega ese nombre a Lambda y <code>TABLA_EVENTOS_FCI</code> se lo pasa a <code>PutCommand</code>.</p>
     <pre><code>mkdir -p src/eventos &amp;&amp; touch src/eventos/crear.mjs &amp;&amp; vi src/eventos/crear.mjs</code></pre>
@@ -954,6 +954,120 @@ evento_secundario_id=2</code></pre>
   --statement "SELECT * FROM \"$tabla_inscripciones\" WHERE \"EVENT_ID\" = ?" \
   --parameters "[{\"N\":\"$evento_id\"}]"</code></pre>
 <p class="checkpoint"><strong>Antes de avanzar</strong> <code>EVENTOS</code> devuelve tu identificador numérico y «Festival de otoño». <code>INSCRIPCIONES</code> devuelve <code>Items: []</code> si todavía no hay inscripciones.</p>
+</article>
+<article id="capas-eventos" class="guide-step" data-step="Crear por capas">
+<h3>Insertar un evento con Handler, Service y Repository</h3>
+<p>Acabas de crear dos eventos y de leerlos en DynamoDB. Ahora reorganiza <code>crear.mjs</code> para que puedas localizar por separado la entrada de Lambda, las decisiones del caso de uso y el acceso a la tabla.</p>
+<ol class="route-map" aria-label="Recorrido para insertar un evento">
+  <li><span>Handler · <code>crear.mjs</code></span><strong>Recibe el título</strong><p>AWS CLI invoca la Lambda con <code>{ "title": "Noche de ciencia" }</code>. El handler pasa ese título al service y devuelve <code>eventId</code> y <code>title</code>.</p></li>
+  <li><span>Service · <code>crear.service.mjs</code></span><strong>Decide cómo crear el evento</strong><p>Limpia el título, pide un ID e intenta guardar. Si otra petición acaba de ocupar ese ID, pide el siguiente y vuelve a intentarlo.</p></li>
+  <li><span>Repository · <code>eventos.repository.mjs</code></span><strong>Lee y escribe en DynamoDB</strong><p>Obtiene el siguiente ID del grupo <code>EVENTO</code> y usa <code>PutCommand</code> para insertar. La condición protege los eventos ya guardados.</p></li>
+</ol>
+<h4>Así queda la carpeta de eventos</h4>
+<pre data-diagram><code>src/
+├── datos/
+│   └── dynamo.mjs              cliente y consulta ordenada compartida
+└── eventos/
+    ├── crear.mjs               entrada de Lambda
+    ├── crear.service.mjs       reglas y reintentos del alta
+    └── eventos.repository.mjs  acceso a la tabla de eventos</code></pre>
+<p class="lesson-note"><strong>Sigue los imports.</strong> <code>serverless.yml</code> apunta a <code>src/eventos/crear.handler</code>. Desde ahí, el handler importa el service, el service importa el repository y el repository usa <code>dynamo.mjs</code>. Si cambia la clave de DynamoDB, busca la escritura en el repository. Si cambia la regla del título, busca la validación en el service.</p>
+<p>Si el último ID era <code>12</code> y dos peticiones proponen <code>13</code>, el repository solo podrá insertar una de ellas. El otro service vuelve a consultar y propone <code>14</code>.</p>
+<p>Desde la raíz de <code>festival-checkin</code>, crea primero el <strong>Repository</strong> y después el <strong>Service</strong>. En cada pestaña, ejecuta el comando de apertura y copia el archivo completo. En <code>vi</code>, escribe <code>:set paste</code>, pulsa Intro y después <kbd>i</kbd> para pegar. Guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro. Actualiza el <strong>Handler</strong> al final.</p>
+<template id="capas-eventos-notas">
+  <div data-prefix="return obtenerSiguienteIdGuardado"><strong>Lee el mayor ID del grupo EVENTO</strong><p>La consulta compartida pide un solo ítem ordenado de mayor a menor y suma uno a su ID.</p></div>
+  <div data-prefix="Item:"><strong>Traduce los datos a los atributos de DynamoDB</strong><p>El argumento <code>eventId</code> se guarda como <code>EVENT_ID</code> y <code>titulo</code> como <code>TITLE</code>.</p></div>
+  <div data-prefix="ConditionExpression:"><strong>Inserta solo si la clave está libre</strong><p>DynamoDB comprueba la condición al escribir. Si dos peticiones obtienen el mismo candidato, solo una puede insertar ese ID.</p></div>
+  <div data-prefix="if (error.name ==="><strong>Comunica una colisión al service</strong><p><code>false</code> indica que el ID estaba ocupado. Si la escritura falla por otro motivo, el error sigue hasta Lambda.</p></div>
+  <div data-prefix="if (typeof title"><strong>Comprueba el dato del caso de uso</strong><p>Un título vacío o compuesto solo por espacios no puede dar de alta un evento.</p></div>
+  <div data-prefix="const titulo ="><strong>Guarda un título limpio</strong><p><code>trim()</code> quita los espacios de los extremos.</p></div>
+  <div data-prefix="for (let intento"><strong>Vuelve a pedir el ID si hubo una colisión</strong><p>El service coordina los reintentos. Cada vuelta vuelve a leer el mayor ID antes de insertar.</p></div>
+  <div data-prefix="const guardado"><strong>Comprueba el resultado de la escritura</strong><p>Con <code>true</code>, el evento ya está guardado y puedes devolver su identificador.</p></div>
+  <div data-prefix="const evento ="><strong>Entrega el título al service</strong><p>El handler espera el resultado del caso de uso.</p></div>
+  <div data-prefix="return { eventId: evento"><strong>Devuelve el identificador como texto</strong><p>La Lambda devuelve un objeto a AWS CLI. Convertir el <code>BigInt</code> a texto permite representarlo en JSON conservando todas sus cifras.</p></div>
+</template>
+<div class="guided-explainer" data-explainer>
+  <div class="guided-options" role="group" aria-label="Archivos de creación de eventos">
+    <button type="button" data-explain="eventos-repository" aria-controls="eventos-repository" aria-pressed="true">Repository</button>
+    <button type="button" data-explain="eventos-service" aria-controls="eventos-service" aria-pressed="false">Service</button>
+    <button type="button" data-explain="eventos-handler" aria-controls="eventos-handler" aria-pressed="false">Handler</button>
+  </div>
+  <section id="eventos-repository" data-explanation>
+    <h4><code>src/eventos/eventos.repository.mjs</code></h4>
+    <p>Mueve aquí el <code>PutCommand</code> y la llamada a la consulta de ID que antes estaban dentro del handler.</p>
+    <pre><code>mkdir -p src/eventos &amp;&amp; ls -ld src/eventos &amp;&amp;
+touch src/eventos/eventos.repository.mjs &amp;&amp; vi src/eventos/eventos.repository.mjs</code></pre>
+    <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/eventos/eventos.repository.mjs" data-explanations="capas-eventos-notas"><code>import { PutCommand } from '@aws-sdk/lib-dynamodb';
+import { db, GRUPO_EVENTOS, TABLA_EVENTOS_FCI, obtenerSiguienteIdGuardado } from '../datos/dynamo.mjs';
+
+export function obtenerSiguienteIdEvento() {
+  return obtenerSiguienteIdGuardado(GRUPO_EVENTOS);
+}
+
+export async function insertarEvento(eventId, titulo) {
+  try {
+    await db.send(new PutCommand({
+      TableName: TABLA_EVENTOS_FCI,
+      Item: { TIPO_REGISTRO: GRUPO_EVENTOS, EVENT_ID: eventId, TITLE: titulo },
+      ConditionExpression: 'attribute_not_exists(EVENT_ID)'
+    }));
+    return true;
+  } catch (error) {
+    if (error.name === 'ConditionalCheckFailedException') return false;
+    throw error;
+  }
+}</code></pre></div>
+  </section>
+  <section id="eventos-service" data-explanation hidden>
+    <h4><code>src/eventos/crear.service.mjs</code></h4>
+    <p>Mueve aquí la comprobación del título y el bucle de reintentos. Cada vuelta pide el candidato y comprueba si pudo guardarlo.</p>
+    <pre><code>mkdir -p src/eventos &amp;&amp; ls -ld src/eventos &amp;&amp;
+touch src/eventos/crear.service.mjs &amp;&amp; vi src/eventos/crear.service.mjs</code></pre>
+    <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/eventos/crear.service.mjs" data-explanations="capas-eventos-notas"><code>import { insertarEvento, obtenerSiguienteIdEvento } from './eventos.repository.mjs';
+
+const MAX_INTENTOS_CREACION = 5;
+
+export async function crearEvento(title) {
+  if (typeof title !== 'string' || !title.trim()) {
+    throw new Error('Indica el título del evento');
+  }
+  const titulo = title.trim();
+
+  for (let intento = 0; intento &lt; MAX_INTENTOS_CREACION; intento++) {
+    const eventId = await obtenerSiguienteIdEvento();
+    const guardado = await insertarEvento(eventId, titulo);
+    if (guardado) return { eventId, title: titulo };
+  }
+
+  throw new Error('No se pudo asignar un número de evento. Vuelve a intentarlo.');
+}</code></pre></div>
+  </section>
+  <section id="eventos-handler" data-explanation hidden>
+    <h4><code>src/eventos/crear.mjs</code></h4>
+    <p>Abre el archivo existente. Escribe <code>:%d</code> y pulsa Intro para sustituir su contenido. Ahora el archivo recibe el título, llama al service y prepara la salida de Lambda.</p>
+    <pre><code>vi src/eventos/crear.mjs</code></pre>
+    <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/eventos/crear.mjs" data-explanations="capas-eventos-notas"><code>import { crearEvento } from './crear.service.mjs';
+
+export async function handler({ title } = {}) {
+  const evento = await crearEvento(title);
+  return { eventId: evento.eventId.toString(), title: evento.title };
+}</code></pre></div>
+  </section>
+</div>
+<h4>Despliega y comprueba el alta</h4>
+<p>Desde <code>festival-checkin</code>, usa la misma terminal del laboratorio. Comprueba la sintaxis, carga el handler con sus imports y vuelve a desplegar.</p>
+<pre><code>node --check src/eventos/eventos.repository.mjs &amp;&amp;
+node --check src/eventos/crear.service.mjs &amp;&amp;
+node --check src/eventos/crear.mjs &amp;&amp;
+node --input-type=module -e 'await import("./src/eventos/crear.mjs"); console.log("Imports comprobados")' &amp;&amp;
+npx serverless deploy --stage dev --aws-profile "$perfil"</code></pre>
+<p>En la misma terminal donde ejecutaste <a href="#guardar-evento">Crear eventos</a>, reutiliza la función <code>crear_evento</code> para dar de alta un tercer evento. Después, usa el ID devuelto para comprobar el registro con PartiQL.</p>
+<pre><code>evento_capas_id=$(crear_evento '{"title":"  Noche de ciencia  "}') &amp;&amp;
+aws dynamodb execute-statement \
+  --profile "$perfil" --region "$region" --consistent-read \
+  --statement "SELECT \"EVENT_ID\", \"TITLE\" FROM \"$tabla_eventos\" WHERE \"TIPO_REGISTRO\" = ? AND \"EVENT_ID\" = ?" \
+  --parameters "[{\"S\":\"EVENTO\"},{\"N\":\"$evento_capas_id\"}]"</code></pre>
+<p class="checkpoint"><strong>Antes de avanzar</strong> El <code>SELECT</code> devuelve un ítem con el ID que asignó la Lambda y el título «Noche de ciencia» sin los espacios de los extremos.</p>
 </article>
 </section>
 <section id="lectura" class="phase" hidden>
