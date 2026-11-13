@@ -30,7 +30,15 @@ const previousSteps = new Map([
   ['crear-inscripciones', 'infraestructura'],
   ['crear-lambda', 'archivo-lambda'],
   ['tablas-lambda', 'infraestructura'],
-  ['consola-alternativa', 'infografia-terminal']
+  ['consola-alternativa', 'infografia-terminal'],
+  ['lectura', 'leer-pase'],
+  ['conectar-api', 'leer-pase'],
+  ['inscripcion', 'construir-post'],
+  ['probar-post', 'construir-post'],
+  ['entrada', 'otro-equipo'],
+  ['construir-patch', 'otro-equipo'],
+  ['probar-patch', 'otro-equipo'],
+  ['capas-patch', 'otro-equipo']
 ]);
 
 function showRoute() {
@@ -331,7 +339,7 @@ for (const choice of accessButtons) {
   });
 }
 
-const commands = '#conexion .guide-step:not(#pegar-aws) pre, #infra pre, #datos pre, #lectura pre[data-command], #lectura pre[data-file], #conectar-api pre, #inscripcion pre, #entrada pre, #prueba pre';
+const commands = '#conexion .guide-step:not(#pegar-aws) pre, #infra pre, #datos pre, #prueba pre';
 for (const pre of document.querySelectorAll(commands)) {
   if (!pre.hasAttribute('data-diagram')) addCodeControls(pre);
 }

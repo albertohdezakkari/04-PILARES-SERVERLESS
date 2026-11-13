@@ -29,8 +29,7 @@
         "SortKey": { "AttributeName": "USER_ID", "AttributeType": "S" }
       },
       "NonKeyAttributes": [
-        { "AttributeName": "REGISTERED_AT", "AttributeType": "S" },
-        { "AttributeName": "CHECKED_IN_AT", "AttributeType": "S" }
+        { "AttributeName": "REGISTERED_AT", "AttributeType": "S" }
       ],
       "GlobalSecondaryIndexes": [
         {
@@ -52,8 +51,7 @@
         {
           "EVENT_ID": { "N": "1" },
           "USER_ID": { "S": "usuario-02" },
-          "REGISTERED_AT": { "S": "2026-11-12T09:06:00Z" },
-          "CHECKED_IN_AT": { "S": "2026-11-12T09:12:00Z" }
+          "REGISTERED_AT": { "S": "2026-11-12T09:06:00Z" }
         },
         {
           "EVENT_ID": { "N": "2" },

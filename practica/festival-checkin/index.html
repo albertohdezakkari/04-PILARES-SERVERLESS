@@ -4,10 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Festival Check-in · práctica guiada</title>
-<link rel="stylesheet" href="style.css?v=tablas-fci">
-<script type="module" src="app.js?v=clave-evento"></script>
-<script type="module" src="guia.js?v=capas-eventos"></script>
-<script type="module" src="visor-modelo.js?v=perfiles"></script>
+<link rel="stylesheet" href="style.css?v=pases-orm">
+<script type="module" src="app.js?v=pases-orm"></script>
+<script type="module" src="guia.js?v=pases-orm"></script>
+<script type="module" src="visor-modelo.js?v=pases-orm"></script>
 <script type="module" src="entrenamiento-dynamo.js?v=clave-evento"></script>
 </head>
 <body>
@@ -24,10 +24,7 @@
   <button type="button" data-phase="conexion" aria-pressed="false"><span class="phase-number">3</span> Conectar</button>
   <button type="button" data-phase="infra" aria-pressed="false"><span class="phase-number">4</span> Configurar</button>
   <button type="button" data-phase="datos" aria-pressed="false"><span class="phase-number">5</span> Sembrar datos</button>
-  <button type="button" data-phase="lectura" aria-pressed="false"><span class="phase-number">6</span> Consultar</button>
-  <button type="button" data-phase="inscripcion" aria-pressed="false"><span class="phase-number">7</span> Inscribir</button>
-  <button type="button" data-phase="entrada" aria-pressed="false"><span class="phase-number">8</span> Dar entrada</button>
-  <button type="button" data-phase="prueba" aria-pressed="false"><span class="phase-number">9</span> Validar</button>
+  <button type="button" data-phase="prueba" aria-pressed="false"><span class="phase-number">6</span> Validar</button>
   <button type="button" data-phase="pantalla" aria-pressed="false">Pantalla de prueba</button>
 </nav>
 <div id="guide-toolbar">
@@ -41,15 +38,14 @@
 <article id="objetivo" class="guide-step" data-step="Caso de uso">
 <div class="lesson-intro">
   <h3>Un pase para el Festival de otoño</h3>
-  <p>El usuario <strong>usuario-02</strong> quiere asistir al <strong>Festival de otoño</strong>. En la puerta debemos saber si se inscribió y si ya entró. Construirás el pase y podrás demostrarlo desde la web, la API y DynamoDB.</p>
+  <p>El usuario <strong>usuario-02</strong> quiere asistir al <strong>Festival de otoño</strong>. En la puerta debemos saber si se inscribió. Construirás el pase y podrás demostrarlo desde la web, la API y DynamoDB.</p>
   <a class="lesson-action" href="#pantalla">Abrir pantalla de ensayo →</a>
 </div>
 <ol class="lesson-flow">
   <li><span>1</span><div><h4>Consultar el pase</h4><p>Pulsa <strong>Consultar</strong>. Con un código nuevo, ves el título del evento y <strong>Sin inscripción</strong>.</p></div><code>GET · 200</code></li>
   <li><span>2</span><div><h4>Inscribirse</h4><p>Pulsa <strong>Inscribirse</strong>. El pase pasa a <strong>Inscrito</strong>. Repite la acción para comprobar que la primera inscripción se conserva.</p></div><code>POST · 201 → 409</code></li>
-  <li><span>3</span><div><h4>Registrar la entrada</h4><p>Pulsa <strong>Registrar entrada</strong>. El pase muestra <strong>Entrada registrada</strong>. Usa un código nuevo para probar qué ocurre si alguien intenta entrar sin inscripción.</p></div><code>PATCH · 200 / 409</code></li>
 </ol>
-<p class="checkpoint"><strong>Antes de avanzar</strong> En modo Ensayo, el mismo código pasa por los tres estados. En la siguiente fase diseñarás qué debe guardar la base de datos para distinguirlos.</p>
+<p class="checkpoint"><strong>Antes de avanzar</strong> En modo Ensayo, el mismo código pasa por los dos estados. En la siguiente fase diseñarás qué debe guardar la base de datos para distinguirlos.</p>
 </article>
 </section>
 <section id="diseno" class="phase" hidden>
@@ -61,7 +57,7 @@
 <div class="er-diagram" role="group" aria-label="Un evento tiene de cero a muchas inscripciones. Un usuario tiene de cero a muchas inscripciones. Cada inscripción vincula un evento y un usuario.">
   <section><h4>EVENTO</h4><code>EVENT_ID</code><span>Título</span></section>
   <div class="er-edge" aria-hidden="true"><b>1</b><i></i><b>0..N</b></div>
-  <section><h4>INSCRIPCION</h4><code>EVENT_ID + USER_ID</code><span>Fecha de inscripción</span><span>Fecha de entrada, opcional</span></section>
+  <section><h4>INSCRIPCION</h4><code>EVENT_ID + USER_ID</code><span>Fecha de inscripción</span></section>
   <div class="er-edge" aria-hidden="true"><b>0..N</b><i></i><b>1</b></div>
   <section><h4>USUARIO</h4><code>USER_ID</code><span>Nombre visible</span><span>Ciudad</span></section>
 </div>
@@ -83,7 +79,6 @@
       <div><dt><abbr class="dynamo-pk" title="Clave de partición">PK</abbr> <code>EVENT_ID</code></dt><dd><code>1</code></dd></div>
       <div><dt><abbr class="dynamo-sk" title="Clave de ordenación">SK</abbr> <code>USER_ID</code></dt><dd><code>usuario-02</code></dd></div>
       <div><dt><code>REGISTERED_AT</code></dt><dd>Fecha de inscripción</dd></div>
-      <div><dt><code>CHECKED_IN_AT</code></dt><dd>Fecha de entrada, opcional</dd></div>
     </dl>
     <p><strong>PK</strong> agrupa a los inscritos del evento. <strong>SK</strong> distingue a cada usuario dentro de ese grupo.</p>
   </section>
@@ -115,9 +110,9 @@
 </article>
 <article id="ensayar-pase" class="guide-step" data-step="Ensayar el pase">
 <h3>Prueba el pase que vas a construir</h3>
-<p>Selecciona <strong>Ensayo</strong> y usa un código nuevo, por ejemplo <code>usuario-02</code>. Pulsa <strong>Consultar → Inscribirse → Registrar entrada</strong> y fíjate en cómo cambia el estado del pase.</p>
+<p>Selecciona <strong>Ensayo</strong> y usa un código nuevo, por ejemplo <code>usuario-02</code>. Pulsa <strong>Consultar → Inscribirse</strong> y fíjate en cómo cambia el estado del pase.</p>
 <div id="ensayo-pantalla"></div>
-<p class="checkpoint"><strong>Antes de avanzar</strong> El pase pasa por <strong>Sin inscripción → Inscrito → Entrada registrada</strong>. Pulsa <strong>Consultar</strong> otra vez y localiza <code>registeredAt</code> y <code>checkedInAt</code> en la respuesta. En <strong>Preguntas y claves</strong> verás qué datos necesita cada búsqueda.</p>
+<p class="checkpoint"><strong>Antes de avanzar</strong> El pase pasa por <strong>Sin inscripción → Inscrito</strong>. Pulsa <strong>Consultar</strong> otra vez y localiza <code>registeredAt</code> en la respuesta. En <strong>Preguntas y claves</strong> verás qué datos necesita cada búsqueda.</p>
 </article>
 <article id="patrones-acceso" class="guide-step" data-step="Preguntas y claves">
 <h3>De las preguntas a las claves de DynamoDB</h3>
@@ -132,7 +127,7 @@
   <div class="access-results" aria-live="polite">
     <section data-access-panel="evento"><h4>Un evento</h4><p>En <code>EVENTOS</code>, usa <code>EVENT_ID = 1</code> para leer un solo evento.</p><code>EVENTOS → PK 1 → Festival de otoño</code></section>
     <section data-access-panel="grupo" hidden><h4>Todas las inscripciones de un evento</h4><p>En <code>INSCRIPCIONES</code>, la PK es <code>EVENT_ID</code>. Una consulta por <code>1</code> recupera su grupo de inscripciones.</p><code>INSCRIPCIONES → PK 1 → usuario-01, usuario-02</code></section>
-    <section data-access-panel="pase" hidden><h4>Una inscripción concreta</h4><p>Dentro del grupo, <code>USER_ID</code> es la clave de ordenación (<strong>SK</strong>). La pareja <code>EVENT_ID</code> + <code>USER_ID</code> es la clave primaria compuesta. Su atributo <code>CHECKED_IN_AT</code> indica si ya se registró la entrada.</p><code>INSCRIPCIONES → PK 1 + SK usuario-02 → una fila</code></section>
+    <section data-access-panel="pase" hidden><h4>Una inscripción concreta</h4><p>Dentro del grupo, <code>USER_ID</code> es la clave de ordenación (<strong>SK</strong>). La pareja <code>EVENT_ID</code> + <code>USER_ID</code> es la clave primaria compuesta.</p><code>INSCRIPCIONES → PK 1 + SK usuario-02 → una fila</code></section>
     <section data-access-panel="usuario" hidden><h4>Los eventos de un usuario</h4><p>Guardas cada inscripción una vez. DynamoDB mantiene el índice <code>PorUsuario</code>, que agrupa esas inscripciones por <code>USER_ID</code> (PK) y las ordena por <code>EVENT_ID</code> (SK).</p><code>PorUsuario → PK usuario-02 → 1, 2</code></section>
   </div>
 </div>
@@ -142,14 +137,14 @@
 <h3>Convierte el modelo en tres tablas y pruébalo</h3>
 <p>Escribe los atributos de DynamoDB en mayúsculas con guion bajo, como <code>EVENT_ID</code>. Cuando la API recibe o devuelve JSON, usa nombres como <code>eventId</code>. Verás cómo traducirlos en <a href="#leer-pase">Lectura</a>.</p>
 <p class="lesson-note"><strong>Convención de Base de Datos.</strong> Llama a las entidades <strong>Evento</strong>, <strong>Inscripción</strong> y <strong>Usuario</strong>. Usa la abreviatura del proyecto, un guion bajo y el nombre de la tabla en plural. En Festival Check-in obtienes <code>FCI_EVENTOS</code>, <code>FCI_INSCRIPCIONES</code> y <code>FCI_USUARIOS</code>. «San Valentín» sería el título de un evento guardado en <code>FCI_EVENTOS</code>.</p>
-<p><strong>Evento → EVENTOS.</strong> Guarda <code>EVENT_ID</code> y <code>TITLE</code>. <strong>Inscripción → INSCRIPCIONES.</strong> Guarda la pareja de identificadores, <code>REGISTERED_AT</code> y, al entrar, <code>CHECKED_IN_AT</code>.</p>
+<p><strong>Evento → EVENTOS.</strong> Guarda <code>EVENT_ID</code> y <code>TITLE</code>. <strong>Inscripción → INSCRIPCIONES.</strong> Guarda la pareja de identificadores, y <code>REGISTERED_AT</code>.</p>
 <p><code>EVENT_ID</code> y <code>USER_ID</code> son referencias al evento y a la persona, como dos claves foráneas en un modelo relacional. La clave primaria de la inscripción es la pareja <code>EVENT_ID</code> + <code>USER_ID</code>, que garantiza una inscripción por persona y evento.</p>
 <p><strong>Usuario → USUARIOS.</strong> Guarda <code>USER_ID</code>, <code>DISPLAY_NAME</code> y <code>CITY</code>. Si Leo cambia de ciudad, actualiza su perfil una vez. Sus inscripciones conservan el mismo <code>USER_ID</code>.</p>
 <p>En DynamoDB la aplicación decide qué referencias comprueba. En esta práctica, POST comprueba que el evento existe y acepta el código de usuario de la ruta. Consulta y edita los perfiles desde <a href="#sembrar-usuarios">Sembrar datos → Usuarios</a>.</p>
 <p id="model-status" role="status">Cargando el ejemplo…</p>
 <div id="model-result">
 </div>
-<p><strong>Lee los datos de ejemplo.</strong> Un valor en <code>CHECKED_IN_AT</code> indica que el usuario ya entró. En el laboratorio, la tabla de inscripciones empezará vacía y se llenará al probar POST.</p>
+<p><strong>Lee los datos de ejemplo.</strong> <code>REGISTERED_AT</code> indica cuándo se inscribió el usuario. En el laboratorio, la tabla de inscripciones empezará vacía y se llenará al probar POST.</p>
 <p class="checkpoint"><strong>Antes de avanzar</strong> En <code>FCI_USUARIOS</code>, localiza a Leo con <code>USER_ID = usuario-02</code>. Pulsa <strong>Ver inscritos del evento</strong>. Aparecen dos filas con <code>EVENT_ID = 1</code> y dos <code>USER_ID</code> distintos. Pulsa <strong>Buscar a usuario-02</strong>. Ahora solo aparece la fila de <code>usuario-02</code>.</p>
 </article>
 </section>
@@ -280,20 +275,14 @@ LAMBDA_ROLE_ARN=$(aws iam get-role --role-name LabRole --profile "$perfil" --reg
         <li><button type="button" data-yaml-block="Rutas" data-yaml-line="crearEvento:" aria-pressed="false"><code>crearEvento</code></button></li>
         <li><button type="button" data-yaml-block="Rutas" data-yaml-line="consultarPase:" aria-pressed="false"><code>consultarPase</code></button>
           <ul>
-            <li><button type="button" data-yaml-block="Rutas" data-yaml-line="handler: src/pases/consultar.handler" aria-pressed="false"><code>handler</code></button></li>
+            <li><button type="button" data-yaml-block="Rutas" data-yaml-line="handler: src/pases/consultar-pase/handler.handler" aria-pressed="false"><code>handler</code></button></li>
             <li><button type="button" data-yaml-block="Rutas" data-yaml-line="method: GET" aria-pressed="false"><code>httpApi · GET</code></button></li>
           </ul>
         </li>
         <li><button type="button" data-yaml-block="Rutas" data-yaml-line="inscribirUsuario:" aria-pressed="false"><code>inscribirUsuario</code></button>
           <ul>
-            <li><button type="button" data-yaml-block="Rutas" data-yaml-line="handler: src/pases/inscribir.handler" aria-pressed="false"><code>handler</code></button></li>
+            <li><button type="button" data-yaml-block="Rutas" data-yaml-line="handler: src/pases/inscribir-usuario/handler.handler" aria-pressed="false"><code>handler</code></button></li>
             <li><button type="button" data-yaml-block="Rutas" data-yaml-line="method: POST" aria-pressed="false"><code>httpApi · POST</code></button></li>
-          </ul>
-        </li>
-        <li><button type="button" data-yaml-block="Rutas" data-yaml-line="registrarEntrada:" aria-pressed="false"><code>registrarEntrada</code></button>
-          <ul>
-            <li><button type="button" data-yaml-block="Rutas" data-yaml-line="handler: src/pases/entrada.handler" aria-pressed="false"><code>handler</code></button></li>
-            <li><button type="button" data-yaml-block="Rutas" data-yaml-line="method: PATCH" aria-pressed="false"><code>httpApi · PATCH</code></button></li>
           </ul>
         </li>
       </ul>
@@ -389,9 +378,9 @@ LAMBDA_ROLE_ARN=$(aws iam get-role --role-name LabRole --profile "$perfil" --reg
       <div><dt><code>cors:</code></dt><dd>Agrupa las reglas que consulta el navegador cuando la web y la API están en orígenes distintos.</dd></div>
       <div><dt data-lines="allowedOrigins:|https://albertohdezakkari.github.io"><code>allowedOrigins:</code></dt><dd>Lista los orígenes web permitidos. El guion introduce <code>https://albertohdezakkari.github.io</code> como elemento de la lista.</dd></div>
       <div><dt data-lines="allowedHeaders:|Content-Type"><code>allowedHeaders:</code></dt><dd>Lista las cabeceras admitidas desde el navegador. <code>Content-Type</code> indica el tipo de contenido enviado.</dd></div>
-      <div><dt data-lines="allowedMethods:|GET|POST|PATCH"><code>allowedMethods:</code></dt><dd>Lista los métodos que puede usar la web: <code>GET</code> para consultar el pase, <code>POST</code> para inscribirse y <code>PATCH</code> para registrar la entrada. Cada guion añade un método.</dd></div>
+      <div><dt data-lines="allowedMethods:|GET|POST"><code>allowedMethods:</code></dt><dd>Lista los métodos que puede usar la web: <code>GET</code> para consultar el pase y <code>POST</code> para inscribirse. Cada guion añade un método.</dd></div>
     </dl>
-    <p>Busca el guion delante de <code>PATCH</code>. Marca un elemento de la lista <code>allowedMethods</code>.</p>
+    <p>Busca el guion delante de <code>POST</code>. Marca un elemento de la lista <code>allowedMethods</code>.</p>
   </section>
   <section data-code-start="build:" data-label="Rutas" hidden>
     <p class="yaml-outcome" hidden>Cada operación tiene su propia Lambda. API Gateway la elige por el método HTTP y la ruta.</p>
@@ -401,21 +390,19 @@ LAMBDA_ROLE_ARN=$(aws iam get-role --role-name LabRole --profile "$perfil" --reg
       <div><dt><code>esbuild: false</code></dt><dd><code>false</code> es un valor booleano. Aquí desactiva la herramienta integrada esbuild porque desplegamos los módulos JavaScript de <code>src/</code>.</dd></div>
       <div><dt><code>functions:</code></dt><dd>Agrupa las funciones Lambda del servicio.</dd></div>
       <div><dt><code>consultarPase:</code></dt><dd>Lambda que consulta el pase cuando API Gateway recibe <code>GET</code> en la ruta del pase.</dd></div>
-      <div><dt><code>handler: src/pases/consultar.handler</code></dt><dd><code>src/pases/consultar</code> identifica el archivo <code>consultar.mjs</code>. Lambda ejecuta su función exportada <code>handler</code>.</dd></div>
+      <div><dt><code>handler: src/pases/consultar-pase/handler.handler</code></dt><dd><code>src/pases/consultar-pase/handler</code> identifica el archivo <code>handler.mjs</code>. Lambda ejecuta su función exportada <code>handler</code>.</dd></div>
       <div><dt><code>inscribirUsuario:</code></dt><dd>Lambda que crea la inscripción cuando API Gateway recibe <code>POST</code> en la ruta del pase.</dd></div>
-      <div><dt><code>handler: src/pases/inscribir.handler</code></dt><dd><code>src/pases/inscribir</code> identifica el archivo <code>inscribir.mjs</code>. Lambda ejecuta su función exportada <code>handler</code>.</dd></div>
+      <div><dt><code>handler: src/pases/inscribir-usuario/handler.handler</code></dt><dd><code>src/pases/inscribir-usuario/handler</code> identifica el archivo <code>handler.mjs</code>. Lambda ejecuta su función exportada <code>handler</code>.</dd></div>
       <div><dt data-lines="crearEvento:|handler: src/eventos/crear-evento/handler.handler"><code>crearEvento:</code></dt><dd>Lambda que invocas desde la terminal para guardar un evento con el ID que envías. En <code>handler.handler</code>, el primer <code>handler</code> identifica el archivo <code>handler.mjs</code> y el segundo, la función que exporta. <code>name</code> fija el nombre usado por AWS CLI.</dd></div>
-      <div><dt><code>registrarEntrada:</code></dt><dd>Lambda que registra la entrada cuando API Gateway recibe <code>PATCH</code> en la ruta del pase.</dd></div>
-      <div><dt><code>handler: src/pases/entrada.handler</code></dt><dd><code>src/pases/entrada</code> identifica el archivo <code>entrada.mjs</code>. Lambda ejecuta su función exportada <code>handler</code>.</dd></div>
       <div><dt data-lines="events:|httpApi:"><code>events:</code></dt><dd>Lista lo que puede activar esa Lambda. Cada <code>- httpApi:</code> añade una ruta HTTP.</dd></div>
       <div><dt><code>method:</code></dt><dd>Selecciona el método HTTP de la ruta. Junto con <code>path</code>, identifica la ruta que activa el handler de ese bloque.</dd></div>
       <div><dt><code>path:</code></dt><dd>Define la dirección que se compara con la petición. En <code>/events/1/registrations/usuario-02</code>, las llaves de la plantilla marcan los huecos: <code>{eventId}</code> recibe <code>1</code> y <code>{userId}</code> recibe <code>usuario-02</code>.</dd></div>
     </dl>
     <div class="yaml-question">
-      <p><strong>El usuario ya está inscrito y llega al festival. ¿Qué petición registra su entrada?</strong></p>
+      <p><strong>¿Qué petición crea una inscripción para usuario-02?</strong></p>
       <div class="actions">
-      <button type="button" data-feedback="POST crea la inscripción. Aquí el registro ya existe y queremos actualizarlo." aria-pressed="false">POST /events/1/registrations/usuario-02</button>
-      <button type="button" data-feedback="Sí. PATCH actualiza el registro existente. API Gateway invoca registrarEntrada." aria-pressed="false">PATCH /events/1/registrations/usuario-02</button>
+      <button type="button" data-feedback="Sí. POST crea la inscripción e invoca inscribirUsuario." aria-pressed="false">POST /events/1/registrations/usuario-02</button>
+      <button type="button" data-feedback="GET consulta el pase. Elige POST para crear la inscripción." aria-pressed="false">GET /events/1/registrations/usuario-02</button>
       </div>
       <p class="yaml-feedback" role="status"></p>
     </div>
@@ -526,7 +513,6 @@ provider:
       allowedMethods:
         - GET
         - POST
-        - PATCH
 
 build:
   esbuild: false
@@ -536,22 +522,16 @@ functions:
     name: ${self:service}-${sls:stage}-crearEvento
     handler: src/eventos/crear-evento/handler.handler
   consultarPase:
-    handler: src/pases/consultar.handler
+    handler: src/pases/consultar-pase/handler.handler
     events:
       - httpApi:
           method: GET
           path: /events/{eventId}/registrations/{userId}
   inscribirUsuario:
-    handler: src/pases/inscribir.handler
+    handler: src/pases/inscribir-usuario/handler.handler
     events:
       - httpApi:
           method: POST
-          path: /events/{eventId}/registrations/{userId}
-  registrarEntrada:
-    handler: src/pases/entrada.handler
-    events:
-      - httpApi:
-          method: PATCH
           path: /events/{eventId}/registrations/{userId}
 
 resources:
@@ -634,24 +614,24 @@ resources:
   <div class="lambda-ticket">
     <strong>Así localizas una petición</strong>
     <div><span class="lambda-method">GET</span> <code>/events/1/registrations/usuario-02</code></div>
-    <p><code>serverless.yml → src/pases/consultar.handler → consultar.mjs → getPass</code></p>
+    <p><code>serverless.yml → src/pases/consultar-pase/handler.handler → handler.mjs</code></p>
   </div>
 </div>
 <section class="lambda-stage" aria-labelledby="lambda-stage-follow">
   <h4 id="lambda-stage-follow"><span>01</span> Localiza qué se ejecuta</h4>
   <ol class="lambda-env-flow">
-    <li><strong>API Gateway elige el archivo</strong><code>Método + ruta → handler</code><span>Para GET invoca el <code>handler</code> de <code>consultar.mjs</code>.</span></li>
-    <li><strong>El archivo ejecuta su caso de uso</strong><code>handler(event) → getPass(key)</code><span>Comparte con POST y PATCH la lectura de los parámetros de la ruta. En esta etapa, la operación devuelve <code>501</code> hasta que completes su lógica.</span></li>
+    <li><strong>API Gateway elige el archivo</strong><code>Método + ruta → handler</code><span>Para GET invoca el <code>handler</code> de <code>consultar-pase/handler.mjs</code>.</span></li>
+    <li><strong>El archivo ejecuta su caso de uso</strong><code>handler(event) → consultarPase(key)</code><span>Comparte con POST la lectura de los parámetros de la ruta. En esta etapa, la operación devuelve <code>501</code> hasta que completes su lógica.</span></li>
     <li><strong>La configuración llega desde el YAML</strong><code>Ref → variable de Lambda → process.env</code><span>Al cargar <code>dynamo.mjs</code>, Lambda prepara el cliente y lee <code>FCI_TABLA_EVENTOS</code> y <code>FCI_TABLA_INSCRIPCIONES</code>. Esas variables contienen <code>FCI_EVENTOS</code> y <code>FCI_INSCRIPCIONES</code>, respectivamente. Un <code>.env</code> es otra forma de cargar variables en local.</span></li>
   </ol>
 </section>
 <section class="lambda-stage" aria-labelledby="lambda-stage-create">
   <h4 id="lambda-stage-create"><span>02</span> Prepara los módulos</h4>
   <div class="lambda-module-map" aria-label="Carpetas y responsabilidades">
-    <div><strong><code>src/pases/</code></strong><p><code>consultar.mjs</code>, <code>inscribir.mjs</code> y <code>entrada.mjs</code> contienen las operaciones del pase.</p></div>
+    <div><strong><code>src/pases/</code></strong><p><code>consultar-pase/</code> e <code>inscribir-usuario/</code> agrupan los archivos de cada caso de uso.</p></div>
     <div><strong><code>src/eventos/crear-evento/</code></strong><p><code>handler.mjs</code> recibe el ID y guarda el evento.</p></div>
     <div><strong><code>src/datos/</code></strong><p><code>dynamo.mjs</code> comparte el acceso a las tablas.</p></div>
-    <div><strong><code>peticion.mjs</code> · Validación compartida</strong><p>Los tres handlers de pases usan este módulo para validar <code>eventId</code> y <code>userId</code>, dar formato a las respuestas y convertir errores en códigos HTTP.</p></div>
+    <div><strong><code>peticion.mjs</code> · Validación compartida</strong><p>Los dos handlers de pases usan este módulo para leer <code>eventId</code> y <code>userId</code>, dar formato a las respuestas y convertir errores en códigos HTTP.</p></div>
   </div>
   <ol>
     <li>
@@ -669,26 +649,25 @@ ls -l serverless.yml package.json</code></pre>
       <p>En <code>vi</code>, escribe <code>:set paste</code> y pulsa <kbd>Intro</kbd>. Si estás actualizando un archivo anterior de esta práctica, escribe <code>:%d</code> y pulsa <kbd>Intro</kbd> para borrar el contenido. Pulsa <kbd>i</kbd> y pega el archivo completo. Para guardar, pulsa <kbd>Esc</kbd>, escribe <code>:wq</code> y pulsa <kbd>Intro</kbd>.</p>
     </li>
   </ol>
-  <p>Sigue las pestañas de izquierda a derecha. Empieza por <strong>DynamoDB · <code>dynamo.mjs</code></strong>, que exporta el cliente y los nombres de las tablas. <code>handler.mjs</code> importa ese módulo. Guarda <code>peticion.mjs</code> antes de preparar los tres archivos del pase. Cada pestaña abre el archivo completo. Puedes usar <strong>Ver por páginas</strong> para leer los archivos largos por partes. Pasa el ratón o toca una línea resaltada para ver su explicación.</p>
+  <p>Sigue las pestañas de izquierda a derecha. Empieza por <strong>DynamoDB · <code>dynamo.mjs</code></strong>, que exporta el cliente y los nombres de las tablas. <code>handler.mjs</code> importa ese módulo. Guarda <code>peticion.mjs</code> antes de preparar los dos handlers del pase. Cada pestaña abre el archivo completo. Puedes usar <strong>Ver por páginas</strong> para leer los archivos largos por partes. Pasa el ratón o toca una línea resaltada para ver su explicación.</p>
   <template id="index-explanations">
   <div data-prefix="import { DynamoDBClient"><strong>Conexión con DynamoDB</strong><p>Importa el cliente que comunica Lambda con DynamoDB. El paquete se instaló al preparar el proyecto.</p></div>
   <div data-prefix="export const db ="><strong>Cliente de documentos</strong><p>Lambda prepara este cliente al cargar el archivo. Las operaciones pueden reutilizarlo y pasarle objetos de JavaScript, como la clave con <code>EVENT_ID</code> y <code>USER_ID</code>.</p></div>
   <div data-prefix="marshallOptions:"><strong>Omite atributos ausentes</strong><p>Si falta <code>title</code> en la invocación, su valor en JavaScript es <code>undefined</code>. El cliente omite ese atributo al preparar el ítem.</p></div>
   <div data-prefix="export const TABLA_EVENTOS_FCI ="><strong>Tabla de eventos</strong><p>El despliegue configura FCI_TABLA_EVENTOS en Lambda a partir de Ref: FestivalCheckInEventos. <code>process.env.FCI_TABLA_EVENTOS</code> devuelve <code>FCI_EVENTOS</code>.</p></div>
-  <div data-prefix="export const TABLA_INSCRIPCIONES_FCI ="><strong>Tabla de inscripciones</strong><p>El despliegue configura FCI_TABLA_INSCRIPCIONES en Lambda a partir de Ref: FestivalCheckInInscripciones. <code>process.env.FCI_TABLA_INSCRIPCIONES</code> devuelve <code>FCI_INSCRIPCIONES</code>, donde se guardan la inscripción y la hora de entrada.</p></div>
+  <div data-prefix="export const TABLA_INSCRIPCIONES_FCI ="><strong>Tabla de inscripciones</strong><p>El despliegue configura FCI_TABLA_INSCRIPCIONES en Lambda a partir de Ref: FestivalCheckInInscripciones. <code>process.env.FCI_TABLA_INSCRIPCIONES</code> devuelve <code>FCI_INSCRIPCIONES</code>, donde se guardan la fecha de inscripción.</p></div>
   <div data-prefix="export function json("><strong>Una respuesta para la API</strong><p>Esta función reúne el código HTTP, la cabecera y el cuerpo que API Gateway devuelve al navegador.</p></div>
   <div data-prefix="headers: {"><strong>Tipo de contenido</strong><p>La cabecera indica al navegador que el cuerpo de la respuesta es JSON.</p></div>
   <div data-prefix="body: JSON.stringify"><strong>Convierte la respuesta a JSON</strong><p>Si el SDK devuelve un <code>BigInt</code>, <code>json</code> lo envía como texto para conservar todas sus cifras.</p></div>
-  <div data-prefix="async function getPass"><strong>Consultar el pase</strong><p>El handler llama a esta función al recibir GET. Usará <code>EVENT_ID</code> para buscar el evento y la pareja <code>EVENT_ID</code> + <code>USER_ID</code> para buscar una inscripción.</p></div>
+  <div data-prefix="async function consultarPase"><strong>Consultar el pase</strong><p>El handler llama a esta función al recibir GET. Usará <code>EVENT_ID</code> para buscar el evento y la pareja <code>EVENT_ID</code> + <code>USER_ID</code> para buscar una inscripción.</p></div>
   <div data-prefix="async function register"><strong>Crear una inscripción</strong><p>El handler llama a esta función al recibir POST. Usará la pareja de claves para guardar la inscripción de un usuario en un evento.</p></div>
-  <div data-prefix="async function checkIn"><strong>Registrar la entrada</strong><p>El handler llama a esta función al recibir PATCH. Buscará la inscripción por su clave completa y añadirá <code>CHECKED_IN_AT</code>.</p></div>
   <div data-prefix="return json(501"><strong>Operación pendiente</strong><p>El archivo base responde 501 hasta que escribas la operación. Esta respuesta te permite distinguir una ruta conectada de una operación ya implementada.</p></div>
-  <div data-prefix="export async function handleRequest"><strong>Entrada y errores compartidos</strong><p>Los tres handlers usan esta función. Lee los datos de la ruta, llama a la operación elegida y prepara la respuesta si ocurre un error.</p></div>
+  <div data-prefix="export async function handleRequest"><strong>Entrada y errores compartidos</strong><p>Los dos handlers usan esta función. Lee los datos de la ruta, llama a la operación elegida y prepara la respuesta si ocurre un error.</p></div>
   <div data-prefix="const { eventId: routeId"><strong>La ruta entrega texto</strong><p>En <code>/events/1/registrations/usuario-02</code>, <code>routeId</code> recibe <code>"1"</code> y <code>userId</code> recibe <code>"usuario-02"</code>.</p></div>
   <div data-prefix="const eventId = BigInt(routeId)"><strong>Convierte el texto de la ruta en un entero</strong><p>API Gateway entrega <code>"1"</code> como texto. <code>BigInt("1")</code> devuelve <code>1n</code>, el entero que pasas a DynamoDB.</p></div>
   <div data-prefix="TableName: TABLA_EVENTOS_FCI"><strong>Usa la tabla FCI_EVENTOS</strong><p><code>TABLA_EVENTOS_FCI</code> contiene el valor de <code>FCI_TABLA_EVENTOS</code>. En el YAML, <code>Ref: FestivalCheckInEventos</code> obtiene el nombre <code>FCI_EVENTOS</code>.</p></div>
   <div data-prefix="ConditionExpression: &#x27;attribute_not_exists(EVENT_ID)&#x27;"><strong>La clave protege el número al escribir</strong><p>Si el evento <code>8</code> ya existe, DynamoDB rechaza la escritura. Para dar de alta otro evento, elige otro ID.</p></div>
-  <div data-prefix="return await operation("><strong>Ejecutar el caso de uso</strong><p>La operación recibe eventId y userId. Por ejemplo, getPass busca la inscripción con esa pareja. await permite capturar aquí los errores de la operación.</p></div>
+  <div data-prefix="return await operation("><strong>Ejecutar el caso de uso</strong><p>La operación recibe eventId y userId. Por ejemplo, consultarPase busca la inscripción con esa pareja. await permite capturar aquí los errores de la operación.</p></div>
   <div data-prefix="if (error.name ==="><strong>Una condición impide escribir</strong><p>Cuando DynamoDB rechaza una condición, el handler devuelve 409. Por ejemplo, al intentar inscribir dos veces al mismo usuario.</p></div>
   <div data-prefix="console.error("><strong>Dónde mirar un fallo</strong><p>El detalle técnico se escribe en el registro de Lambda. La respuesta 500 indica a quien llama que ocurrió un fallo interno.</p></div>
   <div data-prefix="export function handler("><strong>Entrada de la ruta</strong><p>Lambda ejecuta esta función exportada y le entrega la petición. El archivo se elige mediante handler en el YAML.</p></div>
@@ -699,9 +678,8 @@ ls -l serverless.yml package.json</code></pre>
     <button type="button" data-explain="modulo-lambda-4" aria-controls="modulo-lambda-4" aria-pressed="true">DynamoDB · <code>dynamo.mjs</code></button>
     <button type="button" data-explain="modulo-lambda-eventos" aria-controls="modulo-lambda-eventos" aria-pressed="false">Eventos · <code>handler.mjs</code></button>
     <button type="button" data-explain="modulo-lambda-5" aria-controls="modulo-lambda-5" aria-pressed="false">HTTP · <code>peticion.mjs</code></button>
-    <button type="button" data-explain="modulo-lambda-1" aria-controls="modulo-lambda-1" aria-pressed="false">GET · <code>consultar.mjs</code></button>
-    <button type="button" data-explain="modulo-lambda-2" aria-controls="modulo-lambda-2" aria-pressed="false">POST · <code>inscribir.mjs</code></button>
-    <button type="button" data-explain="modulo-lambda-3" aria-controls="modulo-lambda-3" aria-pressed="false">PATCH · <code>entrada.mjs</code></button>
+    <button type="button" data-explain="modulo-lambda-1" aria-controls="modulo-lambda-1" aria-pressed="false">GET · Consultar pase</button>
+    <button type="button" data-explain="modulo-lambda-2" aria-controls="modulo-lambda-2" aria-pressed="false">POST · Inscribir usuario</button>
     </div>
   <section id="modulo-lambda-4" data-explanation>
     <h5><code>src/datos/dynamo.mjs</code></h5>
@@ -739,7 +717,7 @@ export async function handler({ eventId, title } = {}) {
   </section>
   <section id="modulo-lambda-5" data-explanation hidden>
     <h5><code>src/pases/peticion.mjs</code></h5>
-    <p>Comparte el formato de respuesta y el tratamiento de errores de las tres rutas. Para este paso, prueba con un ID de evento que hayas creado, como <code>1</code>, y con un código como <code>usuario-02</code>. Añadirás las validaciones de la ruta más adelante.</p>
+    <p>Comparte el formato de respuesta y el tratamiento de errores de las dos rutas. Para este paso, prueba con un ID de evento que hayas creado, como <code>1</code>, y con un código como <code>usuario-02</code>.</p>
     <pre><code>mkdir -p src/pases &amp;&amp; touch src/pases/peticion.mjs &amp;&amp; vi src/pases/peticion.mjs</code></pre>
     <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/pases/peticion.mjs"><code>export function json(statusCode, body) {
   return {
@@ -765,27 +743,25 @@ export async function handleRequest(event, operation) {
 }</code></pre></div>
   </section>
   <section id="modulo-lambda-1" data-explanation hidden>
-    <h5><code>src/pases/consultar.mjs</code></h5>
-    <p>Prepara el archivo base de GET. Por ahora responde <code>501</code>. Lo completarás en <a href="#leer-pase">6 · Consultar</a>.</p>
-    <pre><code>mkdir -p src/pases &amp;&amp; touch src/pases/consultar.mjs &amp;&amp; vi src/pases/consultar.mjs</code></pre>
-    <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/pases/consultar.mjs"><code>import { GetCommand } from '@aws-sdk/lib-dynamodb';
-import { db, TABLA_EVENTOS_FCI, TABLA_INSCRIPCIONES_FCI } from '../datos/dynamo.mjs';
-import { handleRequest, json } from './peticion.mjs';
+    <h5><code>src/pases/consultar-pase/handler.mjs</code></h5>
+    <p>Prepara el archivo base de GET. Por ahora responde <code>501</code>. Lo completarás en <a href="#leer-pase">Sembrar datos → Consultar · Capas</a>.</p>
+    <pre><code>mkdir -p src/pases/consultar-pase &amp;&amp; ls -ld src/pases/consultar-pase &amp;&amp; touch src/pases/consultar-pase/handler.mjs &amp;&amp; vi src/pases/consultar-pase/handler.mjs</code></pre>
+    <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/pases/consultar-pase/handler.mjs"><code>import { handleRequest, json } from '../peticion.mjs';
 
 export function handler(event) {
-  return handleRequest(event, getPass);
+  return handleRequest(event, consultarPase);
 }
 
-async function getPass(key) {
+async function consultarPase(key) {
   // Fase Lectura: consulta el evento y la inscripción.
   return json(501, { message: 'Lectura por construir' });
 }</code></pre></div>
   </section>
   <section id="modulo-lambda-2" data-explanation hidden>
-    <h5><code>src/pases/inscribir.mjs</code></h5>
-    <p>Prepara el archivo base de POST. Por ahora responde <code>501</code>. Lo completarás en <a href="#construir-post">7 · Inscribir</a>.</p>
-    <pre><code>mkdir -p src/pases &amp;&amp; touch src/pases/inscribir.mjs &amp;&amp; vi src/pases/inscribir.mjs</code></pre>
-    <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/pases/inscribir.mjs"><code>import { handleRequest, json } from './peticion.mjs';
+    <h5><code>src/pases/inscribir-usuario/handler.mjs</code></h5>
+    <p>Prepara el archivo base de POST. Por ahora responde <code>501</code>. Lo completarás en <a href="#construir-post">Sembrar datos → Inscribir · Capas</a>.</p>
+    <pre><code>mkdir -p src/pases/inscribir-usuario &amp;&amp; ls -ld src/pases/inscribir-usuario &amp;&amp; touch src/pases/inscribir-usuario/handler.mjs &amp;&amp; vi src/pases/inscribir-usuario/handler.mjs</code></pre>
+    <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/pases/inscribir-usuario/handler.mjs"><code>import { handleRequest, json } from '../peticion.mjs';
 
 export function handler(event) {
   return handleRequest(event, register);
@@ -796,55 +772,37 @@ async function register(key) {
   return json(501, { message: 'Inscripción por construir' });
 }</code></pre></div>
   </section>
-  <section id="modulo-lambda-3" data-explanation hidden>
-    <h5><code>src/pases/entrada.mjs</code></h5>
-    <p>Prepara el archivo base de PATCH. Por ahora responde <code>501</code>. Lo completarás en <a href="#construir-patch">8 · Dar entrada</a>.</p>
-    <pre><code>mkdir -p src/pases &amp;&amp; touch src/pases/entrada.mjs &amp;&amp; vi src/pases/entrada.mjs</code></pre>
-    <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/pases/entrada.mjs"><code>import { UpdateCommand } from '@aws-sdk/lib-dynamodb';
-import { db, TABLA_INSCRIPCIONES_FCI } from '../datos/dynamo.mjs';
-import { handleRequest, json } from './peticion.mjs';
-
-export function handler(event) {
-  return handleRequest(event, checkIn);
-}
-
-async function checkIn(key) {
-  // Fase Entrada: actualiza una inscripción existente.
-  return json(501, { message: 'Entrada por construir' });
-}</code></pre></div>
-  </section>
   </div>
 </section>
 <section class="lambda-stage" aria-labelledby="lambda-stage-check">
   <h4 id="lambda-stage-check"><span>03</span> Comprueba antes de desplegar</h4>
-  <p><code>ls -l</code> muestra el manifiesto, el YAML y los módulos. <code>node --check</code> comprueba la sintaxis. El último comando importa los cuatro puntos de entrada para verificar que cada dependencia existe y exporta lo que pide el código.</p>
-  <pre><code>ls -l serverless.yml package.json src/pases/*.mjs src/datos/*.mjs src/eventos/crear-evento/*.mjs &amp;&amp;
+  <p><code>ls -l</code> muestra el manifiesto, el YAML y los módulos. <code>node --check</code> comprueba la sintaxis. El último comando importa los tres puntos de entrada para verificar que cada dependencia existe y exporta lo que pide el código.</p>
+  <pre><code>ls -l serverless.yml package.json src/pases/*.mjs src/pases/consultar-pase/*.mjs src/pases/inscribir-usuario/*.mjs src/datos/*.mjs src/eventos/crear-evento/*.mjs &amp;&amp;
 (
-  for archivo in src/pases/*.mjs src/datos/*.mjs src/eventos/crear-evento/*.mjs; do
+  for archivo in src/pases/*.mjs src/pases/consultar-pase/*.mjs src/pases/inscribir-usuario/*.mjs src/datos/*.mjs src/eventos/crear-evento/*.mjs; do
     node --check "$archivo" || exit 1
   done
 ) &amp;&amp;
 node --input-type=module -e '
   await import("./src/eventos/crear-evento/handler.mjs");
-  await import("./src/pases/consultar.mjs");
-  await import("./src/pases/inscribir.mjs");
-  await import("./src/pases/entrada.mjs");
+  await import("./src/pases/consultar-pase/handler.mjs");
+  await import("./src/pases/inscribir-usuario/handler.mjs");
   console.log("Imports comprobados");
 '</code></pre>
-  <p class="checkpoint"><strong>Antes de avanzar</strong> Ves los seis módulos y la terminal muestra <code>Imports comprobados</code>. En el YAML, verifica que <code>crearEvento</code> apunta a <code>src/eventos/crear-evento/handler.handler</code> y GET a <code>src/pases/consultar.handler</code>.</p>
+  <p class="checkpoint"><strong>Antes de avanzar</strong> Ves los cinco módulos y la terminal muestra <code>Imports comprobados</code>. En el YAML, verifica que <code>crearEvento</code> apunta a <code>src/eventos/crear-evento/handler.handler</code> y GET a <code>src/pases/consultar-pase/handler.handler</code>.</p>
 </section>
 </article>
 <article id="desplegar-stack" class="guide-step" data-step="Desplegar">
 <h3>Despliega el servicio desde la terminal</h3>
 <p class="lesson-note"><strong>Si ya desplegaste una edición anterior.</strong> Si <code>FCI_EVENTOS</code> ya existe con una clave compuesta, DynamoDB requiere una tabla nueva para cambiar su clave. Para ensayar, usa un laboratorio con los nombres libres. Para conservar tus datos, migra primero los eventos a una tabla con la clave simple <code>EVENT_ID</code>. <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-dynamodb-table.html">Tablas DynamoDB en CloudFormation</a>.</p>
-<p>Si compartís cuenta, región y proyecto, una persona ejecuta los despliegues y comparte la URL y los IDs de los eventos. Cada pareja usa códigos de usuario distintos para que sus pruebas de inscripción y entrada partan de un pase libre.</p>
+<p>Si compartís cuenta, región y proyecto, una persona ejecuta los despliegues y comparte la URL y los IDs de los eventos. Cada pareja usa códigos de usuario distintos para que sus pruebas de inscripción partan de un pase libre.</p>
 
 <dl class="command-reasons"><div><dt><code>node --check</code></dt><dd>Comprueba la sintaxis del módulo que indicas.</dd></div><div><dt><code>&amp;&amp;</code></dt><dd>Ejecuta el segundo comando si el primero termina correctamente.</dd></div><div><dt><code>--stage dev</code></dt><dd>Selecciona el entorno de desarrollo de tu servicio.</dd></div></dl>
-<p>Ejecuta el comando en la carpeta <code>festival-checkin</code>. Serverless Framework lee tu YAML y CloudFormation crea las tres tablas, las cuatro funciones y la HTTP API en el laboratorio.</p><pre><code>(
-  for archivo in src/pases/*.mjs src/datos/*.mjs src/eventos/crear-evento/*.mjs; do
+<p>Ejecuta el comando en la carpeta <code>festival-checkin</code>. Serverless Framework lee tu YAML y CloudFormation crea las tres tablas, las tres funciones y la HTTP API en el laboratorio.</p><pre><code>(
+  for archivo in src/pases/*.mjs src/pases/consultar-pase/*.mjs src/pases/inscribir-usuario/*.mjs src/datos/*.mjs src/eventos/crear-evento/*.mjs; do
     node --check "$archivo" || exit 1
   done
-) &amp;&amp; npx serverless deploy --stage dev --aws-profile "$perfil"</code></pre><p>Si Framework pide iniciar sesión, usa el mismo acceso de la lección <a href="../../#primer-serverless">01 · Primer Serverless</a>. Si falla CloudFormation, lee el primer recurso y permiso que aparecen en el error. Si la sesión de AWS caducó, renueva los tres valores y repite la comprobación de Conexión.</p><p class="checkpoint"><strong>Antes de avanzar</strong> La terminal muestra el despliegue terminado y las tres rutas de la API.</p>
+) &amp;&amp; npx serverless deploy --stage dev --aws-profile "$perfil"</code></pre><p>Si Framework pide iniciar sesión, usa el mismo acceso de la lección <a href="../../#primer-serverless">01 · Primer Serverless</a>. Si falla CloudFormation, lee el primer recurso y permiso que aparecen en el error. Si la sesión de AWS caducó, renueva los tres valores y repite la comprobación de Conexión.</p><p class="checkpoint"><strong>Antes de avanzar</strong> La terminal muestra el despliegue terminado y las dos rutas de la API.</p>
 </article>
 </section>
 <section id="datos" class="phase" hidden>
@@ -1047,7 +1005,7 @@ aws dynamodb execute-statement \
 </article>
 <article id="capas-eventos-orm" class="guide-step" data-step="Crear con ORM">
 <h3>Crea un evento por capas con DynamoDB Toolbox</h3>
-<p>Completa primero <a href="#capas-eventos">Crear por capas</a>. En <code>src/eventos/crear-evento/</code> vas a añadir el modelo y cambiar cómo el repository guarda un evento en <code>FCI_EVENTOS</code>. DynamoDB Toolbox es un <strong>ODM</strong>, un modelador que traduce los datos de JavaScript a los atributos del ítem de DynamoDB.</p>
+<p>Completa primero <a href="#capas-eventos">Crear por capas</a>. En <code>src/eventos/</code> vas a añadir el modelo compartido. Después cambiarás cómo el repository de <code>crear-evento/</code> guarda un evento en <code>FCI_EVENTOS</code>. DynamoDB Toolbox es un <strong>ODM</strong>, un modelador que traduce los datos de JavaScript a los atributos del ítem de DynamoDB.</p>
 <ol class="route-map" aria-label="Recorrido del alta con DynamoDB Toolbox">
   <li><strong>Handler → Service</strong><p><code>handler.mjs</code> recibe <code>eventId</code> y <code>title</code>. El service pasa ambos al repository.</p></li>
   <li><strong>Repository → Modelo</strong><p><code>guardarEvento</code> entrega al modelo el ID y el título que recibió.</p></li>
@@ -1061,7 +1019,7 @@ aws dynamodb execute-statement \
   <div data-prefix="const TABLA_MODELO_EVENTO"><strong>Conecta el modelo a la tabla existente</strong><p><code>Table</code> describe el nombre y las claves que ya definiste en <code>serverless.yml</code>. <code>documentClient</code> usa el cliente compartido en <code>dynamo.mjs</code>.</p></div>
   <div data-prefix="partitionKey:"><strong>Clave de partición</strong><p><code>EVENT_ID</code> identifica el evento y es la única clave de la tabla.</p></div>
   <div data-prefix="entityAttribute:"><strong>Usa los mismos atributos que ya guardabas</strong><p>Desactivas la etiqueta automática del modelador y las fechas automáticas. Así el ítem tiene los mismos atributos que en el ejemplo con el SDK.</p></div>
-  <div data-prefix="eventId: number"><strong>Declara el ID numérico</strong><p><code>number()</code> describe el tipo. <code>key()</code> marca el atributo como clave y <code>savedAs</code> indica el nombre físico.</p></div>
+  <div data-prefix="eventId: number"><strong>Declara el ID numérico</strong><p><code>number({ big: true })</code> admite tanto el número que envías al crear como el entero que se obtiene al leer la ruta. <code>key()</code> marca el atributo como clave y <code>savedAs</code> indica el nombre físico.</p></div>
   <div data-prefix="title: any"><strong>Mapea el título</strong><p><code>any().optional()</code> permite que el título falte o llegue tal cual. <code>savedAs</code> guarda el valor recibido con el nombre <code>TITLE</code>.</p></div>
   <div data-prefix="const comando ="><strong>Construye el comando de escritura</strong><p><code>item</code> entrega los valores al modelo. Toolbox aplica los tipos y nombres que declaraste en <code>evento.model.mjs</code>.</p></div>
   <div data-prefix="condition:"><strong>Protege la clave durante la escritura</strong><p>Toolbox traduce <code>eventId</code> a <code>EVENT_ID</code> y genera la condición <code>attribute_not_exists</code>. Si dos altas usan el mismo ID, DynamoDB solo acepta una.</p></div>
@@ -1073,17 +1031,17 @@ aws dynamodb execute-statement \
     <button type="button" data-explain="evento-orm-repository" aria-controls="evento-orm-repository" aria-pressed="false">Repository</button>
   </div>
   <section id="evento-orm-modelo" data-explanation>
-    <h4><code>src/eventos/crear-evento/evento.model.mjs</code></h4>
+    <h4><code>src/eventos/evento.model.mjs</code></h4>
     <p>El modelo conecta los nombres de JavaScript con los de DynamoDB. Por ejemplo, el número <code>4</code> que pasas como <code>eventId</code> se guarda en <code>EVENT_ID</code> como número.</p>
-    <pre><code>mkdir -p src/eventos/crear-evento &amp;&amp; ls -ld src/eventos/crear-evento &amp;&amp;
-touch src/eventos/crear-evento/evento.model.mjs &amp;&amp; vi src/eventos/crear-evento/evento.model.mjs</code></pre>
+    <pre><code>mkdir -p src/eventos &amp;&amp; ls -ld src/eventos &amp;&amp;
+touch src/eventos/evento.model.mjs &amp;&amp; vi src/eventos/evento.model.mjs</code></pre>
     <p>En <code>vi</code>, escribe <code>:set paste</code> y pulsa Intro. Pulsa <kbd>i</kbd>, pega el archivo y guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro.</p>
-    <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/eventos/crear-evento/evento.model.mjs" data-explanations="capas-orm-notas"><code>import { Entity } from 'dynamodb-toolbox/entity';
+    <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/eventos/evento.model.mjs" data-explanations="capas-orm-notas"><code>import { Entity } from 'dynamodb-toolbox/entity';
 import { Table } from 'dynamodb-toolbox/table';
 import { item } from 'dynamodb-toolbox/schema/item';
 import { any } from 'dynamodb-toolbox/schema/any';
 import { number } from 'dynamodb-toolbox/schema/number';
-import { db, TABLA_EVENTOS_FCI } from '../../datos/dynamo.mjs';
+import { db, TABLA_EVENTOS_FCI } from '../datos/dynamo.mjs';
 
 const TABLA_MODELO_EVENTO = new Table({
   name: TABLA_EVENTOS_FCI,
@@ -1097,7 +1055,7 @@ export const MODELO_EVENTO = new Entity({
   entityAttribute: false,
   timestamps: false,
   schema: item({
-    eventId: number().key().savedAs('EVENT_ID'),
+    eventId: number({ big: true }).key().savedAs('EVENT_ID'),
     title: any().optional().savedAs('TITLE')
   })
 });</code></pre></div>
@@ -1107,7 +1065,7 @@ export const MODELO_EVENTO = new Entity({
     <p>Abre el repository que creaste. En <code>vi</code>, ejecuta <code>:%d</code> para borrar el contenido anterior. Después activa <code>:set paste</code>, pulsa <kbd>i</kbd> y pega el archivo completo. Guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro.</p>
     <pre><code>vi src/eventos/crear-evento/repository.mjs</code></pre>
     <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/eventos/crear-evento/repository.mjs" data-explanations="capas-orm-notas"><code>import { PutItemCommand } from 'dynamodb-toolbox/entity/actions/put';
-import { MODELO_EVENTO } from './evento.model.mjs';
+import { MODELO_EVENTO } from '../evento.model.mjs';
 
 export async function guardarEvento(eventId, title) {
   const evento = {
@@ -1139,27 +1097,23 @@ aws dynamodb execute-statement \
 <p class="checkpoint"><strong>Antes de avanzar</strong> Comprueba que PartiQL devuelve el ID de la terminal en <code>EVENT_ID.N</code> y «Feria de robótica» en <code>TITLE.S</code>.</p>
 <p><a href="https://www.dynamodbtoolbox.com/docs/entities/usage">Documentación del modelo Entity</a> · <a href="https://www.dynamodbtoolbox.com/docs/entities/actions/put-item">Documentación de PutItem y su condición</a></p>
 </article>
-</section>
-<section id="lectura" class="phase" hidden>
-<h2>Leer desde Lambda</h2>
 <article id="entrenar-dynamo" class="guide-step" data-step="Entrenar con objetos">
   <div class="lambda-hero">
     <div><h3>De la clave al objeto</h3><p><strong>usuario-02</strong> pulsa <strong>Consultar</strong> en el Festival de otoño. Antes de programar, sigue el dato desde la ruta hasta la respuesta.</p></div>
-    <div class="lambda-ticket"><strong>La clave que recibe getPass</strong><code>{ eventId: 1, userId: 'usuario-02' }</code></div>
+    <div class="lambda-ticket"><strong>La clave que recibe consultarPase</strong><code>{ eventId: 1, userId: 'usuario-02' }</code></div>
   </div>
 
   <h4>Qué aprende cada acción del pase</h4>
   <ol class="route-map" aria-label="Operaciones de DynamoDB de la práctica">
     <li><span>Consultar · Lectura por clave</span><strong><code>GetCommand</code></strong><p>Lee <code>EVENTOS</code> con <code>EVENT_ID</code> e <code>INSCRIPCIONES</code> con <code>EVENT_ID + USER_ID</code>.</p></li>
     <li><span>Inscribir · Escritura con condiciones</span><strong><code>PutCommand</code></strong><p>Guarda el pase si la pareja de evento y usuario está libre.</p></li>
-    <li><span>Dar entrada · Actualización con condición</span><strong><code>UpdateCommand</code></strong><p>Añade <code>CHECKED_IN_AT</code> a la inscripción existente una sola vez.</p></li>
   </ol>
   <div class="lesson-note">
     <strong>Cómo se lee el código.</strong> <code>new GetCommand({ TableName, Key, ConsistentRead: true })</code> indica la tabla y la clave. Con <code>ConsistentRead: true</code>, la lectura refleja las escrituras confirmadas antes de esa consulta. <code>await db.send(...)</code> envía la operación y espera su respuesta. <code>const { Item: event } = respuesta</code> extrae <code>Item</code> y le da el nombre local <code>event</code>. El cliente de documentos devuelve los atributos como valores de JavaScript.
   </div>
 
   <section class="dynamo-training" aria-labelledby="dynamo-training-title">
-    <h4 id="dynamo-training-title">Entrena las dos lecturas de <code>getPass</code></h4>
+    <h4 id="dynamo-training-title">Entrena las dos lecturas de <code>consultarPase</code></h4>
     <form id="dynamo-practice">
       <label>Datos de partida
         <select name="scenario">
@@ -1185,112 +1139,305 @@ aws dynamodb execute-statement \
       <li><h5>3 · Responde a la web</h5><strong id="dynamo-status"></strong><pre><code id="dynamo-response"></code></pre><p id="dynamo-response-value"></p></li>
     </ol>
   </section>
-  <p class="checkpoint"><strong>Antes de avanzar</strong> Prueba los tres escenarios. Cuando falta el evento, la segunda lectura se omite. Cuando existe el evento, la API devuelve el título y el resultado de la segunda lectura. Después abre <strong>Lectura</strong> para escribirlo en <code>consultar.mjs</code>.</p>
+  <p class="checkpoint"><strong>Antes de avanzar</strong> Prueba los tres escenarios. Cuando falta el evento, la segunda lectura se omite. Cuando existe el evento, la API devuelve el título y el resultado de la segunda lectura. Después abre <strong>Consultar · Capas</strong> para programar la lectura.</p>
   <p><a href="https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_GetItem.html">Referencia de GetItem</a> · <a href="https://docs.aws.amazon.com/sdk-for-javascript/v3/developer-guide/javascript_dynamodb_code_examples.html">Ejemplos del SDK de JavaScript</a></p>
 </article>
-<article id="leer-pase" class="guide-step" data-step="Lectura">
-<h3>Lee el evento y la inscripción con getPass</h3>
-<figure class="pass-layers" aria-labelledby="pass-layers-title">
-  <figcaption id="pass-layers-title">De la petición a la respuesta del pase</figcaption>
-  <ol role="list">
-    <li>
-      <h4>Navegador → API Gateway</h4>
-      <p>Al pulsar <strong>Consultar</strong>, el navegador pide el pase de <code>usuario-02</code>.</p>
-      <code>GET /events/1/registrations/usuario-02</code>
-    </li>
-    <li>
-      <h4>Lambda · <code>src/pases/consultar.mjs</code></h4>
-      <p>El <code>handler</code> toma los dos valores de la ruta y llama a <code>getPass(key)</code>.</p>
-      <code>key = { eventId: 1, userId: 'usuario-02' }</code>
-    </li>
-    <li>
-      <h4>DynamoDB · Dos lecturas por clave con <code>GetCommand</code></h4>
-      <div class="pass-lookups">
-        <section aria-labelledby="pass-event-lookup">
-          <h5 id="pass-event-lookup">1. <code>TABLA_EVENTOS_FCI</code> → <code>FCI_EVENTOS</code></h5>
-          <code>{ EVENT_ID: 1 }</code>
-          <p><code>Item</code> se guarda en <code>event</code>. Si falta, Lambda devuelve <strong>404</strong> y termina aquí.</p>
-        </section>
-        <span class="pass-next-lookup"><span aria-hidden="true"></span> Si existe</span>
-        <section aria-labelledby="pass-registration-lookup">
-          <h5 id="pass-registration-lookup">2. <code>TABLA_INSCRIPCIONES_FCI</code> → <code>FCI_INSCRIPCIONES</code></h5>
-          <code>{ EVENT_ID: 1, USER_ID: 'usuario-02' }</code>
-          <p><code>Item</code> se guarda en <code>registration</code>. La pareja completa localiza un único pase en la tabla.</p>
-        </section>
-      </div>
-      <p><code>GetCommand</code> lee por la clave primaria de la tabla. Para listar los eventos partiendo de <code>USER_ID</code>, usarías <a href="#consultar-indice"><code>Query</code> sobre <code>PorUsuario</code></a>.</p>
-    </li>
-    <li>
-      <h4>Lambda → API Gateway → Navegador</h4>
-      <p>Si el evento existe, <strong>200</strong> devuelve su título y <code>registration</code>. La función traduce los atributos de DynamoDB a los campos de la API. Si falta la inscripción, envía <code>registration: null</code>.</p>
-      <code>{ "eventId": 1, "title": "Festival de otoño", "registration": null }</code>
-    </li>
-  </ol>
-</figure>
-<p>Desde la raíz de <code>festival-checkin</code>, abre el archivo de la ruta GET.</p><pre data-command><code>vi src/pases/consultar.mjs</code></pre><p>Pulsa <strong>Copiar archivo completo</strong> en la caja de abajo. En <code>vi</code>, escribe <code>:%d</code> y pulsa Intro. Escribe <code>:set paste</code>, pulsa Intro y luego <kbd>i</kbd> para pegar. Guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro. El nuevo archivo ya implementa <code>getPass(key)</code>. En <code>Key</code> usa los atributos de DynamoDB y, al responder, vuelve a los nombres de la API.</p>
-<p>Puedes <a href="#entrenar-dynamo">simular los tres resultados</a> antes de desplegar.</p>
-<section class="lesson-example" aria-labelledby="ejemplo-getPass">
-  <h4 id="ejemplo-getPass">Archivo completo <code>src/pases/consultar.mjs</code></h4>
-  <p>Selecciona una línea resaltada para ver quién le da significado y qué valor toma en este ejemplo. Puedes usar el ratón, el teclado o tocarla.</p>
-  <p>Selecciona las líneas resaltadas para ver cómo se traducen los nombres de la API a los atributos de DynamoDB.</p>
-  <template id="get-pass-explanations">
-    <div data-prefix="async function getPass("><strong>JavaScript declara la función. Tú eliges los nombres.</strong><p><code>async</code> permite usar <code>await</code>. <code>getPass</code> es el nombre que eliges y <code>key</code> recibe el objeto que le pasa <code>handleRequest</code>, por ejemplo <code>{ eventId: 1, userId: 'usuario-02' }</code>.</p></div>
-    <div data-prefix="const { Item: event }"><strong>El SDK devuelve Item. JavaScript lo guarda como event.</strong><p>Lee de dentro hacia fuera. <code>new GetCommand(...)</code>, del SDK de AWS, prepara la lectura. <code>db.send(...)</code> la envía y <code>await</code> espera el resultado. <code>{ Item: event }</code> equivale a guardar <code>respuesta.Item</code> en una variable local llamada <code>event</code>.</p></div>
-    <div data-prefix="TableName: TABLA_EVENTOS_FCI"><strong>TableName lo exige AWS. TABLA_EVENTOS_FCI sale de tu proyecto.</strong><p><code>dynamo.mjs</code> lee el nombre desde <code>process.env.FCI_TABLA_EVENTOS</code>. Serverless configura esa variable con la tabla creada, por ejemplo <code>FCI_EVENTOS</code>.</p></div>
-    <div data-prefix="Key: { EVENT_ID: key.eventId }"><strong>Key contiene la clave primaria de la tabla elegida.</strong><p><code>key.eventId</code> aporta la clave numérica desde la ruta. La clave de búsqueda es <code>{ EVENT_ID: 1 }</code>.</p></div>
-    <div data-prefix="ConsistentRead: true"><strong>ConsistentRead es una opción de DynamoDB.</strong><p>Con <code>true</code>, la lectura refleja las escrituras confirmadas antes de esa operación. <code>await</code> controla cuándo sigue el código. <code>ConsistentRead</code> controla qué versión de los datos puede leer.</p></div>
-    <div data-prefix="if (!event)"><strong>JavaScript comprueba si apareció el evento.</strong><p>Si DynamoDB no encuentra el ítem, <code>event</code> vale <code>undefined</code>. <code>!event</code> se cumple y <code>return</code> termina la función con <code>404</code>, antes de buscar la inscripción.</p></div>
-    <div data-prefix="const { Item: registration }"><strong>El SDK vuelve a devolver Item.</strong><p>Esta vez tú llamas <code>registration</code> a la variable porque la respuesta viene de la tabla de inscripciones. Si la pareja no existe, <code>registration</code> vale <code>undefined</code>.</p></div>
-    <div data-prefix="TableName: TABLA_INSCRIPCIONES_FCI"><strong>El segundo comando apunta a INSCRIPCIONES.</strong><p><code>dynamo.mjs</code> obtiene el nombre desde <code>process.env.FCI_TABLA_INSCRIPCIONES</code>. En esta práctica, el nombre es <code>FCI_INSCRIPCIONES</code>.</p></div>
-    <div data-prefix="Key: { EVENT_ID: key.eventId, USER_ID: key.userId },"><strong>La inscripción necesita los dos identificadores.</strong><p>El <code>Key</code> de la izquierda es la opción de AWS. El objeto de la derecha usa los nombres de DynamoDB, <code>EVENT_ID</code> y <code>USER_ID</code>, y toma sus valores de <code>key</code>.</p></div>
-    <div data-prefix="return json(200"><strong>json es una función de la práctica.</strong><p>La importas de <code>peticion.mjs</code>. Recibe el código HTTP <code>200</code> y convierte el objeto que le pasas en el cuerpo JSON que verá el navegador.</p></div>
-    <div data-prefix="eventId: event.EVENT_ID"><strong>El identificador sale del ítem.</strong><p>El primer <code>eventId</code> nombra el campo de la respuesta. <code>event.EVENT_ID</code> lee <code>1</code> del objeto devuelto por DynamoDB.</p></div>
-    <div data-prefix="title: event.TITLE"><strong>El título sale del mismo ítem.</strong><p><code>title</code> nombra el campo de la respuesta. <code>event.TITLE</code> lee el valor guardado, por ejemplo «Festival de otoño».</p></div>
-    <div data-prefix="registration: registration ?"><strong>La respuesta traduce el ítem de DynamoDB</strong><p>Si existe, convierte atributos como <code>REGISTERED_AT</code> al campo <code>registeredAt</code> del JSON. Si falta el ítem, devuelve <code>registration: null</code>.</p></div>
-  </template>
-  <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/pases/consultar.mjs" data-explanations="get-pass-explanations"><code>import { GetCommand } from '@aws-sdk/lib-dynamodb';
-import { db, TABLA_EVENTOS_FCI, TABLA_INSCRIPCIONES_FCI } from '../datos/dynamo.mjs';
-import { handleRequest, json } from './peticion.mjs';
+<article id="leer-pase" class="guide-step" data-step="Consultar · Capas">
+<h3>Consulta el pase con tres capas</h3>
+<ol class="route-map"><li><strong>Handler</strong><p>Recibe la petición y llama al service.</p></li><li><strong>Service</strong><p>Decide qué hacer con el evento y el pase.</p></li><li><strong>Repository</strong><p>Traduce las claves y habla con DynamoDB.</p></li></ol>
+<p>Trabaja desde <code>festival-checkin</code>. Sigue las pestañas en orden y selecciona las líneas resaltadas para ver qué hacen.</p>
+<template id="leer-pase-notas">
+<div data-prefix="return handleRequest("><strong>Entrega la petición al caso de uso.</strong><p>El módulo compartido lee los parámetros y traduce los errores de DynamoDB a HTTP.</p></div>
+  <div data-prefix="async function consultarPase"><strong>El service dirige la lectura.</strong><p>Busca el evento y después el pase. Devuelve 404 si falta el evento.</p></div>
+  <div data-prefix="async function inscribirUsuario"><strong>El service dirige la inscripción.</strong><p>Comprueba que el evento existe y pasa al repository la fecha en UTC.</p></div>
+  <div data-prefix="Key: { EVENT_ID:"><strong>Busca por clave primaria.</strong><p>EVENTOS usa solo el ID numérico. INSCRIPCIONES usa también el código de usuario.</p></div>
+</template>
+<div class="guided-explainer" data-explainer>
+<div class="guided-options" role="group" aria-label="Archivos del paso"><button type="button" data-explain="leer-pase-archivo-0" aria-controls="leer-pase-archivo-0" aria-pressed="true">Lectura de evento</button><button type="button" data-explain="leer-pase-archivo-1" aria-controls="leer-pase-archivo-1" aria-pressed="false">Repository</button><button type="button" data-explain="leer-pase-archivo-2" aria-controls="leer-pase-archivo-2" aria-pressed="false">Service</button><button type="button" data-explain="leer-pase-archivo-3" aria-controls="leer-pase-archivo-3" aria-pressed="false">Handler</button></div>
+<section id="leer-pase-archivo-0" data-explanation>
+  <h4><code>src/eventos/eventos.repository.mjs</code></h4>
+  <pre><code>mkdir -p src/eventos &amp;&amp; ls -ld src/eventos &amp;&amp;
+touch src/eventos/eventos.repository.mjs &amp;&amp; vi src/eventos/eventos.repository.mjs</code></pre>
+  <p>En <code>vi</code>, escribe <code>:set paste</code> y pulsa Intro. Pulsa <kbd>i</kbd> y pega el archivo completo. Guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro.</p>
+  <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/eventos/eventos.repository.mjs" data-explanations="leer-pase-notas"><code>import { GetCommand } from &#x27;@aws-sdk/lib-dynamodb&#x27;;
+import { db, TABLA_EVENTOS_FCI } from &#x27;../datos/dynamo.mjs&#x27;;
 
-export function handler(event) {
-  return handleRequest(event, getPass);
-}
-
-async function getPass(key) {
-  const { Item: event } = await db.send(new GetCommand({
+export async function buscarEvento(eventId) {
+  const { Item } = await db.send(new GetCommand({
     TableName: TABLA_EVENTOS_FCI,
-    Key: { EVENT_ID: key.eventId },
+    Key: { EVENT_ID: eventId },
     ConsistentRead: true
   }));
-  if (!event) return json(404, { message: 'Evento no encontrado' });
+  if (!Item) return null;
+  return { eventId: Item.EVENT_ID, title: Item.TITLE };
+}</code></pre></div>
+</section>
+<section id="leer-pase-archivo-1" data-explanation hidden>
+  <h4><code>src/pases/consultar-pase/repository.mjs</code></h4>
+  <pre><code>mkdir -p src/pases/consultar-pase &amp;&amp; ls -ld src/pases/consultar-pase &amp;&amp;
+touch src/pases/consultar-pase/repository.mjs &amp;&amp; vi src/pases/consultar-pase/repository.mjs</code></pre>
+  <p>En <code>vi</code>, escribe <code>:set paste</code> y pulsa Intro. Pulsa <kbd>i</kbd> y pega el archivo completo. Guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro.</p>
+  <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/pases/consultar-pase/repository.mjs" data-explanations="leer-pase-notas"><code>import { GetCommand } from &#x27;@aws-sdk/lib-dynamodb&#x27;;
+import { db, TABLA_INSCRIPCIONES_FCI } from &#x27;../../datos/dynamo.mjs&#x27;;
 
-  const { Item: registration } = await db.send(new GetCommand({
+export async function buscarInscripcion(eventId, userId) {
+  const { Item } = await db.send(new GetCommand({
     TableName: TABLA_INSCRIPCIONES_FCI,
-    Key: { EVENT_ID: key.eventId, USER_ID: key.userId },
+    Key: { EVENT_ID: eventId, USER_ID: userId },
     ConsistentRead: true
   }));
+  if (!Item) return null;
+
+  return {
+    eventId: Item.EVENT_ID,
+    userId: Item.USER_ID,
+    registeredAt: Item.REGISTERED_AT
+  };
+}</code></pre></div>
+</section>
+<section id="leer-pase-archivo-2" data-explanation hidden>
+  <h4><code>src/pases/consultar-pase/service.mjs</code></h4>
+  <pre><code>mkdir -p src/pases/consultar-pase &amp;&amp; ls -ld src/pases/consultar-pase &amp;&amp;
+touch src/pases/consultar-pase/service.mjs &amp;&amp; vi src/pases/consultar-pase/service.mjs</code></pre>
+  <p>En <code>vi</code>, escribe <code>:set paste</code> y pulsa Intro. Pulsa <kbd>i</kbd> y pega el archivo completo. Guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro.</p>
+  <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/pases/consultar-pase/service.mjs" data-explanations="leer-pase-notas"><code>import { json } from &#x27;../peticion.mjs&#x27;;
+import { buscarEvento } from &#x27;../../eventos/eventos.repository.mjs&#x27;;
+import { buscarInscripcion } from &#x27;./repository.mjs&#x27;;
+
+export async function consultarPase({ eventId, userId }) {
+  const evento = await buscarEvento(eventId);
+  if (!evento) return json(404, { message: &#x27;Evento no encontrado&#x27; });
+
+  const registration = await buscarInscripcion(eventId, userId);
   return json(200, {
-    eventId: event.EVENT_ID,
-    title: event.TITLE,
-    registration: registration ? {
-      eventId: registration.EVENT_ID,
-      userId: registration.USER_ID,
-      registeredAt: registration.REGISTERED_AT,
-      checkedInAt: registration.CHECKED_IN_AT
-    } : null
+    eventId: evento.eventId,
+    title: evento.title,
+    registration
   });
 }</code></pre></div>
 </section>
-<p class="checkpoint"><strong>Antes de avanzar</strong> En <code>src/pases/consultar.mjs</code>, el primer <code>GetCommand</code> usa <code>EVENT_ID</code> y el segundo usa <code>EVENT_ID</code> y <code>USER_ID</code>. Pulsa <kbd>Esc</kbd>, escribe <code>:wq</code> y pulsa Intro para guardar.</p>
+<section id="leer-pase-archivo-3" data-explanation hidden>
+  <h4><code>src/pases/consultar-pase/handler.mjs</code></h4>
+  <pre><code>vi src/pases/consultar-pase/handler.mjs</code></pre>
+  <p>Ejecuta <code>:%d</code> e Intro para sustituir el archivo. En <code>vi</code>, escribe <code>:set paste</code> y pulsa Intro. Pulsa <kbd>i</kbd> y pega el archivo completo. Guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro.</p>
+  <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/pases/consultar-pase/handler.mjs" data-explanations="leer-pase-notas"><code>import { handleRequest } from &#x27;../peticion.mjs&#x27;;
+import { consultarPase } from &#x27;./service.mjs&#x27;;
+
+export function handler(event) {
+  return handleRequest(event, consultarPase);
+}</code></pre></div>
+</section>
+</div>
+<h4>Despliega y prueba</h4>
+<p>Usa la terminal del laboratorio. Si la cerraste, repite <a href="#probar-aws">Comprobación</a>, <a href="#rol-laboratorio">Rol</a> y <a href="#salidas-stack">Salidas</a> en ese orden. Usa el ID de <a href="#guardar-evento">Crear eventos</a>.</p>
+<pre><code>node --input-type=module -e 'await import("./src/pases/consultar-pase/handler.mjs")' &amp;&amp;
+npx serverless deploy --stage dev --aws-profile "$perfil"</code></pre>
+
+<pre><code>usuario=usuario-04
+curl -i &quot;$api_url/events/$evento_id/registrations/$usuario&quot;</code></pre>
+<p class="checkpoint"><strong>Antes de avanzar</strong> Con un código libre, GET devuelve <code>200</code>, el título y <code>registration: null</code>.</p>
 </article>
+<article id="construir-post" class="guide-step" data-step="Inscribir · Capas">
+<h3>Inscribe a un usuario con tres capas</h3>
+<ol class="route-map"><li><strong>Handler</strong><p>Recibe la petición y llama al service.</p></li><li><strong>Service</strong><p>Decide qué hacer con el evento y el pase.</p></li><li><strong>Repository</strong><p>Traduce las claves y habla con DynamoDB.</p></li></ol>
+<p>Trabaja desde <code>festival-checkin</code>. Sigue las pestañas en orden y selecciona las líneas resaltadas para ver qué hacen.</p>
+<template id="construir-post-notas">
+<div data-prefix="return handleRequest("><strong>Entrega la petición al caso de uso.</strong><p>El módulo compartido lee los parámetros y traduce los errores de DynamoDB a HTTP.</p></div>
+  <div data-prefix="async function consultarPase"><strong>El service dirige la lectura.</strong><p>Busca el evento y después el pase. Devuelve 404 si falta el evento.</p></div>
+  <div data-prefix="async function inscribirUsuario"><strong>El service dirige la inscripción.</strong><p>Comprueba que el evento existe y pasa al repository la fecha en UTC.</p></div>
+  <div data-prefix="ConditionExpression:"><strong>Protege el pase.</strong><p>La condición se evalúa sobre la pareja completa. Repetir la misma inscripción devuelve 409.</p></div>
+</template>
+<div class="guided-explainer" data-explainer>
+<div class="guided-options" role="group" aria-label="Archivos del paso"><button type="button" data-explain="construir-post-archivo-0" aria-controls="construir-post-archivo-0" aria-pressed="true">Repository</button><button type="button" data-explain="construir-post-archivo-1" aria-controls="construir-post-archivo-1" aria-pressed="false">Service</button><button type="button" data-explain="construir-post-archivo-2" aria-controls="construir-post-archivo-2" aria-pressed="false">Handler</button></div>
+<section id="construir-post-archivo-0" data-explanation>
+  <h4><code>src/pases/inscribir-usuario/repository.mjs</code></h4>
+  <pre><code>mkdir -p src/pases/inscribir-usuario &amp;&amp; ls -ld src/pases/inscribir-usuario &amp;&amp;
+touch src/pases/inscribir-usuario/repository.mjs &amp;&amp; vi src/pases/inscribir-usuario/repository.mjs</code></pre>
+  <p>En <code>vi</code>, escribe <code>:set paste</code> y pulsa Intro. Pulsa <kbd>i</kbd> y pega el archivo completo. Guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro.</p>
+  <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/pases/inscribir-usuario/repository.mjs" data-explanations="construir-post-notas"><code>import { PutCommand } from &#x27;@aws-sdk/lib-dynamodb&#x27;;
+import { db, TABLA_INSCRIPCIONES_FCI } from &#x27;../../datos/dynamo.mjs&#x27;;
+
+export async function guardarInscripcion(eventId, userId, registeredAt) {
+  const inscripcion = {
+    EVENT_ID: eventId,
+    USER_ID: userId,
+    REGISTERED_AT: registeredAt
+  };
+
+  await db.send(new PutCommand({
+    TableName: TABLA_INSCRIPCIONES_FCI,
+    Item: inscripcion,
+    ConditionExpression: &#x27;attribute_not_exists(EVENT_ID)&#x27;
+  }));
+}</code></pre></div>
+</section>
+<section id="construir-post-archivo-1" data-explanation hidden>
+  <h4><code>src/pases/inscribir-usuario/service.mjs</code></h4>
+  <pre><code>mkdir -p src/pases/inscribir-usuario &amp;&amp; ls -ld src/pases/inscribir-usuario &amp;&amp;
+touch src/pases/inscribir-usuario/service.mjs &amp;&amp; vi src/pases/inscribir-usuario/service.mjs</code></pre>
+  <p>En <code>vi</code>, escribe <code>:set paste</code> y pulsa Intro. Pulsa <kbd>i</kbd> y pega el archivo completo. Guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro.</p>
+  <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/pases/inscribir-usuario/service.mjs" data-explanations="construir-post-notas"><code>import { json } from &#x27;../peticion.mjs&#x27;;
+import { buscarEvento } from &#x27;../../eventos/eventos.repository.mjs&#x27;;
+import { guardarInscripcion } from &#x27;./repository.mjs&#x27;;
+
+export async function inscribirUsuario({ eventId, userId }) {
+  const evento = await buscarEvento(eventId);
+  if (!evento) return json(404, { message: &#x27;Evento no encontrado&#x27; });
+
+  const registeredAt = new Date().toISOString();
+  await guardarInscripcion(eventId, userId, registeredAt);
+  return json(201, { message: &#x27;Inscripción creada&#x27; });
+}</code></pre></div>
+</section>
+<section id="construir-post-archivo-2" data-explanation hidden>
+  <h4><code>src/pases/inscribir-usuario/handler.mjs</code></h4>
+  <pre><code>vi src/pases/inscribir-usuario/handler.mjs</code></pre>
+  <p>Ejecuta <code>:%d</code> e Intro para sustituir el archivo. En <code>vi</code>, escribe <code>:set paste</code> y pulsa Intro. Pulsa <kbd>i</kbd> y pega el archivo completo. Guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro.</p>
+  <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/pases/inscribir-usuario/handler.mjs" data-explanations="construir-post-notas"><code>import { handleRequest } from &#x27;../peticion.mjs&#x27;;
+import { inscribirUsuario } from &#x27;./service.mjs&#x27;;
+
+export function handler(event) {
+  return handleRequest(event, inscribirUsuario);
+}</code></pre></div>
+</section>
+</div>
+<h4>Despliega y prueba</h4>
+<p>Usa la terminal del laboratorio. Si la cerraste, repite <a href="#probar-aws">Comprobación</a>, <a href="#rol-laboratorio">Rol</a> y <a href="#salidas-stack">Salidas</a> en ese orden. Usa el ID de <a href="#guardar-evento">Crear eventos</a>.</p>
+<pre><code>node --input-type=module -e 'await import("./src/pases/inscribir-usuario/handler.mjs")' &amp;&amp;
+npx serverless deploy --stage dev --aws-profile "$perfil"</code></pre>
+<p>Usa un código libre para la primera inscripción.</p>
+<pre><code>usuario=usuario-05
+pase=&quot;$api_url/events/$evento_id/registrations/$usuario&quot;
+curl -i -X POST &quot;$pase&quot;
+curl -i &quot;$pase&quot;</code></pre>
+<p class="checkpoint"><strong>Antes de avanzar</strong> POST devuelve <code>201</code> y GET muestra <code>registeredAt</code>. Si repites POST, devuelve <code>409</code>.</p>
+</article>
+<article id="consultar-orm" class="guide-step" data-step="Consultar · ORM">
+<h3>Consulta el pase con DynamoDB Toolbox</h3>
+<p>Completa <a href="#capas-eventos-orm">Crear con ORM</a>. Ahí instalaste DynamoDB Toolbox y creaste el modelo de eventos.</p><p>Conserva el Handler y el Service. Crea el modelo de inscripción y actualiza los dos repositories de lectura. Toolbox convierte las claves y los atributos del ítem a nombres de JavaScript.</p>
+<p>Trabaja desde <code>festival-checkin</code>. Sigue las pestañas en orden y selecciona las líneas resaltadas para ver qué hacen.</p>
+<template id="consultar-orm-notas">
+<div data-prefix="partitionKey:"><strong>Elige el evento.</strong><p>El modelo usa EVENT_ID como clave de partición.</p></div>
+  <div data-prefix="sortKey:"><strong>Identifica al usuario dentro del evento.</strong><p>USER_ID completa la clave del pase.</p></div>
+  <div data-prefix=".key("><strong>Indica la clave al modelo.</strong><p>Toolbox traduce los nombres de JavaScript a los de DynamoDB.</p></div>
+</template>
+<div class="guided-explainer" data-explainer>
+<div class="guided-options" role="group" aria-label="Archivos del paso"><button type="button" data-explain="consultar-orm-archivo-0" aria-controls="consultar-orm-archivo-0" aria-pressed="true">Modelo</button><button type="button" data-explain="consultar-orm-archivo-1" aria-controls="consultar-orm-archivo-1" aria-pressed="false">Lectura de evento</button><button type="button" data-explain="consultar-orm-archivo-2" aria-controls="consultar-orm-archivo-2" aria-pressed="false">Repository</button></div>
+<section id="consultar-orm-archivo-0" data-explanation>
+  <h4><code>src/pases/inscripcion.model.mjs</code></h4>
+  <pre><code>mkdir -p src/pases &amp;&amp; ls -ld src/pases &amp;&amp;
+touch src/pases/inscripcion.model.mjs &amp;&amp; vi src/pases/inscripcion.model.mjs</code></pre>
+  <p>En <code>vi</code>, escribe <code>:set paste</code> y pulsa Intro. Pulsa <kbd>i</kbd> y pega el archivo completo. Guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro.</p>
+  <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/pases/inscripcion.model.mjs" data-explanations="consultar-orm-notas"><code>import { Entity } from &#x27;dynamodb-toolbox/entity&#x27;;
+import { Table } from &#x27;dynamodb-toolbox/table&#x27;;
+import { item } from &#x27;dynamodb-toolbox/schema/item&#x27;;
+import { number } from &#x27;dynamodb-toolbox/schema/number&#x27;;
+import { string } from &#x27;dynamodb-toolbox/schema/string&#x27;;
+import { db, TABLA_INSCRIPCIONES_FCI } from &#x27;../datos/dynamo.mjs&#x27;;
+
+const tablaInscripciones = new Table({
+  name: TABLA_INSCRIPCIONES_FCI,
+  documentClient: db,
+  partitionKey: { name: &#x27;EVENT_ID&#x27;, type: &#x27;number&#x27; },
+  sortKey: { name: &#x27;USER_ID&#x27;, type: &#x27;string&#x27; }
+});
+
+export const MODELO_INSCRIPCION = new Entity({
+  name: &#x27;Inscripcion&#x27;,
+  table: tablaInscripciones,
+  entityAttribute: false,
+  timestamps: false,
+  schema: item({
+    eventId: number({ big: true }).key().savedAs(&#x27;EVENT_ID&#x27;),
+    userId: string().key().savedAs(&#x27;USER_ID&#x27;),
+    registeredAt: string().savedAs(&#x27;REGISTERED_AT&#x27;)
+  })
+});</code></pre></div>
+</section>
+<section id="consultar-orm-archivo-1" data-explanation hidden>
+  <h4><code>src/eventos/eventos.repository.mjs</code></h4>
+  <pre><code>vi src/eventos/eventos.repository.mjs</code></pre>
+  <p>Ejecuta <code>:%d</code> e Intro para sustituir el archivo. En <code>vi</code>, escribe <code>:set paste</code> y pulsa Intro. Pulsa <kbd>i</kbd> y pega el archivo completo. Guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro.</p>
+  <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/eventos/eventos.repository.mjs" data-explanations="consultar-orm-notas"><code>import { GetItemCommand } from &#x27;dynamodb-toolbox/entity/actions/get&#x27;;
+import { MODELO_EVENTO } from &#x27;./evento.model.mjs&#x27;;
+
+export async function buscarEvento(eventId) {
+  const { Item } = await MODELO_EVENTO.build(GetItemCommand)
+    .key({ eventId })
+    .options({ consistent: true })
+    .send();
+
+  return Item ?? null;
+}</code></pre></div>
+</section>
+<section id="consultar-orm-archivo-2" data-explanation hidden>
+  <h4><code>src/pases/consultar-pase/repository.mjs</code></h4>
+  <pre><code>vi src/pases/consultar-pase/repository.mjs</code></pre>
+  <p>Ejecuta <code>:%d</code> e Intro para sustituir el archivo. En <code>vi</code>, escribe <code>:set paste</code> y pulsa Intro. Pulsa <kbd>i</kbd> y pega el archivo completo. Guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro.</p>
+  <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/pases/consultar-pase/repository.mjs" data-explanations="consultar-orm-notas"><code>import { GetItemCommand } from &#x27;dynamodb-toolbox/entity/actions/get&#x27;;
+import { MODELO_INSCRIPCION } from &#x27;../inscripcion.model.mjs&#x27;;
+
+export async function buscarInscripcion(eventId, userId) {
+  const { Item } = await MODELO_INSCRIPCION.build(GetItemCommand)
+    .key({ eventId, userId })
+    .options({ consistent: true })
+    .send();
+
+  return Item ?? null;
+}</code></pre></div>
+</section>
+</div>
+<h4>Despliega y prueba</h4>
+<p>Usa la terminal del laboratorio. Si la cerraste, repite <a href="#probar-aws">Comprobación</a>, <a href="#rol-laboratorio">Rol</a> y <a href="#salidas-stack">Salidas</a> en ese orden. Usa el ID de <a href="#guardar-evento">Crear eventos</a>.</p>
+<pre><code>node --input-type=module -e 'await import("./src/pases/consultar-pase/handler.mjs")' &amp;&amp;
+npx serverless deploy --stage dev --aws-profile "$perfil"</code></pre>
+
+<pre><code>usuario=usuario-05
+curl -i &quot;$api_url/events/$evento_id/registrations/$usuario&quot;</code></pre>
+<p class="checkpoint"><strong>Antes de avanzar</strong> GET devuelve <code>200</code> con el mismo pase que guardaste en la versión por capas.</p>
+</article>
+<article id="inscribir-orm" class="guide-step" data-step="Inscribir · ORM">
+<h3>Inscribe a un usuario con DynamoDB Toolbox</h3>
+<p>Completa <a href="#consultar-orm">Consultar · ORM</a> para tener el modelo de inscripción. Conserva el Handler y el Service. Cambia la escritura del repository y prueba el mismo POST con un usuario libre.</p>
+<p>Trabaja desde <code>festival-checkin</code>. Sigue las pestañas en orden y selecciona las líneas resaltadas para ver qué hacen.</p>
+<template id="inscribir-orm-notas">
+<div data-prefix=".item("><strong>Entrega los datos al modelo.</strong><p>Toolbox guarda EVENT_ID, USER_ID y REGISTERED_AT con los nombres del modelo.</p></div>
+  <div data-prefix=".options("><strong>Conserva la escritura condicional.</strong><p>La misma pareja solo puede inscribirse una vez.</p></div>
+</template>
+<div class="guided-explainer" data-explainer>
+<div class="guided-options" role="group" aria-label="Archivos del paso"><button type="button" data-explain="inscribir-orm-archivo-0" aria-controls="inscribir-orm-archivo-0" aria-pressed="true">Repository</button></div>
+<section id="inscribir-orm-archivo-0" data-explanation>
+  <h4><code>src/pases/inscribir-usuario/repository.mjs</code></h4>
+  <pre><code>vi src/pases/inscribir-usuario/repository.mjs</code></pre>
+  <p>Ejecuta <code>:%d</code> e Intro para sustituir el archivo. En <code>vi</code>, escribe <code>:set paste</code> y pulsa Intro. Pulsa <kbd>i</kbd> y pega el archivo completo. Guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro.</p>
+  <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/pases/inscribir-usuario/repository.mjs" data-explanations="inscribir-orm-notas"><code>import { PutItemCommand } from &#x27;dynamodb-toolbox/entity/actions/put&#x27;;
+import { MODELO_INSCRIPCION } from &#x27;../inscripcion.model.mjs&#x27;;
+
+export async function guardarInscripcion(eventId, userId, registeredAt) {
+  await MODELO_INSCRIPCION.build(PutItemCommand)
+    .item({ eventId, userId, registeredAt })
+    .options({ condition: { attr: &#x27;eventId&#x27;, exists: false } })
+    .send();
+}</code></pre></div>
+</section>
+</div>
+<h4>Despliega y prueba</h4>
+<p>Usa la terminal del laboratorio. Si la cerraste, repite <a href="#probar-aws">Comprobación</a>, <a href="#rol-laboratorio">Rol</a> y <a href="#salidas-stack">Salidas</a> en ese orden. Usa el ID de <a href="#guardar-evento">Crear eventos</a>.</p>
+<pre><code>node --input-type=module -e 'await import("./src/pases/inscribir-usuario/handler.mjs")' &amp;&amp;
+npx serverless deploy --stage dev --aws-profile "$perfil"</code></pre>
+
+<pre><code>usuario=usuario-06
+pase=&quot;$api_url/events/$evento_id/registrations/$usuario&quot;
+curl -i -X POST &quot;$pase&quot;
+curl -i &quot;$pase&quot;</code></pre>
+<p class="checkpoint"><strong>Antes de avanzar</strong> POST devuelve <code>201</code> y GET muestra <code>registeredAt</code>. Al repetir POST obtienes <code>409</code>.</p>
+</article>
+</section>
 <template id="prueba-command-notes">
   <div data-prefix="vi "><strong>Abre el módulo que vas a actualizar.</strong><p><code>vi</code> abre el archivo. En este paso sustituirás su contenido por el archivo completo de abajo.</p></div>
   <div data-prefix="node --check "><strong>Comprueba la sintaxis y despliega.</strong><p><code>node --check</code> comprueba el archivo sin ejecutarlo. <code>&amp;&amp;</code> permite desplegar solo si esa comprobación termina bien.</p></div>
   <div data-prefix="curl -i -X POST "><strong>POST intenta crear la inscripción.</strong><p><code>-i</code> muestra el estado HTTP junto con el cuerpo. El primer POST válido devuelve <code>201</code>. Si repites la petición para la misma pareja, devuelve <code>409</code>.</p></div>
-  <div data-prefix="curl -i -X PATCH "><strong>PATCH intenta registrar la entrada.</strong><p>Si el pase existe y carece de hora de entrada, responde <code>200</code>. Si falta la inscripción o ya entró, responde <code>409</code>.</p></div>
-  <div data-prefix="curl -i "><strong>GET consulta el estado del pase.</strong><p>Sin <code>-X</code>, curl usa GET. Busca <code>registration</code> en el cuerpo. Si hay una inscripción, puedes comprobar <code>registeredAt</code> y <code>checkedInAt</code>.</p></div>
-  <div data-prefix="usuario_inscrito="><strong>Identifica el pase que ya inscribiste.</strong><p>Usa el código de la prueba de POST y comprueba que aún no tiene hora de entrada.</p></div>
-  <div data-prefix="sin_inscripcion="><strong>Usa otro código para la prueba de rechazo.</strong><p>El primer PATCH espera <code>409</code> porque ese usuario todavía carece de inscripción.</p></div>
+  <div data-prefix="curl -i "><strong>GET consulta el estado del pase.</strong><p>Sin <code>-X</code>, curl usa GET. Busca <code>registration</code> en el cuerpo. Si hay una inscripción, puedes comprobar <code>registeredAt</code>.</p></div>
   <div data-prefix="usuario="><strong>Elige un código sin inscripción.</strong><p>Cambia el valor si ya lo usaste para que el primer POST de esta prueba pueda crear el pase.</p></div>
   <div data-prefix="codigo_prueba="><strong>Identifica al usuario del recorrido.</strong><p>Elige un código libre al empezar el recorrido y conserva ese mismo código en Persistencia y Consultar índice.</p></div>
   <div data-prefix="pase="><strong>Compón la URL del pase.</strong><p>La URL base está en <code>api_url</code>. La ruta añade el evento y el código del usuario.</p></div>
@@ -1304,252 +1451,6 @@ async function getPass(key) {
   <div data-prefix="--expression-attribute-values"><strong>Asigna el valor al marcador.</strong><p>DynamoDB sustituye <code>:evento</code> por un número o <code>:usuario</code> por un texto, según el tipo indicado.</p></div>
   <div data-prefix="--query 'Items[]"><strong>Muestra los identificadores del resultado.</strong><p>AWS CLI extrae de cada ítem el identificador del usuario (<code>S</code>) o del evento (<code>N</code>), según la consulta.</p></div>
 </template>
-<article id="conectar-api" class="guide-step" data-step="Probar GET">
-<h3>Despliega la lectura y prueba la pantalla</h3>
-<ol class="route-map" aria-label="Comprueba GET en terminal y navegador">
-  <li><span>Terminal</span><strong>200 · <code>registration: null</code></strong><p>La API devuelve el título y aún no hay inscripción para ese usuario.</p></li>
-  <li><span>Navegador</span><strong>Sin inscripción</strong><p>Comprueba el mismo usuario en la Pantalla de prueba con la conexión AWS.</p></li>
-</ol>
-<p>Guarda los cambios en <code>src/pases/consultar.mjs</code> y ejecuta el mismo despliegue. Después prueba la ruta GET desde la terminal. Cambia <code>usuario-01</code> si ese código ya tiene una inscripción.</p><p>Selecciona una línea resaltada para ver qué hace.</p>
-<div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-command data-explanations="prueba-command-notes"><code>node --check src/pases/consultar.mjs &amp;&amp; npx serverless deploy --stage dev --aws-profile "$perfil"</code></pre></div><div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-command data-explanations="prueba-command-notes"><code>curl -i "$api_url/events/$evento_id/registrations/usuario-01"</code></pre></div><p>Si acabas de cambiar de terminal o de stack, recupera la URL en <a href="#salidas-stack">Salidas</a>. En <a href="#pantalla">Pantalla de prueba</a>, elige AWS, pega el valor de <code>api_url</code> en URL de invocación, escribe el número de <code>evento_id</code> y pulsa Consultar con el mismo usuario.</p><p class="checkpoint"><strong>Antes de avanzar</strong> curl devuelve 200 y registration: null. La pantalla muestra Festival de otoño y Sin inscripción.</p>
-</article>
-</section>
-<section id="inscripcion" class="phase" hidden>
-<h2>Guardar una inscripción</h2>
-<article id="construir-post" class="guide-step" data-step="Construir">
-<h3>Crea la inscripción con las dos claves</h3>
-<figure class="pass-layers" aria-labelledby="post-layers-title">
-  <figcaption id="post-layers-title">De la petición a la inscripción</figcaption>
-  <ol role="list">
-    <li><h4>Navegador → API Gateway</h4><code>POST /events/1/registrations/usuario-02</code></li>
-    <li><h4>Lambda · <code>src/pases/inscribir.mjs</code></h4><p><code>handleRequest</code> convierte el ID del evento a entero y llama a <code>register(key)</code>.</p><code>key = { eventId: 1, userId: 'usuario-02' }</code></li>
-    <li><h4>DynamoDB</h4><p><code>GetCommand</code> busca <code>1</code> en <code>EVENTOS</code>. Si falta, responde <strong>404</strong>. Si existe, <code>PutCommand</code> guarda la inscripción con su hora y protege la pareja de evento y usuario.</p></li>
-    <li><h4>Lambda → API Gateway → Navegador</h4><p><strong>201</strong> si la guarda. Si ya existe esa pareja, la función responde <strong>409</strong>.</p></li>
-  </ol>
-</figure>
-<div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-command data-explanations="prueba-command-notes"><code>vi src/pases/inscribir.mjs</code></pre></div>
-<p>Desde la raíz de <code>festival-checkin</code>, abre el módulo de POST y pulsa <strong>Copiar archivo completo</strong> en la caja de abajo. En <code>vi</code>, escribe <code>:%d</code> y pulsa Intro. Escribe <code>:set paste</code>, pulsa Intro y luego <kbd>i</kbd> para pegar. Guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro y ejecuta el comando de despliegue de este paso.</p>
-<section class="lesson-example" aria-labelledby="ejemplo-register">
-  <h4 id="ejemplo-register">Archivo completo <code>src/pases/inscribir.mjs</code></h4>
-  <ol class="route-map" aria-label="Qué hace la escritura de la inscripción">
-    <li><strong>Comprueba el evento</strong><p>Lee <code>FCI_EVENTOS</code> con el <code>EVENT_ID</code> de la ruta.</p></li>
-    <li><strong>Guarda la pareja y la hora</strong><p>Escribe <code>EVENT_ID</code>, <code>USER_ID</code> y <code>REGISTERED_AT</code> en <code>FCI_INSCRIPCIONES</code>.</p></li>
-    <li><strong>Protege la inscripción</strong><p>Si la pareja ya existe, la condición falla y la API responde <code>409</code>.</p></li>
-  </ol>
-  <p>Selecciona una línea resaltada para relacionar el código con el recorrido.</p>
-  <template id="register-explanations">
-    <div data-prefix="async function register("><strong>La función recibe la pareja del pase.</strong><p><code>key</code> contiene <code>eventId</code> y <code>userId</code>. <code>async</code> permite usar <code>await</code> con las operaciones de DynamoDB.</p></div>
-    <div data-prefix="const { Item: event }"><strong>Primero lee el evento.</strong><p><code>GetCommand</code> prepara la lectura y <code>db.send</code> la envía. <code>await</code> espera la respuesta y la desestructuración guarda <code>Item</code> como <code>event</code>.</p></div>
-    <div data-prefix="TableName: TABLA_EVENTOS_FCI"><strong>La lectura va a EVENTOS.</strong><p><code>TABLA_EVENTOS_FCI</code> contiene el nombre que Lambda recibe en <code>FCI_TABLA_EVENTOS</code>.</p></div>
-    <div data-prefix="Key: { EVENT_ID: key.eventId }"><strong>Busca el evento por su ID.</strong><p><code>key.eventId</code> es el número que llega en la ruta.</p></div>
-    <div data-prefix="if (!event)"><strong>Si falta el evento, responde 404.</strong><p>El <code>return</code> termina la operación antes de escribir.</p></div>
-    <div data-prefix="const inscripcion ="><strong>Prepara el ítem con la pareja y la hora.</strong><p><code>EVENT_ID</code> y <code>USER_ID</code> vienen de la ruta. <code>REGISTERED_AT</code> se guarda en UTC.</p></div>
-    <div data-prefix="ConditionExpression:"><strong>Protege la pareja del pase.</strong><p>La condición se evalúa sobre el ítem que corresponde a la clave completa <code>EVENT_ID</code> y <code>USER_ID</code>.</p></div>
-    <div data-prefix="return json(201"><strong>Devuelve 201 después de guardar.</strong><p>Al consultar el pase verás la fecha de inscripción.</p></div>
-  </template>
-  <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/pases/inscribir.mjs" data-explanations="register-explanations"><code>import { GetCommand, PutCommand } from '@aws-sdk/lib-dynamodb';
-import { db, TABLA_EVENTOS_FCI, TABLA_INSCRIPCIONES_FCI } from '../datos/dynamo.mjs';
-import { handleRequest, json } from './peticion.mjs';
-
-export function handler(event) {
-  return handleRequest(event, register);
-}
-
-async function register(key) {
-  const { Item: event } = await db.send(new GetCommand({
-    TableName: TABLA_EVENTOS_FCI,
-    Key: { EVENT_ID: key.eventId },
-    ConsistentRead: true
-  }));
-  if (!event) return json(404, { message: 'Evento no encontrado' });
-
-  const inscripcion = {
-    EVENT_ID: key.eventId,
-    USER_ID: key.userId,
-    REGISTERED_AT: new Date().toISOString()
-  };
-
-  await db.send(new PutCommand({
-    TableName: TABLA_INSCRIPCIONES_FCI,
-    Item: inscripcion,
-    ConditionExpression: 'attribute_not_exists(EVENT_ID)'
-  }));
-
-  return json(201, { message: 'Inscripción creada' });
-}</code></pre></div>
-</section>
-<div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-command data-explanations="prueba-command-notes"><code>node --check src/pases/inscribir.mjs &amp;&amp; node --check src/datos/dynamo.mjs &amp;&amp; npx serverless deploy --stage dev --aws-profile "$perfil"</code></pre></div><p class="checkpoint"><strong>Antes de avanzar</strong> El despliegue ha terminado. La ruta POST ya está lista para probarse.</p>
-</article>
-<article id="probar-post" class="guide-step" data-step="Probar">
-<h3>Comprueba que no se inscribe dos veces</h3>
-<ol class="route-map" aria-label="Resultados esperados de POST">
-  <li><span>Primer POST</span><strong>201 · Inscripción creada</strong><p>El GET muestra <code>registeredAt</code>.</p></li>
-  <li><span>Segundo POST</span><strong>409 · Inscripción existente</strong><p>El siguiente GET conserva la misma hora de inscripción.</p></li>
-</ol>
-<p>Elige un código sin inscripción. Cambia <code>usuario-01</code> si ya se ha usado. Ejecuta el primer POST y anota <code>registeredAt</code> del GET. Repite el POST y comprueba que la hora se conserva.</p>
-<p>Selecciona una línea resaltada para ver qué hace.</p>
-<div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-command data-explanations="prueba-command-notes"><code>usuario=usuario-01
-pase="$api_url/events/$evento_id/registrations/$usuario"
-curl -i -X POST "$pase"
-curl -i "$pase"
-curl -i -X POST "$pase"
-curl -i "$pase"</code></pre></div>
-<p class="checkpoint"><strong>Antes de avanzar</strong> El primer POST devuelve <code>201</code>. El segundo devuelve <code>409</code>. Los dos GET muestran la misma hora de registro.</p>
-</article>
-</section>
-<section id="entrada" class="phase" hidden>
-<h2>Registrar la entrada</h2>
-<article id="construir-patch" class="guide-step" data-step="Construir">
-<h3>Añade CHECKED_IN_AT a una inscripción existente</h3>
-<figure class="pass-layers" aria-labelledby="patch-layers-title">
-  <figcaption id="patch-layers-title">De la petición a la entrada</figcaption>
-  <ol role="list">
-    <li><h4>Navegador → API Gateway</h4><code>PATCH /events/1/registrations/usuario-02</code></li>
-    <li><h4>Lambda · <code>src/pases/entrada.mjs</code></h4><p><code>handleRequest</code> convierte el ID del evento a entero y llama a <code>checkIn(key)</code>.</p><code>key = { eventId: 1, userId: 'usuario-02' }</code></li>
-    <li><h4>DynamoDB</h4><p><code>UpdateCommand</code> localiza la inscripción por <code>EVENT_ID</code> y <code>USER_ID</code>. Solo escribe <code>CHECKED_IN_AT</code> si la inscripción existe y aún carece de esa hora.</p></li>
-    <li><h4>Lambda → API Gateway → Navegador</h4><p><strong>200</strong> si registra la entrada. Si falta la inscripción o ya tiene hora de entrada, DynamoDB rechaza el cambio y <code>handleRequest</code> responde <strong>409</strong>.</p></li>
-  </ol>
-</figure>
-<div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-command data-explanations="prueba-command-notes"><code>vi src/pases/entrada.mjs</code></pre></div>
-<p>Desde la raíz de <code>festival-checkin</code>, abre el módulo de PATCH y pulsa <strong>Copiar archivo completo</strong> en la caja de abajo. En <code>vi</code>, escribe <code>:%d</code> y pulsa Intro. Escribe <code>:set paste</code>, pulsa Intro y luego <kbd>i</kbd> para pegar. Guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro y ejecuta el comando de despliegue. <code>UpdateCommand</code> añade la hora en UTC si el pase existe y aún carece de <code>CHECKED_IN_AT</code>.</p>
-<section class="lesson-example" aria-labelledby="ejemplo-checkIn">
-  <h4 id="ejemplo-checkIn">Archivo completo <code>src/pases/entrada.mjs</code></h4>
-  <p>Selecciona las líneas resaltadas para ver cómo se traducen los nombres de la API a los atributos de DynamoDB.</p>
-  <p>Selecciona una línea resaltada para relacionar el código con el recorrido.</p>
-  <template id="checkIn-explanations">
-    <div data-prefix="async function checkIn("><strong>La función recibe la clave del pase.</strong><p><code>key</code> trae <code>eventId</code> y <code>userId</code> desde <code>handleRequest</code>.</p></div>
-    <div data-prefix="await db.send(new UpdateCommand"><strong>Envía una actualización a DynamoDB.</strong><p><code>UpdateCommand</code> prepara la operación. <code>await</code> espera que termine antes de responder al navegador.</p></div>
-    <div data-prefix="TableName: TABLA_INSCRIPCIONES_FCI"><strong>El cambio va a INSCRIPCIONES.</strong><p><code>TABLA_INSCRIPCIONES_FCI</code> recibe el nombre real desde <code>FCI_TABLA_INSCRIPCIONES</code>.</p></div>
-    <div data-prefix="Key: { EVENT_ID"><strong>Selecciona un único pase.</strong><p>El <code>Key</code> de AWS usa <code>EVENT_ID</code> y <code>USER_ID</code>, con los valores recibidos en la ruta.</p></div>
-    <div data-prefix="UpdateExpression:"><strong>SET indica el atributo que se escribe.</strong><p><code>CHECKED_IN_AT</code> es el atributo de la inscripción en DynamoDB. <code>:hora</code> es el marcador que DynamoDB sustituye por el valor indicado abajo.</p></div>
-    <div data-prefix="ConditionExpression:"><strong>DynamoDB comprueba las dos condiciones al escribir.</strong><p><code>attribute_exists(EVENT_ID)</code> exige que exista el pase. <code>attribute_not_exists(CHECKED_IN_AT)</code> protege la primera hora. Si falla cualquiera de las dos, <code>handleRequest</code> responde <code>409</code>.</p></div>
-    <div data-prefix="ExpressionAttributeValues:"><strong>Asigna un valor real a :hora.</strong><p>JavaScript genera la hora UTC como texto con <code>new Date().toISOString()</code>. DynamoDB usa ese texto en la expresión <code>SET</code>.</p></div>
-    <div data-prefix="return json(200"><strong>Devuelve 200 después de actualizar.</strong><p><code>json</code> prepara la respuesta. Un GET posterior permite comprobar la hora guardada.</p></div>
-  </template>
-  <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/pases/entrada.mjs" data-explanations="checkIn-explanations"><code>import { UpdateCommand } from '@aws-sdk/lib-dynamodb';
-import { db, TABLA_INSCRIPCIONES_FCI } from '../datos/dynamo.mjs';
-import { handleRequest, json } from './peticion.mjs';
-
-export function handler(event) {
-  return handleRequest(event, checkIn);
-}
-
-async function checkIn(key) {
-  await db.send(new UpdateCommand({
-    TableName: TABLA_INSCRIPCIONES_FCI,
-    Key: { EVENT_ID: key.eventId, USER_ID: key.userId },
-    UpdateExpression: 'SET CHECKED_IN_AT = :hora',
-    ConditionExpression: 'attribute_exists(EVENT_ID) AND attribute_not_exists(CHECKED_IN_AT)',
-    ExpressionAttributeValues: { ':hora': new Date().toISOString() }
-  }));
-  return json(200, { message: 'Entrada registrada' });
-}</code></pre></div>
-</section>
-<div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-command data-explanations="prueba-command-notes"><code>node --check src/pases/entrada.mjs &amp;&amp; npx serverless deploy --stage dev --aws-profile "$perfil"</code></pre></div><p class="checkpoint"><strong>Antes de avanzar</strong> El despliegue ha terminado. La ruta PATCH ya está lista para probarse.</p>
-</article>
-<article id="probar-patch" class="guide-step" data-step="Probar">
-<h3>Prueba los tres resultados</h3>
-<ol class="route-map" aria-label="Resultados esperados de PATCH">
-  <li><span>Sin inscripción</span><strong>409 · Entrada rechazada</strong><p>La pareja todavía carece de inscripción.</p></li>
-  <li><span>Primera entrada</span><strong>200 · Entrada registrada</strong><p>El GET muestra <code>checkedInAt</code>.</p></li>
-  <li><span>Entrada repetida</span><strong>409 · Entrada ya registrada</strong><p>El siguiente GET conserva las dos horas.</p></li>
-</ol>
-<p>El bloque recupera de <code>$usuario</code> el código que usaste en <strong>Inscribir</strong>. Si cambiaste de terminal, asigna antes a <code>usuario</code> ese mismo código. Elige otro código sin inscripción para la primera prueba. Tras la primera entrada válida, consulta la hora y comprueba que se mantiene al repetir PATCH.</p>
-<p>Selecciona una línea resaltada para ver qué hace.</p>
-<div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-command data-explanations="prueba-command-notes"><code>usuario_inscrito="$usuario"
-sin_inscripcion=usuario-02
-pase="$api_url/events/$evento_id/registrations/$usuario_inscrito"
-curl -i -X PATCH "$api_url/events/$evento_id/registrations/$sin_inscripcion"
-curl -i -X PATCH "$pase"
-curl -i "$pase"
-curl -i -X PATCH "$pase"
-curl -i "$pase"</code></pre></div>
-<p class="checkpoint"><strong>Antes de avanzar</strong> Los tres PATCH devuelven 409, 200 y 409. Los dos GET muestran los mismos valores de registeredAt y checkedInAt.</p>
-</article>
-<article id="capas-patch" class="guide-step" data-step="Organizar en capas">
-<h3>Una entrada, tres responsabilidades</h3>
-<p>Ya has probado el PATCH. Ahora separa la operación en tres archivos. Sigue la petición <code>PATCH /events/1/registrations/usuario-02</code> y fíjate en qué dato pasa de un archivo al siguiente.</p>
-<ol class="route-map" aria-label="Recorrido de la petición por las tres capas">
-  <li><span>1 · Handler</span><strong>Entiende la petición</strong><p>Lee los identificadores de la ruta con <code>handleRequest</code> y prepara la respuesta HTTP.</p><code>event → { eventId, userId }</code></li>
-  <li><span>2 · Service</span><strong>Aplica la regla del pase</strong><p>Pide registrar la primera entrada y fija su hora en UTC.</p><code>clave + hora → registrarPrimeraEntrada</code></li>
-  <li><span>3 · Repository</span><strong>Escribe en DynamoDB</strong><p>Usa la clave del pase y guarda la hora si existe la inscripción y sigue sin entrada.</p><code>UpdateCommand → CHECKED_IN_AT</code></li>
-</ol>
-<p class="lesson-note"><strong>La regla y su garantía.</strong> El service pide registrar la primera entrada. El repository expresa esa regla en una condición que DynamoDB comprueba al escribir. Si llegan dos PATCH a la vez, solo el primero puede guardar la hora.</p>
-<p>Desde la raíz de <code>festival-checkin</code>, prepara primero <strong>Repository</strong>, luego <strong>Service</strong> y por último <strong>Handler</strong>. En cada pestaña copia el comando, abre el archivo y pulsa <strong>Copiar archivo completo</strong> en la caja de código. En <code>vi</code>, escribe <code>:set paste</code>, pulsa Intro y después <kbd>i</kbd> para pegar. Guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro. Selecciona las líneas resaltadas para ver su explicación.</p>
-<template id="capas-patch-notas">
-  <div data-prefix="export async function registrarPrimeraEntrada"><strong>El nombre expresa la operación de datos</strong><p>La función recibe la clave del pase y la hora que debe persistir.</p></div>
-  <div data-prefix="Key: { EVENT_ID"><strong>Localiza una inscripción concreta</strong><p>DynamoDB busca el ítem por la pareja <code>EVENT_ID + USER_ID</code>.</p></div>
-  <div data-prefix="ConditionExpression:"><strong>Protege la primera escritura</strong><p>DynamoDB comprueba la existencia del pase y la ausencia de <code>CHECKED_IN_AT</code> en la misma operación.</p></div>
-  <div data-prefix="const horaEntrada"><strong>Fija el momento de entrada</strong><p>El service genera una hora UTC y la pasa al repository como argumento.</p></div>
-  <div data-prefix="await registrarPrimeraEntrada"><strong>Ejecuta la operación del caso de uso</strong><p>El service espera a que el repository complete la escritura.</p></div>
-  <div data-prefix="return handleRequest"><strong>Reutiliza la lectura de la petición</strong><p><code>handleRequest</code> convierte los parámetros de la ruta en la clave del pase. Si DynamoDB rechaza la condición, responde <code>409</code>.</p></div>
-  <div data-prefix="await darEntrada"><strong>Entrega la clave al service</strong><p>El handler espera a que termine la operación y entonces prepara el <code>200</code>.</p></div>
-</template>
-<div class="guided-explainer" data-explainer>
-  <div class="guided-options" role="group" aria-label="Archivos de la práctica por capas">
-    <button type="button" data-explain="capa-repository" aria-controls="capa-repository" aria-pressed="true">Repository</button>
-    <button type="button" data-explain="capa-service" aria-controls="capa-service" aria-pressed="false">Service</button>
-    <button type="button" data-explain="capa-handler" aria-controls="capa-handler" aria-pressed="false">Handler</button>
-  </div>
-  <section id="capa-repository" data-explanation>
-    <h4><code>src/pases/entrada.repository.mjs</code></h4>
-    <pre><code>mkdir -p src/pases &amp;&amp; ls -ld src/pases &amp;&amp; touch src/pases/entrada.repository.mjs &amp;&amp; vi src/pases/entrada.repository.mjs</code></pre>
-    <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/pases/entrada.repository.mjs" data-explanations="capas-patch-notas"><code>import { UpdateCommand } from '@aws-sdk/lib-dynamodb';
-import { db, TABLA_INSCRIPCIONES_FCI } from '../datos/dynamo.mjs';
-
-export async function registrarPrimeraEntrada({ eventId, userId }, horaEntrada) {
-  await db.send(new UpdateCommand({
-    TableName: TABLA_INSCRIPCIONES_FCI,
-    Key: { EVENT_ID: eventId, USER_ID: userId },
-    UpdateExpression: 'SET CHECKED_IN_AT = :hora',
-    ConditionExpression: 'attribute_exists(EVENT_ID) AND attribute_not_exists(CHECKED_IN_AT)',
-    ExpressionAttributeValues: { ':hora': horaEntrada }
-  }));
-}</code></pre></div>
-  </section>
-  <section id="capa-service" data-explanation hidden>
-    <h4><code>src/pases/entrada.service.mjs</code></h4>
-    <pre><code>mkdir -p src/pases &amp;&amp; ls -ld src/pases &amp;&amp; touch src/pases/entrada.service.mjs &amp;&amp; vi src/pases/entrada.service.mjs</code></pre>
-    <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/pases/entrada.service.mjs" data-explanations="capas-patch-notas"><code>import { registrarPrimeraEntrada } from './entrada.repository.mjs';
-
-export async function darEntrada(clave) {
-  const horaEntrada = new Date().toISOString();
-  await registrarPrimeraEntrada(clave, horaEntrada);
-}</code></pre></div>
-  </section>
-  <section id="capa-handler" data-explanation hidden>
-    <h4><code>src/pases/entrada.mjs</code></h4>
-    <p>Abre el archivo existente. Antes de pegar, escribe <code>:%d</code> y pulsa Intro para sustituir su contenido completo. El YAML ya apunta a <code>src/pases/entrada.handler</code>.</p>
-    <pre><code>vi src/pases/entrada.mjs</code></pre>
-    <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/pases/entrada.mjs" data-explanations="capas-patch-notas"><code>import { darEntrada } from './entrada.service.mjs';
-import { handleRequest, json } from './peticion.mjs';
-
-export function handler(event) {
-  return handleRequest(event, async clave =&gt; {
-    await darEntrada(clave);
-    return json(200, { message: 'Entrada registrada' });
-  });
-}</code></pre></div>
-  </section>
-</div>
-<h4>Comprueba las tres capas en la misma ruta</h4>
-<p>Desde <code>festival-checkin</code>, usa la terminal donde configuraste el <a href="#rol-laboratorio">rol del laboratorio</a>. Comprueba los archivos y vuelve a desplegar el servicio.</p>
-<pre><code>node --check src/pases/entrada.repository.mjs &amp;&amp;
-node --check src/pases/entrada.service.mjs &amp;&amp;
-node --check src/pases/entrada.mjs &amp;&amp;
-node --input-type=module -e 'await import("./src/pases/entrada.mjs"); console.log("Imports comprobados")' &amp;&amp;
-npx serverless deploy --stage dev --aws-profile "$perfil"</code></pre>
-<p>Usa la URL y el ID de evento de <a href="#salidas-stack">Salidas</a> y <a href="#guardar-evento">Crear eventos</a>. Elige un código sin inscripción en ese evento y úsalo en los cinco comandos.</p>
-<pre><code>usuario_capas=usuario-04
-pase_capas="$api_url/events/$evento_id/registrations/$usuario_capas"
-curl -i -X POST "$pase_capas"
-curl -i -X PATCH "$pase_capas"
-curl -i "$pase_capas"
-curl -i -X PATCH "$pase_capas"
-curl -i "$pase_capas"</code></pre>
-<p class="checkpoint"><strong>Antes de avanzar</strong> Comprueba que POST devuelve <code>201</code>, el primer PATCH devuelve <code>200</code> y la repetición devuelve <code>409</code>. Los dos GET muestran el mismo <code>checkedInAt</code>.</p>
-</article>
-</section>
 <section id="prueba" class="phase" hidden>
 <h2>Demostración cruzada</h2>
 <article id="otro-equipo" class="guide-step" data-step="Recorrido">
@@ -1559,38 +1460,33 @@ curl -i "$pase_capas"</code></pre>
 <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-command data-explanations="prueba-command-notes"><code>codigo_prueba=usuario-03
 pase_prueba="$api_url/events/$evento_id/registrations/$codigo_prueba"
 curl -i "$pase_prueba"
-curl -i -X PATCH "$pase_prueba"
 curl -i -X POST "$pase_prueba"
 curl -i -X POST "$pase_prueba"
-curl -i -X PATCH "$pase_prueba"
-curl -i -X PATCH "$pase_prueba"
 curl -i "$pase_prueba"</code></pre></div>
 <ol class="route-map" aria-label="Secuencia esperada del recorrido">
   <li><span>GET inicial</span><strong>200 · Sin inscripción</strong><p>El pase contiene <code>registration: null</code>.</p></li>
-  <li><span>PATCH antes de POST</span><strong>409 · Entrada rechazada</strong><p>Todavía falta la inscripción.</p></li>
   <li><span>POST y repetición</span><strong>201 → 409</strong><p>Solo se guarda la primera inscripción.</p></li>
-  <li><span>PATCH y repetición</span><strong>200 → 409</strong><p>Solo se guarda la primera hora de entrada.</p></li>
-  <li><span>GET final</span><strong>200 · Entrada registrada</strong><p>El pase devuelve las dos horas.</p></li>
+  <li><span>GET final</span><strong>200 · Inscrito</strong><p>El pase devuelve la fecha de inscripción.</p></li>
 </ol>
-<p class="checkpoint"><strong>Antes de avanzar</strong> Consulta el mismo código. La respuesta conserva el <code>registeredAt</code> de la inscripción y contiene el <code>checkedInAt</code> de la primera entrada.</p>
+<p class="checkpoint"><strong>Antes de avanzar</strong> Consulta el mismo código. La respuesta conserva el <code>registeredAt</code> de la inscripción.</p>
 </article>
 <article id="persistencia" class="guide-step" data-step="Persistencia">
-<h3>Recarga y lee las dos horas</h3>
-<ol class="route-map" aria-label="Compara las horas que devuelve cada capa">
-  <li><span>GET en la API</span><strong>Objeto <code>registration</code></strong><p>Localiza <code>registeredAt</code> y <code>checkedInAt</code> en la respuesta.</p></li>
-  <li><span>SELECT en DynamoDB</span><strong>Ítem de INSCRIPCIONES</strong><p>Usa la misma pareja y comprueba que coinciden las dos horas.</p></li>
+<h3>Comprueba la fecha guardada</h3>
+<ol class="route-map" aria-label="Compara la fecha que devuelve cada capa">
+  <li><span>GET en la API</span><strong>Objeto <code>registration</code></strong><p>Localiza <code>registeredAt</code> en la respuesta.</p></li>
+  <li><span>SELECT en DynamoDB</span><strong>Ítem de INSCRIPCIONES</strong><p>Usa la misma pareja y comprueba que coincide la fecha de inscripción.</p></li>
 </ol>
-<p class="lesson-note"><strong>Qué demuestra la comparación.</strong> El GET y la consulta directa a DynamoDB deben mostrar las mismas marcas de tiempo para la misma pareja <code>eventId + userId</code>.</p>
+<p class="lesson-note"><strong>Qué demuestra la comparación.</strong> El GET y la consulta directa a DynamoDB deben mostrar la misma fecha de inscripción para la misma pareja <code>eventId + userId</code>.</p>
 <p>Usa el mismo <code>codigo_prueba</code> del recorrido anterior. El primer comando consulta la API. El segundo usa las dos claves para leer esa misma inscripción en DynamoDB. Si abriste otra terminal, recupera <code>api_url</code> y <code>tabla_inscripciones</code> en <a href="#salidas-stack">Salidas</a> y asigna a <code>evento_id</code> y <code>codigo_prueba</code> los valores que anotaste en Crear eventos y Recorrido.</p>
 <p>Selecciona una línea resaltada para ver qué hace.</p>
 <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-command data-explanations="prueba-command-notes"><code>curl -i "$api_url/events/$evento_id/registrations/$codigo_prueba"
 
 aws dynamodb execute-statement \
   --profile "$perfil" --region "$region" --consistent-read \
-  --statement "SELECT \"EVENT_ID\", \"USER_ID\", \"REGISTERED_AT\", \"CHECKED_IN_AT\" FROM \"$tabla_inscripciones\" WHERE \"EVENT_ID\" = ? AND \"USER_ID\" = ?" \
+  --statement "SELECT \"EVENT_ID\", \"USER_ID\", \"REGISTERED_AT\" FROM \"$tabla_inscripciones\" WHERE \"EVENT_ID\" = ? AND \"USER_ID\" = ?" \
   --parameters "[{\"N\":\"$evento_id\"},{\"S\":\"$codigo_prueba\"}]"</code></pre></div>
 <p>Si usas la <a href="#pantalla">Pantalla de prueba</a>, selecciona AWS, indica la misma URL, el mismo número de evento y el mismo usuario y pulsa <strong>Consultar</strong>.</p>
-<p class="checkpoint"><strong>Antes de avanzar</strong> DynamoDB devuelve un ítem. Sus dos horas coinciden con las del GET. En la pantalla ves «Entrada registrada».</p>
+<p class="checkpoint"><strong>Antes de avanzar</strong> DynamoDB devuelve un ítem. La fecha de inscripción coincide con la del GET. En la pantalla ves «Inscrito».</p>
 </article>
 <article id="consultar-indice" class="guide-step" data-step="Consultar índice">
 <h3>Busca por evento y por usuario</h3>
@@ -1627,7 +1523,7 @@ aws dynamodb execute-statement \
 <figure class="infra-flow">
   <ol>
     <li><a href="#modelo-titulo">Elige las claves</a><span>EVENTOS · EVENT_ID<br>INSCRIPCIONES · EVENT_ID + USER_ID<br>USUARIOS · USER_ID</span></li>
-    <li><a href="#infraestructura">Escribe serverless.yml</a><span>Tres tablas, cuatro funciones y las rutas del pase</span></li>
+    <li><a href="#infraestructura">Escribe serverless.yml</a><span>Tres tablas, tres funciones y las rutas del pase</span></li>
     <li><a href="#desplegar-stack">Despliega en AWS</a><span>Serverless Framework → CloudFormation → recursos del laboratorio</span></li>
     <li><a href="#guardar-evento">Carga el primer evento</a><span>AWS CLI → Lambda → evento con el ID enviado</span></li>
     <li><a href="#sembrar-usuarios">Mantén un perfil</a><span>PartiQL → USER_ID → nombre visible y ciudad</span></li>
@@ -1680,7 +1576,6 @@ aws dynamodb execute-statement \
         <div class="phone-actions">
           <button type="button" data-method="GET">Consultar</button>
           <button type="button" data-method="POST">Inscribirse</button>
-          <button type="button" data-method="PATCH">Registrar entrada</button>
         </div>
         <p id="feedback" role="status">Pulsa Consultar para empezar.</p>
       </div>

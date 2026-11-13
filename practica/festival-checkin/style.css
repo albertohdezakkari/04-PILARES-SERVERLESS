@@ -657,7 +657,6 @@ button:disabled { opacity: .65; cursor: wait; }
 .phone-settings label { font-size: .86rem; }
 .phone-settings input, .phone-settings select { background: #171020; }
 .phone-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.phone-actions [data-method="PATCH"] { grid-column: 1 / -1; }
 .phone-screen #feedback { margin: 10px 0 0; color: var(--muted); font-size: .87rem; }
 .phone-inspector {
   min-width: 0;

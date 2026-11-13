@@ -62,9 +62,6 @@ function renderTable(model) {
       const value = Object.hasOwn(row, column) ? row[column] : undefined;
       const cell = line.insertCell();
       cell.textContent = formatValue(value);
-      if (showPractice && column === 'CHECKED_IN_AT') {
-        cell.append(element('span', value === undefined ? 'Sin entrada registrada' : 'Entrada registrada', 'model-key'));
-      }
     }
     return { row, line };
   });
@@ -135,7 +132,7 @@ function showModel(message = status) {
 async function loadExample(message, onlyIfEmpty = false) {
   example.disabled = true;
   try {
-    const response = await fetch('modelo-dynamodb.json?v=perfiles');
+    const response = await fetch('modelo-dynamodb.json?v=pases-orm');
     if (!response.ok) throw new Error('El ejemplo no está disponible en este momento.');
     const source = await response.text();
     if (onlyIfEmpty && input.value.trim()) return;

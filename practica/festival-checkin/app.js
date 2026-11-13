@@ -11,9 +11,8 @@ const requestModule = document.querySelector('#request-module');
 const requestLesson = document.querySelector('#request-lesson');
 const readFeedback = document.querySelector('#read-feedback');
 const routes = {
-  GET: { module: 'consultar', lesson: '#leer-pase' },
-  POST: { module: 'inscribir', lesson: '#construir-post' },
-  PATCH: { module: 'entrada', lesson: '#construir-patch' }
+  GET: { module: 'consultar-pase', lesson: '#leer-pase' },
+  POST: { module: 'inscribir-usuario', lesson: '#construir-post' }
 };
 const passState = document.querySelector('#pass-state');
 const title = document.querySelector('#screen-title');
@@ -50,10 +49,6 @@ function demoRequest(method, userId) {
     });
     return { status: 201, body: { message: 'Inscripción creada' } };
   }
-  if (method === 'PATCH' && registration && !registration.checkedInAt) {
-    registration.checkedInAt = new Date().toISOString();
-    return { status: 200, body: { message: 'Entrada registrada' } };
-  }
   return { status: 409, body: { message: 'La operación no se puede aplicar a este estado' } };
 }
 
@@ -77,11 +72,10 @@ async function awsRequest(base, method, path) {
 
 function showPass(body) {
   if (typeof body.title !== 'string' || !Object.hasOwn(body, 'registration')) {
-    throw new Error('La respuesta GET no coincide con el contrato de la pestaña Lectura.');
+    throw new Error('La respuesta GET no coincide con el contrato del paso Consultar.');
   }
   title.textContent = body.title;
-  passState.textContent = body.registration?.checkedInAt ? 'Entrada registrada'
-    : body.registration ? 'Inscrito' : 'Sin inscripción';
+  passState.textContent = body.registration ? 'Inscrito' : 'Sin inscripción';
 }
 
 async function run(method) {
@@ -104,7 +98,7 @@ async function run(method) {
   const path = passPath(eventId, userId);
   readFeedback.hidden = true;
   requestPath.textContent = method + ' ' + path;
-  requestModule.textContent = 'src/pases/' + routes[method].module + '.mjs';
+  requestModule.textContent = 'src/pases/' + routes[method].module + '/handler.mjs';
   requestLesson.href = routes[method].lesson;
   requestTrace.hidden = false;
   response.textContent = 'Esperando respuesta…';
