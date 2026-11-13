@@ -22,8 +22,8 @@
   <button type="button" data-phase="mision" aria-pressed="true"><span class="phase-number">1</span> Caso</button>
   <button type="button" data-phase="diseno" aria-pressed="false"><span class="phase-number">2</span> Diseñar</button>
   <button type="button" data-phase="conexion" aria-pressed="false"><span class="phase-number">3</span> Conectar</button>
-  <button type="button" data-phase="infra" aria-pressed="false"><span class="phase-number">4</span> Configurar</button>
-  <button type="button" data-phase="datos" aria-pressed="false"><span class="phase-number">5</span> Sembrar datos</button>
+  <button type="button" data-phase="infra" aria-pressed="false"><span class="phase-number">4</span> Programar y desplegar</button>
+  <button type="button" data-phase="datos" aria-pressed="false"><span class="phase-number">5</span> Datos y casos de uso</button>
   <button type="button" data-phase="prueba" aria-pressed="false"><span class="phase-number">6</span> Validar</button>
   <button type="button" data-phase="pantalla" aria-pressed="false">Pantalla de prueba</button>
 </nav>
@@ -44,6 +44,15 @@
 <ol class="lesson-flow">
   <li><span>1</span><div><h4>Consultar el pase</h4><p>Pulsa <strong>Consultar</strong>. Con un código nuevo, ves el título del evento y <strong>Sin inscripción</strong>.</p></div><code>GET · 200</code></li>
   <li><span>2</span><div><h4>Inscribirse</h4><p>Pulsa <strong>Inscribirse</strong>. El pase pasa a <strong>Inscrito</strong>. Repite la acción para comprobar que la primera inscripción se conserva.</p></div><code>POST · 201 → 409</code></li>
+</ol>
+<h4>Qué consigues en cada fase</h4>
+<ol class="route-map" aria-label="Recorrido de la práctica">
+  <li><span>1 · Caso</span><strong>Prueba el pase</strong><p>En el móvil de ensayo ves qué ocurre al consultar e inscribirte.</p></li>
+  <li><span>2 · Diseñar</span><strong>Dibuja los datos</strong><p>Decides qué guardan Eventos, Usuarios e Inscripciones y con qué claves vas a buscarlos.</p></li>
+  <li><span>3 · Conectar</span><strong>Entra en AWS Academy</strong><p>La terminal comprueba tu sesión y la región en la que vas a desplegar.</p></li>
+  <li><span>4 · Programar y desplegar</span><strong>Escribe la primera Lambda</strong><p>Creas <code>serverless.yml</code> y, en <a href="#archivo-lambda">Programar Lambda</a>, escribes el handler que guarda un evento.</p></li>
+  <li><span>5 · Datos y casos de uso</span><strong>Guarda datos y completa los pases</strong><p>Creas perfiles y eventos. Después programas la consulta y la inscripción por capas y con Toolbox.</p></li>
+  <li><span>6 · Validar</span><strong>Prueba la aplicación</strong><p>Compruebas la API, la persistencia en DynamoDB y el índice <code>PorUsuario</code>.</p></li>
 </ol>
 <p class="checkpoint"><strong>Antes de avanzar</strong> En modo Ensayo, el mismo código pasa por los dos estados. En la siguiente fase diseñarás qué debe guardar la base de datos para distinguirlos.</p>
 </article>
@@ -141,7 +150,7 @@
 <p><strong>Evento → EVENTOS.</strong> Guarda <code>EVENT_ID</code> y <code>TITLE</code>, ambos obligatorios. <strong>Inscripción → INSCRIPCIONES.</strong> Guarda <code>EVENT_ID</code>, <code>USER_ID</code>, <code>REGISTERED_AT</code> y, si hay una fecha de entrada registrada, <code>CHECKED_IN_AT</code>.</p>
 <p><code>EVENT_ID</code> y <code>USER_ID</code> son referencias al evento y a la persona, como dos claves foráneas en un modelo relacional. La clave primaria de la inscripción es la pareja <code>EVENT_ID</code> + <code>USER_ID</code>, que garantiza una inscripción por persona y evento.</p>
 <p><strong>Usuario → USUARIOS.</strong> Guarda <code>USER_ID</code>, <code>DISPLAY_NAME</code> y <code>CITY</code>. Si Leo cambia de ciudad, actualiza su perfil una vez. Sus inscripciones conservan el mismo <code>USER_ID</code>.</p>
-<p>Las referencias funcionan como claves foráneas en el dibujo. En DynamoDB las comprueba el service antes de guardar la inscripción. Si falta el evento o el usuario, POST devuelve <code>404</code>. Consulta y edita los perfiles desde <a href="#sembrar-usuarios">Sembrar datos → Usuarios</a>.</p>
+<p>Las referencias funcionan como claves foráneas en el dibujo. En DynamoDB las comprueba el service antes de guardar la inscripción. Si falta el evento o el usuario, POST devuelve <code>404</code>. Consulta y edita los perfiles desde <a href="#sembrar-usuarios">Datos y casos de uso → Usuarios</a>.</p>
 <p id="model-status" role="status">Cargando el ejemplo…</p>
 <div id="model-result">
 </div>
@@ -185,9 +194,10 @@ aws dynamodb list-tables --profile "$perfil" --region "$region"</code></pre><p><
 </article>
 </section>
 <section id="infra" class="phase" hidden>
-<h2>Configurar y desplegar la aplicación</h2>
+<h2>Programar y desplegar la aplicación</h2>
 <article id="nombres-tablas" class="guide-step" data-step="Proyecto">
 <h3>Prepara la carpeta de trabajo</h3>
+<p class="lesson-note"><strong>Tu primera Lambda se escribe en esta fase.</strong> Prepara la carpeta y el rol, crea <code>serverless.yml</code> y abre <a href="#archivo-lambda">Programar Lambda</a> para escribir el alta de eventos.</p>
 <dl class="command-reasons"><div><dt><code>npm init -y</code></dt><dd>Crea el manifiesto del proyecto.</dd></div><div><dt><code>serverless</code></dt><dd>Lee el YAML y prepara el despliegue.</dd></div><div><dt>SDK de DynamoDB</dt><dd>Permite que el código de Lambda lea y escriba ítems.</dd></div></dl>
 <p>En la misma terminal de Conexión, abre la carpeta donde guardas tus prácticas. Usarás Node.js 22 y la misma versión de Serverless Framework del entrenamiento. Comprueba que <code>node --version</code> empieza por <code>v22</code>. Guarda aquí <code>serverless.yml</code> y las carpetas <code>src/datos</code>, <code>src/eventos/crear-evento</code> y <code>src/pases</code> que prepararás en los pasos siguientes.</p><pre><code>node --version
 mkdir -p festival-checkin
@@ -610,11 +620,11 @@ resources:
 <pre><code>grep -nE '^(service:|functions:|resources:|[[:space:]]+(KeyType:|IndexName:))' serverless.yml</code></pre>
 <p class="checkpoint"><strong>Antes de avanzar</strong> La terminal muestra <code>service:</code>, <code>functions:</code>, <code>resources:</code> e <code>IndexName: PorUsuario</code>. En el archivo, comprueba que <code>EVENT_ID</code> figura como única clave (<code>HASH</code>) en la tabla de eventos.</p>
 </article>
-<article id="archivo-lambda" class="guide-step" data-step="Archivos Lambda">
+<article id="archivo-lambda" class="guide-step" data-step="Programar Lambda">
 <div class="lambda-hero">
   <div>
-    <h3>Una carpeta por dominio, un archivo por operación</h3>
-    <p>Busca todo lo relacionado con pases en <code>src/pases/</code>. El caso de uso de alta de eventos vive en <code>src/eventos/crear-evento/</code>.</p>
+    <h3>Programa tu primera Lambda</h3>
+    <p>Primero escribe el cliente de DynamoDB y el <code>handler.mjs</code> que guarda un evento. Después prepara los puntos de entrada de los pases en <code>src/pases/</code>. Completarás su lógica en <strong>5 · Datos y casos de uso</strong>.</p>
   </div>
   <div class="lambda-ticket">
     <strong>Así localizas una petición</strong>
@@ -702,7 +712,7 @@ export const TABLA_USUARIOS_FCI = process.env.FCI_TABLA_USUARIOS;</code></pre></
   </section>
   <section id="modulo-lambda-eventos" data-explanation hidden>
     <h5><code>src/eventos/crear-evento/handler.mjs</code></h5>
-    <p>Antes de abrir este archivo, guarda <code>src/datos/dynamo.mjs</code> en la pestaña anterior. <code>handler.mjs</code> importa el cliente y el nombre de la tabla desde ahí. Después de crear y comprobar los primeros eventos, reorganizarás este archivo en <a href="#capas-eventos">Sembrar datos → Crear por capas</a>.</p>
+    <p>Antes de abrir este archivo, guarda <code>src/datos/dynamo.mjs</code> en la pestaña anterior. <code>handler.mjs</code> importa el cliente y el nombre de la tabla desde ahí. Después de crear y comprobar los primeros eventos, reorganizarás este archivo en <a href="#capas-eventos">Datos y casos de uso → Crear por capas</a>.</p>
     <p>Invoca la función desde AWS CLI con <code>eventId</code> numérico y un <code>title</code> con texto. El handler comprueba el título antes de escribir. <code>EVENT_ID</code> identifica el evento y la condición de escritura protege un ID que ya está ocupado.</p>
     <p><code>Ref: FestivalCheckInEventos</code> resuelve <code>FCI_EVENTOS</code>. La variable <code>FCI_TABLA_EVENTOS</code> entrega ese nombre a Lambda y <code>TABLA_EVENTOS_FCI</code> se lo pasa a <code>PutCommand</code>.</p>
     <pre><code>mkdir -p src/eventos/crear-evento &amp;&amp; ls -ld src/eventos/crear-evento &amp;&amp;
@@ -754,7 +764,7 @@ export async function handleRequest(event, operation) {
   </section>
   <section id="modulo-lambda-1" data-explanation hidden>
     <h5><code>src/pases/consultar-pase/handler.mjs</code></h5>
-    <p>Prepara el archivo base de GET. Por ahora responde <code>501</code>. Lo completarás en <a href="#leer-pase">Sembrar datos → Consultar · Capas</a>.</p>
+    <p>Prepara el archivo base de GET. Por ahora responde <code>501</code>. Lo completarás en <a href="#leer-pase">Datos y casos de uso → Consultar · Capas</a>.</p>
     <pre><code>mkdir -p src/pases/consultar-pase &amp;&amp; ls -ld src/pases/consultar-pase &amp;&amp; touch src/pases/consultar-pase/handler.mjs &amp;&amp; vi src/pases/consultar-pase/handler.mjs</code></pre>
     <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/pases/consultar-pase/handler.mjs"><code>import { handleRequest, json } from '../peticion.mjs';
 
@@ -769,7 +779,7 @@ async function consultarPase(key) {
   </section>
   <section id="modulo-lambda-2" data-explanation hidden>
     <h5><code>src/pases/inscribir-usuario/handler.mjs</code></h5>
-    <p>Prepara el archivo base de POST. Por ahora responde <code>501</code>. Lo completarás en <a href="#construir-post">Sembrar datos → Inscribir · Capas</a>.</p>
+    <p>Prepara el archivo base de POST. Por ahora responde <code>501</code>. Lo completarás en <a href="#construir-post">Datos y casos de uso → Inscribir · Capas</a>.</p>
     <pre><code>mkdir -p src/pases/inscribir-usuario &amp;&amp; ls -ld src/pases/inscribir-usuario &amp;&amp; touch src/pases/inscribir-usuario/handler.mjs &amp;&amp; vi src/pases/inscribir-usuario/handler.mjs</code></pre>
     <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/pases/inscribir-usuario/handler.mjs"><code>import { handleRequest, json } from '../peticion.mjs';
 
@@ -816,7 +826,7 @@ node --input-type=module -e '
 </article>
 </section>
 <section id="datos" class="phase" hidden>
-<h2>Comprobar y sembrar los datos del festival</h2>
+<h2>Cargar datos y completar los casos de uso</h2>
 <article id="salidas-stack" class="guide-step" data-step="Salidas">
 <h3>Recupera los nombres reales y la URL</h3>
 <p class="lesson-note"><strong>Del nombre lógico al nombre real.</strong> En el YAML escribiste <code>FestivalCheckInEventos</code>. CloudFormation crea la tabla con el nombre indicado en <code>TableName</code>, por ejemplo <code>FCI_EVENTOS</code>. <code>salida NombreTablaEventosFCI</code> lo obtiene del stack y <code>tabla_eventos</code> lo guarda para que tus comandos apunten a esa tabla. <code>api_url</code> guarda la dirección que usarás con <code>curl</code>.</p>
@@ -1037,7 +1047,7 @@ await db.send(comando);</code></pre>
         └── repository.mjs        escritura del alta</code></pre>
 <p class="lesson-note"><strong>Sigue los imports.</strong> <code>serverless.yml</code> apunta a <code>src/eventos/crear-evento/handler.handler</code>. Desde ahí, el handler importa el service, el service importa el repository y el repository usa <code>../../datos/dynamo.mjs</code>. Los dos <code>../</code> suben de <code>crear-evento</code> a <code>eventos</code> y luego a <code>src</code>. El repository convierte <code>eventId</code> en <code>EVENT_ID</code> al preparar la escritura. Si más adelante añades reglas de negocio para el alta, incorpóralas en el service.</p>
 <p><code>crearEvento</code> nombra el caso de uso. <code>guardarEvento</code> nombra la operación del repository. El comando <code>PutCommand</code> indica cómo se escribe el registro en DynamoDB. Si dos altas usan el mismo ID, DynamoDB acepta una y rechaza la otra. Para crear otro evento, elige otro ID.</p>
-<p>Si ya tenías el proyecto de una versión anterior, actualiza también <code>src/datos/dynamo.mjs</code> en <a href="#archivo-lambda">Configurar → Archivos Lambda</a>, en la pestaña <strong>DynamoDB</strong>. Busca <code>removeUndefinedValues</code> para comprobar que estás usando el cliente actualizado.</p>
+<p>Si ya tenías el proyecto de una versión anterior, actualiza también <code>src/datos/dynamo.mjs</code> en <a href="#archivo-lambda">Programar y desplegar → Programar Lambda</a>, en la pestaña <strong>DynamoDB</strong>. Busca <code>removeUndefinedValues</code> para comprobar que estás usando el cliente actualizado.</p>
 <p>Desde la raíz de <code>festival-checkin</code>, crea primero el <strong>Repository</strong> y después el <strong>Service</strong>. En cada pestaña, ejecuta el comando de apertura y copia el archivo completo. En <code>vi</code>, escribe <code>:set paste</code>, pulsa Intro y después <kbd>i</kbd> para pegar. Guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro. Actualiza el <strong>Handler</strong> al final.</p>
 <template id="capas-eventos-notas">
   <div data-prefix="if (typeof title"><strong>Exige un título con texto</strong><p><code>typeof</code> comprueba que el valor sea texto. <code>trim()</code> permite detectar un título formado solo por espacios. Si falla la comprobación, la función termina antes de escribir en DynamoDB.</p></div>
