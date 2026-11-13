@@ -956,12 +956,12 @@ evento_secundario_id=2</code></pre>
 <p class="checkpoint"><strong>Antes de avanzar</strong> <code>EVENTOS</code> devuelve tu identificador numérico y «Festival de otoño». <code>INSCRIPCIONES</code> devuelve <code>Items: []</code> si todavía no hay inscripciones.</p>
 </article>
 <article id="capas-eventos" class="guide-step" data-step="Crear por capas">
-<h3>Insertar un evento con Handler, Service y Repository</h3>
+<h3>Crear un evento con Handler, Service y Repository</h3>
 <p>Acabas de crear dos eventos y de leerlos en DynamoDB. Ahora reorganiza <code>crear.mjs</code> para que puedas localizar por separado la entrada de Lambda, las decisiones del caso de uso y el acceso a la tabla.</p>
-<ol class="route-map" aria-label="Recorrido para insertar un evento">
+<ol class="route-map" aria-label="Recorrido para crear un evento">
   <li><span>Handler · <code>crear.mjs</code></span><strong>Recibe el título</strong><p>AWS CLI invoca la Lambda con <code>{ "title": "Noche de ciencia" }</code>. El handler pasa ese título al service y devuelve <code>eventId</code> y <code>title</code>.</p></li>
-  <li><span>Service · <code>crear.service.mjs</code></span><strong>Decide cómo crear el evento</strong><p>Quita los espacios del título, comprueba que tenga contenido y llama a <code>insertarEvento(titulo)</code>.</p></li>
-  <li><span>Repository · <code>eventos.repository.mjs</code></span><strong>Lee y escribe en DynamoDB</strong><p>Obtiene el siguiente ID del grupo <code>EVENTO</code> y usa <code>PutCommand</code> para insertar. La condición protege los eventos ya guardados.</p></li>
+  <li><span>Service · <code>crear.service.mjs</code></span><strong>Decide cómo crear el evento</strong><p>Quita los espacios del título, comprueba que tenga contenido y llama a <code>guardarEvento(titulo)</code>.</p></li>
+  <li><span>Repository · <code>eventos.repository.mjs</code></span><strong>Lee y escribe en DynamoDB</strong><p>Obtiene el siguiente ID del grupo <code>EVENTO</code> y usa <code>PutCommand</code> para guardar el evento. La condición protege los eventos ya guardados.</p></li>
 </ol>
 <h4>Así queda la carpeta de eventos</h4>
 <pre data-diagram><code>src/
@@ -972,16 +972,18 @@ evento_secundario_id=2</code></pre>
     ├── crear.service.mjs       regla del título
     └── eventos.repository.mjs  acceso a la tabla de eventos</code></pre>
 <p class="lesson-note"><strong>Sigue los imports.</strong> <code>serverless.yml</code> apunta a <code>src/eventos/crear.handler</code>. Desde ahí, el handler importa el service, el service importa el repository y el repository usa <code>dynamo.mjs</code>. Si cambia la clave de DynamoDB, busca la escritura en el repository. Si cambia la regla del título, busca la validación en el service.</p>
-<p><code>crearEvento(title)</code> llama a <code>insertarEvento(titulo)</code>. Si dos altas proponen el mismo ID, DynamoDB acepta una y rechaza la otra. Puedes repetir la invocación para pedir un nuevo ID.</p>
+<p><code>crearEvento</code> nombra el caso de uso. <code>guardarEvento</code> nombra la operación del repository. El comando <code>PutCommand</code> indica cómo se escribe el registro en DynamoDB. Si dos altas proponen el mismo ID, DynamoDB acepta una y rechaza la otra. Puedes repetir la invocación para pedir un nuevo ID.</p>
 <p>Desde la raíz de <code>festival-checkin</code>, crea primero el <strong>Repository</strong> y después el <strong>Service</strong>. En cada pestaña, ejecuta el comando de apertura y copia el archivo completo. En <code>vi</code>, escribe <code>:set paste</code>, pulsa Intro y después <kbd>i</kbd> para pegar. Guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro. Actualiza el <strong>Handler</strong> al final.</p>
 <template id="capas-eventos-notas">
   <div data-prefix="const eventId = await obtenerSiguienteIdGuardado"><strong>Lee el mayor ID del grupo EVENTO</strong><p>La consulta compartida pide un solo ítem ordenado de mayor a menor y suma uno a su ID.</p></div>
-  <div data-prefix="Item:"><strong>Traduce los datos a los atributos de DynamoDB</strong><p>El argumento <code>eventId</code> se guarda como <code>EVENT_ID</code> y <code>titulo</code> como <code>TITLE</code>.</p></div>
+  <div data-prefix="const itemEvento ="><strong>Traduce los datos a los atributos de DynamoDB</strong><p>El valor de <code>eventId</code> se guarda como <code>EVENT_ID</code> y <code>titulo</code> como <code>TITLE</code>.</p></div>
   <div data-prefix="ConditionExpression:"><strong>Inserta solo si la clave está libre</strong><p>DynamoDB comprueba la condición al escribir. Si dos peticiones obtienen el mismo candidato, solo una puede insertar ese ID.</p></div>
+  <div data-prefix="await db.send(comando)"><strong>Envía la escritura</strong><p>El repository espera la confirmación de DynamoDB antes de devolver el ID.</p></div>
   <div data-prefix="const titulo ="><strong>Limpia el título</strong><p><code>trim()</code> quita los espacios de los extremos. Si no queda texto, el service detiene el alta.</p></div>
-  <div data-prefix="const eventId = await insertarEvento"><strong>Llama al repository</strong><p>El service espera a que se guarde el evento y recibe el ID numérico.</p></div>
-  <div data-prefix="const evento ="><strong>Entrega el título al service</strong><p>El handler espera el resultado del caso de uso.</p></div>
-  <div data-prefix="return { eventId: evento"><strong>Devuelve el identificador como texto</strong><p>La Lambda devuelve un objeto a AWS CLI. Convertir el <code>BigInt</code> a texto permite representarlo en JSON conservando todas sus cifras.</p></div>
+  <div data-prefix="const eventId = await guardarEvento"><strong>Llama al repository</strong><p>El service espera a que se guarde el evento y recibe el ID numérico.</p></div>
+  <div data-prefix="const title = event.title"><strong>Lee el dato de la invocación</strong><p>El objeto <code>event</code> contiene el JSON que enviaste con AWS CLI.</p></div>
+  <div data-prefix="const eventoCreado ="><strong>Entrega el título al service</strong><p>El handler espera el resultado del caso de uso.</p></div>
+  <div data-prefix="eventId: eventoCreado.eventId.toString()"><strong>Devuelve el identificador como texto</strong><p>La Lambda devuelve un objeto a AWS CLI. Convertir el <code>BigInt</code> a texto permite representarlo en JSON conservando todas sus cifras.</p></div>
 </template>
 <div class="guided-explainer" data-explainer>
   <div class="guided-options" role="group" aria-label="Archivos de creación de eventos">
@@ -991,19 +993,27 @@ evento_secundario_id=2</code></pre>
   </div>
   <section id="eventos-repository" data-explanation>
     <h4><code>src/eventos/eventos.repository.mjs</code></h4>
-    <p><code>insertarEvento(titulo)</code> obtiene el ID con la consulta que ya tienes en <code>dynamo.mjs</code>, inserta el evento y devuelve su ID.</p>
+    <p><code>guardarEvento(titulo)</code> obtiene el ID con la consulta que ya tienes en <code>dynamo.mjs</code>, guarda el evento y devuelve su ID.</p>
     <pre><code>mkdir -p src/eventos &amp;&amp; ls -ld src/eventos &amp;&amp;
 touch src/eventos/eventos.repository.mjs &amp;&amp; vi src/eventos/eventos.repository.mjs</code></pre>
     <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/eventos/eventos.repository.mjs" data-explanations="capas-eventos-notas"><code>import { PutCommand } from '@aws-sdk/lib-dynamodb';
 import { db, GRUPO_EVENTOS, TABLA_EVENTOS_FCI, obtenerSiguienteIdGuardado } from '../datos/dynamo.mjs';
 
-export async function insertarEvento(titulo) {
+export async function guardarEvento(titulo) {
   const eventId = await obtenerSiguienteIdGuardado(GRUPO_EVENTOS);
-  await db.send(new PutCommand({
+  const itemEvento = {
+    TIPO_REGISTRO: GRUPO_EVENTOS,
+    EVENT_ID: eventId,
+    TITLE: titulo
+  };
+
+  const comando = new PutCommand({
     TableName: TABLA_EVENTOS_FCI,
-    Item: { TIPO_REGISTRO: GRUPO_EVENTOS, EVENT_ID: eventId, TITLE: titulo },
+    Item: itemEvento,
     ConditionExpression: 'attribute_not_exists(EVENT_ID)'
-  }));
+  });
+
+  await db.send(comando);
   return eventId;
 }</code></pre></div>
   </section>
@@ -1012,13 +1022,19 @@ export async function insertarEvento(titulo) {
     <p><code>crearEvento(title)</code> aplica la regla del título y pasa el resultado al repository.</p>
     <pre><code>mkdir -p src/eventos &amp;&amp; ls -ld src/eventos &amp;&amp;
 touch src/eventos/crear.service.mjs &amp;&amp; vi src/eventos/crear.service.mjs</code></pre>
-    <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/eventos/crear.service.mjs" data-explanations="capas-eventos-notas"><code>import { insertarEvento } from './eventos.repository.mjs';
+    <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/eventos/crear.service.mjs" data-explanations="capas-eventos-notas"><code>import { guardarEvento } from './eventos.repository.mjs';
 
 export async function crearEvento(title) {
-  const titulo = typeof title === 'string' ? title.trim() : '';
-  if (!titulo) throw new Error('Indica el título del evento');
+  if (typeof title !== 'string') {
+    throw new Error('Indica el título del evento');
+  }
 
-  const eventId = await insertarEvento(titulo);
+  const titulo = title.trim();
+  if (titulo === '') {
+    throw new Error('Indica el título del evento');
+  }
+
+  const eventId = await guardarEvento(titulo);
   return { eventId, title: titulo };
 }</code></pre></div>
   </section>
@@ -1028,9 +1044,14 @@ export async function crearEvento(title) {
     <pre><code>vi src/eventos/crear.mjs</code></pre>
     <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/eventos/crear.mjs" data-explanations="capas-eventos-notas"><code>import { crearEvento } from './crear.service.mjs';
 
-export async function handler({ title } = {}) {
-  const evento = await crearEvento(title);
-  return { eventId: evento.eventId.toString(), title: evento.title };
+export async function handler(event = {}) {
+  const title = event.title;
+  const eventoCreado = await crearEvento(title);
+
+  return {
+    eventId: eventoCreado.eventId.toString(),
+    title: eventoCreado.title
+  };
 }</code></pre></div>
   </section>
 </div>
