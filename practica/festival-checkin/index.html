@@ -1326,6 +1326,89 @@ curl -i -X PATCH "$pase"
 curl -i "$pase"</code></pre></div>
 <p class="checkpoint"><strong>Antes de avanzar</strong> Los tres PATCH devuelven 409, 200 y 409. Los dos GET muestran los mismos valores de registeredAt y checkedInAt.</p>
 </article>
+<article id="capas-patch" class="guide-step" data-step="Organizar en capas">
+<h3>Una entrada, tres responsabilidades</h3>
+<p>Ya has probado el PATCH. Ahora separa la operación en tres archivos. Sigue la petición <code>PATCH /events/1/registrations/usuario-02</code> y fíjate en qué dato pasa de un archivo al siguiente.</p>
+<ol class="route-map" aria-label="Recorrido de la petición por las tres capas">
+  <li><span>1 · Handler</span><strong>Entiende la petición</strong><p>Lee los identificadores de la ruta con <code>handleRequest</code> y prepara la respuesta HTTP.</p><code>event → { eventId, userId }</code></li>
+  <li><span>2 · Service</span><strong>Aplica la regla del pase</strong><p>Pide registrar la primera entrada y fija su hora en UTC.</p><code>clave + hora → registrarPrimeraEntrada</code></li>
+  <li><span>3 · Repository</span><strong>Escribe en DynamoDB</strong><p>Usa la clave del pase y guarda la hora si existe la inscripción y sigue sin entrada.</p><code>UpdateCommand → CHECKED_IN_AT</code></li>
+</ol>
+<p class="lesson-note"><strong>La regla y su garantía.</strong> El service pide registrar la primera entrada. El repository expresa esa regla en una condición que DynamoDB comprueba al escribir. Si llegan dos PATCH a la vez, solo el primero puede guardar la hora.</p>
+<p>Desde la raíz de <code>festival-checkin</code>, prepara primero <strong>Repository</strong>, luego <strong>Service</strong> y por último <strong>Handler</strong>. En cada pestaña copia el comando, abre el archivo y pulsa <strong>Copiar archivo completo</strong> en la caja de código. En <code>vi</code>, escribe <code>:set paste</code>, pulsa Intro y después <kbd>i</kbd> para pegar. Guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro. Selecciona las líneas resaltadas para ver su explicación.</p>
+<template id="capas-patch-notas">
+  <div data-prefix="export async function registrarPrimeraEntrada"><strong>El nombre expresa la operación de datos</strong><p>La función recibe la clave del pase y la hora que debe persistir.</p></div>
+  <div data-prefix="Key: { EVENT_ID"><strong>Localiza una inscripción concreta</strong><p>DynamoDB busca el ítem por la pareja <code>EVENT_ID + USER_ID</code>.</p></div>
+  <div data-prefix="ConditionExpression:"><strong>Protege la primera escritura</strong><p>DynamoDB comprueba la existencia del pase y la ausencia de <code>CHECKED_IN_AT</code> en la misma operación.</p></div>
+  <div data-prefix="const horaEntrada"><strong>Fija el momento de entrada</strong><p>El service genera una hora UTC y la pasa al repository como argumento.</p></div>
+  <div data-prefix="await registrarPrimeraEntrada"><strong>Ejecuta la operación del caso de uso</strong><p>El service espera a que el repository complete la escritura.</p></div>
+  <div data-prefix="return handleRequest"><strong>Reutiliza la lectura de la petición</strong><p><code>handleRequest</code> convierte los parámetros de la ruta en la clave del pase. Si DynamoDB rechaza la condición, responde <code>409</code>.</p></div>
+  <div data-prefix="await darEntrada"><strong>Entrega la clave al service</strong><p>El handler espera a que termine la operación y entonces prepara el <code>200</code>.</p></div>
+</template>
+<div class="guided-explainer" data-explainer>
+  <div class="guided-options" role="group" aria-label="Archivos de la práctica por capas">
+    <button type="button" data-explain="capa-repository" aria-controls="capa-repository" aria-pressed="true">Repository</button>
+    <button type="button" data-explain="capa-service" aria-controls="capa-service" aria-pressed="false">Service</button>
+    <button type="button" data-explain="capa-handler" aria-controls="capa-handler" aria-pressed="false">Handler</button>
+  </div>
+  <section id="capa-repository" data-explanation>
+    <h4><code>src/pases/entrada.repository.mjs</code></h4>
+    <pre><code>mkdir -p src/pases &amp;&amp; ls -ld src/pases &amp;&amp; touch src/pases/entrada.repository.mjs &amp;&amp; vi src/pases/entrada.repository.mjs</code></pre>
+    <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/pases/entrada.repository.mjs" data-explanations="capas-patch-notas"><code>import { UpdateCommand } from '@aws-sdk/lib-dynamodb';
+import { db, TABLA_INSCRIPCIONES_FCI } from '../datos/dynamo.mjs';
+
+export async function registrarPrimeraEntrada({ eventId, userId }, horaEntrada) {
+  await db.send(new UpdateCommand({
+    TableName: TABLA_INSCRIPCIONES_FCI,
+    Key: { EVENT_ID: eventId, USER_ID: userId },
+    UpdateExpression: 'SET CHECKED_IN_AT = :hora',
+    ConditionExpression: 'attribute_exists(EVENT_ID) AND attribute_not_exists(CHECKED_IN_AT)',
+    ExpressionAttributeValues: { ':hora': horaEntrada }
+  }));
+}</code></pre></div>
+  </section>
+  <section id="capa-service" data-explanation hidden>
+    <h4><code>src/pases/entrada.service.mjs</code></h4>
+    <pre><code>mkdir -p src/pases &amp;&amp; ls -ld src/pases &amp;&amp; touch src/pases/entrada.service.mjs &amp;&amp; vi src/pases/entrada.service.mjs</code></pre>
+    <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/pases/entrada.service.mjs" data-explanations="capas-patch-notas"><code>import { registrarPrimeraEntrada } from './entrada.repository.mjs';
+
+export async function darEntrada(clave) {
+  const horaEntrada = new Date().toISOString();
+  await registrarPrimeraEntrada(clave, horaEntrada);
+}</code></pre></div>
+  </section>
+  <section id="capa-handler" data-explanation hidden>
+    <h4><code>src/pases/entrada.mjs</code></h4>
+    <p>Abre el archivo existente. Antes de pegar, escribe <code>:%d</code> y pulsa Intro para sustituir su contenido completo. El YAML ya apunta a <code>src/pases/entrada.handler</code>.</p>
+    <pre><code>vi src/pases/entrada.mjs</code></pre>
+    <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/pases/entrada.mjs" data-explanations="capas-patch-notas"><code>import { darEntrada } from './entrada.service.mjs';
+import { handleRequest, json } from './peticion.mjs';
+
+export function handler(event) {
+  return handleRequest(event, async clave =&gt; {
+    await darEntrada(clave);
+    return json(200, { message: 'Entrada registrada' });
+  });
+}</code></pre></div>
+  </section>
+</div>
+<h4>Comprueba las tres capas en la misma ruta</h4>
+<p>Desde <code>festival-checkin</code>, usa la terminal donde configuraste el <a href="#rol-laboratorio">rol del laboratorio</a>. Comprueba los archivos y vuelve a desplegar el servicio.</p>
+<pre><code>node --check src/pases/entrada.repository.mjs &amp;&amp;
+node --check src/pases/entrada.service.mjs &amp;&amp;
+node --check src/pases/entrada.mjs &amp;&amp;
+node --input-type=module -e 'await import("./src/pases/entrada.mjs"); console.log("Imports comprobados")' &amp;&amp;
+npx serverless deploy --stage dev --aws-profile "$perfil"</code></pre>
+<p>Usa la URL y el ID de evento de <a href="#salidas-stack">Salidas</a> y <a href="#guardar-evento">Crear eventos</a>. Elige un código sin inscripción en ese evento y úsalo en los cinco comandos.</p>
+<pre><code>usuario_capas=usuario-04
+pase_capas="$api_url/events/$evento_id/registrations/$usuario_capas"
+curl -i -X POST "$pase_capas"
+curl -i -X PATCH "$pase_capas"
+curl -i "$pase_capas"
+curl -i -X PATCH "$pase_capas"
+curl -i "$pase_capas"</code></pre>
+<p class="checkpoint"><strong>Antes de avanzar</strong> Comprueba que POST devuelve <code>201</code>, el primer PATCH devuelve <code>200</code> y la repetición devuelve <code>409</code>. Los dos GET muestran el mismo <code>checkedInAt</code>.</p>
+</article>
 </section>
 <section id="prueba" class="phase" hidden>
 <h2>Demostración cruzada</h2>
