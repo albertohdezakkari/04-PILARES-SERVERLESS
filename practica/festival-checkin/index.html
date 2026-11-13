@@ -651,9 +651,9 @@ ls -l serverless.yml package.json</code></pre>
   </ol>
   <p>Sigue las pestañas de izquierda a derecha. Empieza por <strong>DynamoDB · <code>dynamo.mjs</code></strong>, que exporta el cliente y los nombres de las tablas. <code>handler.mjs</code> importa ese módulo. Guarda <code>peticion.mjs</code> antes de preparar los dos handlers del pase. Cada pestaña abre el archivo completo. Puedes usar <strong>Ver por páginas</strong> para leer los archivos largos por partes. Pasa el ratón o toca una línea resaltada para ver su explicación.</p>
   <template id="index-explanations">
+  <div data-prefix="if (typeof title"><strong>Exige un título con texto</strong><p><code>typeof</code> comprueba que el valor sea texto. <code>trim()</code> permite detectar un título formado solo por espacios. Si falla la comprobación, la función termina antes de escribir en DynamoDB.</p></div>
   <div data-prefix="import { DynamoDBClient"><strong>Conexión con DynamoDB</strong><p>Importa el cliente que comunica Lambda con DynamoDB. El paquete se instaló al preparar el proyecto.</p></div>
   <div data-prefix="export const db ="><strong>Cliente de documentos</strong><p>Lambda prepara este cliente al cargar el archivo. Las operaciones pueden reutilizarlo y pasarle objetos de JavaScript, como la clave con <code>EVENT_ID</code> y <code>USER_ID</code>.</p></div>
-  <div data-prefix="marshallOptions:"><strong>Omite atributos ausentes</strong><p>Si falta <code>title</code> en la invocación, su valor en JavaScript es <code>undefined</code>. El cliente omite ese atributo al preparar el ítem.</p></div>
   <div data-prefix="export const TABLA_EVENTOS_FCI ="><strong>Tabla de eventos</strong><p>El despliegue configura FCI_TABLA_EVENTOS en Lambda a partir de Ref: FestivalCheckInEventos. <code>process.env.FCI_TABLA_EVENTOS</code> devuelve <code>FCI_EVENTOS</code>.</p></div>
   <div data-prefix="export const TABLA_INSCRIPCIONES_FCI ="><strong>Tabla de inscripciones</strong><p>El despliegue configura FCI_TABLA_INSCRIPCIONES en Lambda a partir de Ref: FestivalCheckInInscripciones. <code>process.env.FCI_TABLA_INSCRIPCIONES</code> devuelve <code>FCI_INSCRIPCIONES</code>, donde se guardan la fecha de inscripción.</p></div>
   <div data-prefix="export function json("><strong>Una respuesta para la API</strong><p>Esta función reúne el código HTTP, la cabecera y el cuerpo que API Gateway devuelve al navegador.</p></div>
@@ -697,7 +697,7 @@ export const TABLA_INSCRIPCIONES_FCI = process.env.FCI_TABLA_INSCRIPCIONES;</cod
   <section id="modulo-lambda-eventos" data-explanation hidden>
     <h5><code>src/eventos/crear-evento/handler.mjs</code></h5>
     <p>Antes de abrir este archivo, guarda <code>src/datos/dynamo.mjs</code> en la pestaña anterior. <code>handler.mjs</code> importa el cliente y el nombre de la tabla desde ahí. Después de crear y comprobar los primeros eventos, reorganizarás este archivo en <a href="#capas-eventos">Sembrar datos → Crear por capas</a>.</p>
-    <p>Invoca la función desde AWS CLI con <code>eventId</code> numérico y <code>title</code>. <code>EVENT_ID</code> identifica el evento y la condición de escritura protege un ID que ya está ocupado.</p>
+    <p>Invoca la función desde AWS CLI con <code>eventId</code> numérico y un <code>title</code> con texto. El handler comprueba el título antes de escribir. <code>EVENT_ID</code> identifica el evento y la condición de escritura protege un ID que ya está ocupado.</p>
     <p><code>Ref: FestivalCheckInEventos</code> resuelve <code>FCI_EVENTOS</code>. La variable <code>FCI_TABLA_EVENTOS</code> entrega ese nombre a Lambda y <code>TABLA_EVENTOS_FCI</code> se lo pasa a <code>PutCommand</code>.</p>
     <pre><code>mkdir -p src/eventos/crear-evento &amp;&amp; ls -ld src/eventos/crear-evento &amp;&amp;
 touch src/eventos/crear-evento/handler.mjs &amp;&amp; vi src/eventos/crear-evento/handler.mjs</code></pre>
@@ -705,6 +705,10 @@ touch src/eventos/crear-evento/handler.mjs &amp;&amp; vi src/eventos/crear-event
 import { db, TABLA_EVENTOS_FCI } from '../../datos/dynamo.mjs';
 
 export async function handler({ eventId, title } = {}) {
+  if (typeof title !== 'string' || title.trim() === '') {
+    throw new Error('Escribe un título para el evento');
+  }
+
   const comando = new PutCommand({
     TableName: TABLA_EVENTOS_FCI,
     Item: { EVENT_ID: eventId, TITLE: title },
@@ -916,15 +920,19 @@ evento_secundario_id=2</code></pre>
   <p>Usa la misma petición en los dos recorridos. Selecciona un nodo para ver qué hace y qué líneas lo ejecutan.</p>
   <code class="architecture-payload">{ "eventId": 3, "title": "Noche de ciencia" }</code>
   <figure class="architecture-flow">
-  <figcaption><strong>1. Escritura directa</strong><span>El handler recibe el evento, prepara el ítem y lo guarda.</span></figcaption>
+  <figcaption><strong>1. Escritura directa</strong><span>El handler recibe la petición, comprueba el título y guarda el evento.</span></figcaption>
   <ol class="architecture-nodes" data-architecture aria-label="1. Escritura directa">
     <li class="architecture-node">
       <button type="button" aria-expanded="false" aria-controls="arquitectura-directa-1">
         <strong>Lambda · Handler</strong><code>handler.mjs</code>
       </button>
       <div id="arquitectura-directa-1" class="architecture-callout" hidden>
-        <p>AWS invoca <code>handler</code>. Aquí lees <code>eventId</code> y <code>title</code>, construyes el <code>PutCommand</code> y esperas a que DynamoDB confirme la escritura.</p>
-        <pre data-diagram><code>const comando = new PutCommand({
+        <p>AWS invoca <code>handler</code>. Aquí lees <code>eventId</code> y <code>title</code>. Si el título contiene texto, preparas el comando y lo envías a DynamoDB.</p>
+        <pre data-diagram><code>if (typeof title !== 'string' || title.trim() === '') {
+    throw new Error('Escribe un título para el evento');
+  }
+
+const comando = new PutCommand({
   TableName: TABLA_EVENTOS_FCI,
   Item: { EVENT_ID: eventId, TITLE: title },
   ConditionExpression: &#x27;attribute_not_exists(EVENT_ID)&#x27;
@@ -962,8 +970,12 @@ await db.send(comando);</code></pre>
         <strong>Service</strong><code>service.mjs</code>
       </button>
       <div id="arquitectura-capas-2" class="architecture-callout" hidden>
-        <p><code>crearEvento</code> coordina el alta. Espera a que el repository guarde el evento y después devuelve los datos de la respuesta.</p>
-        <pre data-diagram><code>await guardarEvento(eventId, title);
+        <p><code>crearEvento</code> exige un título con texto. Si el título es válido, espera a que el repository guarde el evento y devuelve el resultado.</p>
+        <pre data-diagram><code>if (typeof title !== 'string' || title.trim() === '') {
+    throw new Error('Escribe un título para el evento');
+  }
+
+await guardarEvento(eventId, title);
 return { eventId, title };</code></pre>
       </div>
     </li>
@@ -1008,6 +1020,7 @@ await db.send(comando);</code></pre>
 <p>Si ya tenías el proyecto de una versión anterior, actualiza también <code>src/datos/dynamo.mjs</code> en <a href="#archivo-lambda">Configurar → Archivos Lambda</a>, en la pestaña <strong>DynamoDB</strong>. Busca <code>removeUndefinedValues</code> para comprobar que estás usando el cliente actualizado.</p>
 <p>Desde la raíz de <code>festival-checkin</code>, crea primero el <strong>Repository</strong> y después el <strong>Service</strong>. En cada pestaña, ejecuta el comando de apertura y copia el archivo completo. En <code>vi</code>, escribe <code>:set paste</code>, pulsa Intro y después <kbd>i</kbd> para pegar. Guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro. Actualiza el <strong>Handler</strong> al final.</p>
 <template id="capas-eventos-notas">
+  <div data-prefix="if (typeof title"><strong>Exige un título con texto</strong><p><code>typeof</code> comprueba que el valor sea texto. <code>trim()</code> permite detectar un título formado solo por espacios. Si falla la comprobación, la función termina antes de escribir en DynamoDB.</p></div>
   <div data-prefix="const itemEvento ="><strong>Traduce los datos a los atributos de DynamoDB</strong><p>El valor de <code>eventId</code> se guarda como <code>EVENT_ID</code> y <code>title</code> como <code>TITLE</code>.</p></div>
   <div data-prefix="ConditionExpression:"><strong>Inserta solo si la clave está libre</strong><p>DynamoDB comprueba la condición al escribir. Si dos peticiones usan el mismo ID, solo una puede guardar el evento.</p></div>
   <div data-prefix="await db.send(comando)"><strong>Envía la escritura</strong><p>El repository espera la confirmación de DynamoDB antes de que el service devuelva el ID.</p></div>
@@ -1043,12 +1056,16 @@ export async function guardarEvento(eventId, title) {
   </section>
   <section id="eventos-service" data-explanation hidden>
     <h4><code>src/eventos/crear-evento/service.mjs</code></h4>
-    <p><code>crearEvento(eventId, title)</code> pasa ambos valores al repository y devuelve el resultado del alta.</p>
+    <p><code>crearEvento(eventId, title)</code> comprueba el título antes de llamar al repository y devuelve el resultado del alta.</p>
     <pre><code>mkdir -p src/eventos/crear-evento &amp;&amp; ls -ld src/eventos/crear-evento &amp;&amp;
 touch src/eventos/crear-evento/service.mjs &amp;&amp; vi src/eventos/crear-evento/service.mjs</code></pre>
     <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/eventos/crear-evento/service.mjs" data-explanations="capas-eventos-notas"><code>import { guardarEvento } from './repository.mjs';
 
 export async function crearEvento(eventId, title) {
+  if (typeof title !== 'string' || title.trim() === '') {
+    throw new Error('Escribe un título para el evento');
+  }
+
   await guardarEvento(eventId, title);
   return { eventId, title };
 }</code></pre></div>
@@ -1079,6 +1096,15 @@ aws dynamodb execute-statement \
   --statement "SELECT \"EVENT_ID\", \"TITLE\" FROM \"$tabla_eventos\" WHERE \"EVENT_ID\" = ?" \
   --parameters "[{\"N\":\"$evento_capas_id\"}]"</code></pre>
 <p class="checkpoint"><strong>Antes de avanzar</strong> El <code>SELECT</code> devuelve un ítem con el ID que enviaste a Lambda y el título «Noche de ciencia».</p>
+<h4>Prueba el título obligatorio</h4>
+<p>Usa un ID libre. La invocación devuelve <code>Escribe un título para el evento</code> y la consulta devuelve <code>Items: []</code>.</p>
+<pre><code>evento_sin_titulo=5
+crear_evento "{\"eventId\":$evento_sin_titulo,\"title\":\"   \"}"
+
+aws dynamodb execute-statement \
+  --profile "$perfil" --region "$region" --consistent-read \
+  --statement "SELECT * FROM \"$tabla_eventos\" WHERE \"EVENT_ID\" = ?" \
+  --parameters "[{\"N\":\"$evento_sin_titulo\"}]"</code></pre>
 </article>
 <article id="capas-eventos-orm" class="guide-step" data-step="Crear con ORM">
 <h3>Crea un evento por capas con DynamoDB Toolbox</h3>
@@ -1097,7 +1123,7 @@ aws dynamodb execute-statement \
   <div data-prefix="partitionKey:"><strong>Clave de partición</strong><p><code>EVENT_ID</code> identifica el evento y es la única clave de la tabla.</p></div>
   <div data-prefix="entityAttribute:"><strong>Usa los mismos atributos que ya guardabas</strong><p>Desactivas la etiqueta automática del modelador y las fechas automáticas. Así el ítem tiene los mismos atributos que en el ejemplo con el SDK.</p></div>
   <div data-prefix="eventId: number"><strong>Declara el ID numérico</strong><p><code>number({ big: true })</code> admite tanto el número que envías al crear como el entero que se obtiene al leer la ruta. <code>key()</code> marca el atributo como clave y <code>savedAs</code> indica el nombre físico.</p></div>
-  <div data-prefix="title: any"><strong>Mapea el título</strong><p><code>any().optional()</code> permite que el título falte o llegue tal cual. <code>savedAs</code> guarda el valor recibido con el nombre <code>TITLE</code>.</p></div>
+  <div data-prefix="title: any"><strong>Mapea el título</strong><p><code>savedAs</code> guarda el título como <code>TITLE</code>. El service exige texto en las altas. <code>any().optional()</code> permite que Toolbox lea también los ítems de versiones anteriores.</p></div>
   <div data-prefix="const comando ="><strong>Construye el comando de escritura</strong><p><code>item</code> entrega los valores al modelo. Toolbox aplica los tipos y nombres que declaraste en <code>evento.model.mjs</code>.</p></div>
   <div data-prefix="condition:"><strong>Protege la clave durante la escritura</strong><p>Toolbox traduce <code>eventId</code> a <code>EVENT_ID</code> y genera la condición <code>attribute_not_exists</code>. Si dos altas usan el mismo ID, DynamoDB solo acepta una.</p></div>
   <div data-prefix="await comando.send()"><strong>Espera la confirmación</strong><p>El service continúa cuando DynamoDB confirma la escritura.</p></div>
