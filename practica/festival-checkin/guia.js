@@ -20,6 +20,13 @@ function button(label, handler) {
   return node;
 }
 
+function prependStepNumber(control, number) {
+  const label = document.createElement('span');
+  label.className = 'phase-number';
+  label.textContent = number;
+  control.prepend(label, ' ');
+}
+
 function navigate(id) {
   if (location.hash === '#' + id) return;
   location.hash = id;
@@ -62,13 +69,13 @@ function showRoute() {
   const index = phaseSteps.indexOf(activeStep);
   progress.textContent = index < 0 ? 'Pantalla de prueba'
     : title + ' · Paso ' + (index + 1) + ' de ' + phaseSteps.length;
-  tabs.replaceChildren(...phaseSteps.map(step => {
+  tabs.replaceChildren(...phaseSteps.map((step, index) => {
     const tab = button(step.dataset.step, () => navigate(step.id));
+    prependStepNumber(tab, index + 1);
     tab.setAttribute('aria-pressed', String(step === activeStep));
     return tab;
   }));
   tabs.hidden = phaseSteps.length < 2;
-  tabs.querySelector('[aria-pressed="true"]')?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
 
   const courseIndex = courseSteps.indexOf(activeStep);
   back.textContent = courseIndex < 0 ? '← Volver al paso' : '← Atrás';
@@ -317,7 +324,8 @@ for (const question of document.querySelectorAll('.yaml-question')) {
 for (const explainer of document.querySelectorAll('[data-explainer]')) {
   const choices = [...explainer.querySelectorAll('[data-explain]')];
   const explanations = explainer.querySelectorAll('[data-explanation]');
-  for (const choice of choices) {
+  for (const [index, choice] of choices.entries()) {
+    if (choices.length > 1) prependStepNumber(choice, index + 1);
     const reveal = () => {
       for (const option of choices) option.setAttribute('aria-pressed', String(option === choice));
       for (const explanation of explanations) explanation.hidden = explanation.id !== choice.dataset.explain;

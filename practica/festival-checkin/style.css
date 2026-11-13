@@ -30,11 +30,19 @@ p, li { line-height: 1.55; }
 li + li { margin-top: .65rem; }
 .eyebrow { color: var(--muted); font-size: .8rem; letter-spacing: .12em; text-transform: uppercase; margin: 1.5em 0 .65em; }
 .phases, .actions { display: flex; gap: 8px; flex-wrap: wrap; }
-.phases, #guide-steps { flex-wrap: nowrap; overflow-x: auto; padding: 3px; }
-.phases button, #guide-steps button { flex: 0 0 auto; }
+.phases, #guide-steps { padding: 4px; }
+.phases button, #guide-steps button, .guided-options button {
+  max-width: 100%;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
 @media (min-width: 900px) {
   .phases { flex-wrap: wrap; gap: 6px; }
   .phases button { padding-inline: 9px; }
+}
+@media (max-width: 540px) {
+  .phases, #guide-steps { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .phases button, #guide-steps button { text-align: left; }
 }
 #guide-progress { margin: 0 3px 5px; color: var(--muted); }
 #guide-steps button { min-height: 40px; padding: 6px 10px; }
@@ -71,7 +79,7 @@ button:disabled { opacity: .65; cursor: wait; }
   font-weight: 750;
   color: var(--accent);
 }
-.phases button[aria-pressed="true"] .phase-number { color: inherit; }
+button[aria-pressed="true"] > .phase-number { color: inherit; }
 .lesson-intro {
   padding: clamp(18px, 4vw, 42px);
   border: 1px solid var(--border);
