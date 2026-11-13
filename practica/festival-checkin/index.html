@@ -653,6 +653,7 @@ ls -l serverless.yml package.json</code></pre>
   <template id="index-explanations">
   <div data-prefix="import { DynamoDBClient"><strong>Conexión con DynamoDB</strong><p>Importa el cliente que comunica Lambda con DynamoDB. El paquete se instaló al preparar el proyecto.</p></div>
   <div data-prefix="export const db ="><strong>Cliente de documentos</strong><p>Lambda prepara este cliente al cargar el archivo. Las operaciones pueden reutilizarlo y pasarle objetos de JavaScript, como la clave con <code>EVENT_ID</code> y <code>USER_ID</code>.</p></div>
+  <div data-prefix="marshallOptions:"><strong>Omite atributos ausentes</strong><p>Si falta <code>title</code> en la invocación, su valor en JavaScript es <code>undefined</code>. El cliente omite ese atributo al preparar el ítem.</p></div>
   <div data-prefix="export const TABLA_EVENTOS_FCI ="><strong>Tabla de eventos</strong><p>El despliegue configura FCI_TABLA_EVENTOS en Lambda a partir de Ref: FestivalCheckInEventos. <code>process.env.FCI_TABLA_EVENTOS</code> devuelve <code>FCI_EVENTOS</code>.</p></div>
   <div data-prefix="export const TABLA_INSCRIPCIONES_FCI ="><strong>Tabla de inscripciones</strong><p>El despliegue configura FCI_TABLA_INSCRIPCIONES en Lambda a partir de Ref: FestivalCheckInInscripciones. <code>process.env.FCI_TABLA_INSCRIPCIONES</code> devuelve <code>FCI_INSCRIPCIONES</code>, donde se guardan la inscripción y la hora de entrada.</p></div>
   <div data-prefix="export function json("><strong>Una respuesta para la API</strong><p>Esta función reúne el código HTTP, la cabecera y el cuerpo que API Gateway devuelve al navegador.</p></div>
@@ -707,7 +708,9 @@ export const MAX_ID_LONG = 9223372036854775807n;
 export const MAX_INTENTOS_ID = 5;
 export const GRUPO_EVENTOS = 'EVENTO';
 export const GRUPO_NUMEROS_INSCRIPCION = 'NUMERO_INSCRIPCION';
-export const db = DynamoDBDocumentClient.from(new DynamoDBClient({}));
+export const db = DynamoDBDocumentClient.from(new DynamoDBClient({}), {
+  marshallOptions: { removeUndefinedValues: true }
+});
 export const TABLA_EVENTOS_FCI = process.env.FCI_TABLA_EVENTOS;
 export const TABLA_INSCRIPCIONES_FCI = process.env.FCI_TABLA_INSCRIPCIONES;
 
@@ -739,20 +742,15 @@ import {
 } from '../../datos/dynamo.mjs';
 
 export async function handler({ title } = {}) {
-  if (typeof title !== 'string' || !title.trim()) {
-    throw new Error('Indica el título del evento');
-  }
-  const titulo = title.trim();
-
   for (let intento = 0; intento &lt; MAX_INTENTOS_ID; intento++) {
     const eventId = await obtenerSiguienteIdGuardado(GRUPO_EVENTOS);
     try {
       await db.send(new PutCommand({
         TableName: TABLA_EVENTOS_FCI,
-        Item: { TIPO_REGISTRO: GRUPO_EVENTOS, EVENT_ID: eventId, TITLE: titulo },
+        Item: { TIPO_REGISTRO: GRUPO_EVENTOS, EVENT_ID: eventId, TITLE: title },
         ConditionExpression: 'attribute_not_exists(EVENT_ID)'
       }));
-      return { eventId: eventId.toString(), title: titulo };
+      return { eventId: eventId.toString(), title };
     } catch (error) {
       if (error.name !== 'ConditionalCheckFailedException') throw error;
     }
@@ -961,28 +959,28 @@ evento_secundario_id=2</code></pre>
 <p>Acabas de crear dos eventos y de leerlos en DynamoDB. Ahora reorganiza <code>handler.mjs</code> para que puedas localizar por separado la entrada de Lambda, las decisiones del caso de uso y el acceso a la tabla.</p>
 <ol class="route-map" aria-label="Recorrido para crear un evento">
   <li><span>Handler · <code>handler.mjs</code></span><strong>Recibe el título</strong><p>AWS CLI invoca la Lambda con <code>{ "title": "Noche de ciencia" }</code>. El handler pasa ese título al service y devuelve <code>eventId</code> y <code>title</code>.</p></li>
-  <li><span>Service · <code>service.mjs</code></span><strong>Decide cómo crear el evento</strong><p>Quita los espacios del título, comprueba que tenga contenido y llama a <code>guardarEvento(titulo)</code>.</p></li>
+  <li><span>Service · <code>service.mjs</code></span><strong>Decide cómo crear el evento</strong><p>Pasa el título a <code>guardarEvento(title)</code> y reúne el ID y el título para la respuesta.</p></li>
   <li><span>Repository · <code>repository.mjs</code></span><strong>Lee y escribe en DynamoDB</strong><p>Obtiene el siguiente ID del grupo <code>EVENTO</code> y usa <code>PutCommand</code> para guardar el evento. La condición protege los eventos ya guardados.</p></li>
 </ol>
 <h4>Del dominio al caso de uso</h4>
-<p><code>eventos/</code> agrupa el dominio. Dentro, <code>crear-evento/</code> reúne los archivos del alta. Si añades una edición, tendrás una carpeta hermana <code>modificar-evento/</code> con sus propios archivos. Así, para encontrar la regla del título del alta, vas directamente a <code>eventos/crear-evento/service.mjs</code>.</p>
+<p><code>eventos/</code> agrupa el dominio. Dentro, <code>crear-evento/</code> reúne los archivos del alta. Si añades una edición, tendrás una carpeta hermana <code>modificar-evento/</code> con sus propios archivos. Así, para encontrar la flujo del alta, vas directamente a <code>eventos/crear-evento/service.mjs</code>.</p>
 <pre data-diagram><code>src/
 ├── datos/
 │   └── dynamo.mjs                 cliente y consulta compartida
 └── eventos/
     └── crear-evento/
         ├── handler.mjs            entrada de Lambda
-        ├── service.mjs            regla del título
+        ├── service.mjs            caso de uso
         └── repository.mjs        lectura y escritura del alta</code></pre>
-<p class="lesson-note"><strong>Sigue los imports.</strong> <code>serverless.yml</code> apunta a <code>src/eventos/crear-evento/handler.handler</code>. Desde ahí, el handler importa el service, el service importa el repository y el repository usa <code>../../datos/dynamo.mjs</code>. Los dos <code>../</code> suben de <code>crear-evento</code> a <code>eventos</code> y luego a <code>src</code>. Si cambia la clave de DynamoDB, busca la escritura en el repository. Si cambia la regla del título, busca la validación en el service.</p>
+<p class="lesson-note"><strong>Sigue los imports.</strong> <code>serverless.yml</code> apunta a <code>src/eventos/crear-evento/handler.handler</code>. Desde ahí, el handler importa el service, el service importa el repository y el repository usa <code>../../datos/dynamo.mjs</code>. Los dos <code>../</code> suben de <code>crear-evento</code> a <code>eventos</code> y luego a <code>src</code>. Si cambia la clave de DynamoDB, busca la escritura en el repository. Si más adelante añades reglas de negocio para el alta, incorpóralas en el service.</p>
 <p><code>crearEvento</code> nombra el caso de uso. <code>guardarEvento</code> nombra la operación del repository. El comando <code>PutCommand</code> indica cómo se escribe el registro en DynamoDB. Si dos altas proponen el mismo ID, DynamoDB acepta una y rechaza la otra. Puedes repetir la invocación para pedir un nuevo ID.</p>
+<p>Si ya tenías el proyecto de una versión anterior, actualiza también <code>src/datos/dynamo.mjs</code> en <a href="#archivo-lambda">Configurar → Archivos Lambda</a>, en la pestaña <strong>DynamoDB</strong>. Busca <code>removeUndefinedValues</code> para comprobar que estás usando el cliente actualizado.</p>
 <p>Desde la raíz de <code>festival-checkin</code>, crea primero el <strong>Repository</strong> y después el <strong>Service</strong>. En cada pestaña, ejecuta el comando de apertura y copia el archivo completo. En <code>vi</code>, escribe <code>:set paste</code>, pulsa Intro y después <kbd>i</kbd> para pegar. Guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro. Actualiza el <strong>Handler</strong> al final.</p>
 <template id="capas-eventos-notas">
   <div data-prefix="const eventId = await obtenerSiguienteIdGuardado"><strong>Lee el mayor ID del grupo EVENTO</strong><p>La consulta compartida pide un solo ítem ordenado de mayor a menor y suma uno a su ID.</p></div>
-  <div data-prefix="const itemEvento ="><strong>Traduce los datos a los atributos de DynamoDB</strong><p>El valor de <code>eventId</code> se guarda como <code>EVENT_ID</code> y <code>titulo</code> como <code>TITLE</code>.</p></div>
+  <div data-prefix="const itemEvento ="><strong>Traduce los datos a los atributos de DynamoDB</strong><p>El valor de <code>eventId</code> se guarda como <code>EVENT_ID</code> y <code>title</code> como <code>TITLE</code>.</p></div>
   <div data-prefix="ConditionExpression:"><strong>Inserta solo si la clave está libre</strong><p>DynamoDB comprueba la condición al escribir. Si dos peticiones obtienen el mismo candidato, solo una puede insertar ese ID.</p></div>
   <div data-prefix="await db.send(comando)"><strong>Envía la escritura</strong><p>El repository espera la confirmación de DynamoDB antes de devolver el ID.</p></div>
-  <div data-prefix="const titulo ="><strong>Limpia el título</strong><p><code>trim()</code> quita los espacios de los extremos. Si no queda texto, el service detiene el alta.</p></div>
   <div data-prefix="const eventId = await guardarEvento"><strong>Llama al repository</strong><p>El service espera a que se guarde el evento y recibe el ID numérico.</p></div>
   <div data-prefix="const title = event.title"><strong>Lee el dato de la invocación</strong><p>El objeto <code>event</code> contiene el JSON que enviaste con AWS CLI.</p></div>
   <div data-prefix="const eventoCreado ="><strong>Entrega el título al service</strong><p>El handler espera el resultado del caso de uso.</p></div>
@@ -996,18 +994,18 @@ evento_secundario_id=2</code></pre>
   </div>
   <section id="eventos-repository" data-explanation>
     <h4><code>src/eventos/crear-evento/repository.mjs</code></h4>
-    <p><code>guardarEvento(titulo)</code> obtiene el ID con la consulta que ya tienes en <code>dynamo.mjs</code>, guarda el evento y devuelve su ID.</p>
+    <p><code>guardarEvento(title)</code> obtiene el ID con la consulta que ya tienes en <code>dynamo.mjs</code>, guarda el evento y devuelve su ID.</p>
     <pre><code>mkdir -p src/eventos/crear-evento &amp;&amp; ls -ld src/eventos/crear-evento &amp;&amp;
 touch src/eventos/crear-evento/repository.mjs &amp;&amp; vi src/eventos/crear-evento/repository.mjs</code></pre>
     <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/eventos/crear-evento/repository.mjs" data-explanations="capas-eventos-notas"><code>import { PutCommand } from '@aws-sdk/lib-dynamodb';
 import { db, GRUPO_EVENTOS, TABLA_EVENTOS_FCI, obtenerSiguienteIdGuardado } from '../../datos/dynamo.mjs';
 
-export async function guardarEvento(titulo) {
+export async function guardarEvento(title) {
   const eventId = await obtenerSiguienteIdGuardado(GRUPO_EVENTOS);
   const itemEvento = {
     TIPO_REGISTRO: GRUPO_EVENTOS,
     EVENT_ID: eventId,
-    TITLE: titulo
+    TITLE: title
   };
 
   const comando = new PutCommand({
@@ -1022,23 +1020,14 @@ export async function guardarEvento(titulo) {
   </section>
   <section id="eventos-service" data-explanation hidden>
     <h4><code>src/eventos/crear-evento/service.mjs</code></h4>
-    <p><code>crearEvento(title)</code> aplica la regla del título y pasa el resultado al repository.</p>
+    <p><code>crearEvento(title)</code> pasa el título al repository y devuelve el resultado del alta.</p>
     <pre><code>mkdir -p src/eventos/crear-evento &amp;&amp; ls -ld src/eventos/crear-evento &amp;&amp;
 touch src/eventos/crear-evento/service.mjs &amp;&amp; vi src/eventos/crear-evento/service.mjs</code></pre>
     <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/eventos/crear-evento/service.mjs" data-explanations="capas-eventos-notas"><code>import { guardarEvento } from './repository.mjs';
 
 export async function crearEvento(title) {
-  if (typeof title !== 'string') {
-    throw new Error('Indica el título del evento');
-  }
-
-  const titulo = title.trim();
-  if (titulo === '') {
-    throw new Error('Indica el título del evento');
-  }
-
-  const eventId = await guardarEvento(titulo);
-  return { eventId, title: titulo };
+  const eventId = await guardarEvento(title);
+  return { eventId, title };
 }</code></pre></div>
   </section>
   <section id="eventos-handler" data-explanation hidden>
@@ -1066,19 +1055,19 @@ node --check src/eventos/crear-evento/handler.mjs &amp;&amp;
 node --input-type=module -e 'await import("./src/eventos/crear-evento/handler.mjs"); console.log("Imports comprobados")' &amp;&amp;
 npx serverless deploy --stage dev --aws-profile "$perfil"</code></pre>
 <p>En la misma terminal donde ejecutaste <a href="#guardar-evento">Crear eventos</a>, reutiliza la función <code>crear_evento</code> para dar de alta un tercer evento. Después, usa el ID devuelto para comprobar el registro con PartiQL.</p>
-<pre><code>evento_capas_id=$(crear_evento '{"title":"  Noche de ciencia  "}') &amp;&amp;
+<pre><code>evento_capas_id=$(crear_evento '{"title":"Noche de ciencia"}') &amp;&amp;
 printf 'ID creado: %s\n' "$evento_capas_id" &amp;&amp;
 aws dynamodb execute-statement \
   --profile "$perfil" --region "$region" --consistent-read \
   --statement "SELECT \"EVENT_ID\", \"TITLE\" FROM \"$tabla_eventos\" WHERE \"TIPO_REGISTRO\" = ? AND \"EVENT_ID\" = ?" \
   --parameters "[{\"S\":\"EVENTO\"},{\"N\":\"$evento_capas_id\"}]"</code></pre>
-<p class="checkpoint"><strong>Antes de avanzar</strong> El <code>SELECT</code> devuelve un ítem con el ID que asignó la Lambda y el título «Noche de ciencia» sin los espacios de los extremos.</p>
+<p class="checkpoint"><strong>Antes de avanzar</strong> El <code>SELECT</code> devuelve un ítem con el ID que asignó la Lambda y el título «Noche de ciencia».</p>
 </article>
 <article id="capas-eventos-orm" class="guide-step" data-step="Crear con ORM">
 <h3>Crea un evento por capas con DynamoDB Toolbox</h3>
 <p>Completa primero <a href="#capas-eventos">Crear por capas</a>. En <code>src/eventos/crear-evento/</code> vas a añadir el modelo y cambiar cómo el repository guarda un evento en <code>FCI_EVENTOS</code>. DynamoDB Toolbox es un <strong>ODM</strong>, un modelador que traduce los datos de JavaScript a los atributos del ítem de DynamoDB.</p>
 <ol class="route-map" aria-label="Recorrido del alta con DynamoDB Toolbox">
-  <li><strong>Handler → Service</strong><p><code>handler.mjs</code> recibe <code>title</code> y llama a <code>crearEvento</code>. El service limpia el título y llama a <code>guardarEvento</code>.</p></li>
+  <li><strong>Handler → Service</strong><p><code>handler.mjs</code> recibe <code>title</code> y llama a <code>crearEvento</code>. El service pasa el título a <code>guardarEvento</code>.</p></li>
   <li><strong>Repository → Modelo</strong><p><code>guardarEvento</code> pide el siguiente ID y le entrega al modelo el grupo, el ID y el título.</p></li>
   <li><strong>Modelo → DynamoDB</strong><p>El modelo transforma <code>eventId</code> en <code>EVENT_ID</code>. El comando escribe en la tabla creada por <code>serverless.yml</code>.</p></li>
 </ol>
@@ -1092,7 +1081,7 @@ aws dynamodb execute-statement \
   <div data-prefix="sortKey:"><strong>Clave de ordenación</strong><p><code>EVENT_ID</code> ordena los eventos por su número dentro de ese grupo.</p></div>
   <div data-prefix="entityAttribute:"><strong>Usa los mismos atributos que ya guardabas</strong><p>Desactivas la etiqueta automática del modelador y las fechas automáticas. Tu modelo ya escribe <code>TIPO_REGISTRO</code> para distinguir los eventos.</p></div>
   <div data-prefix="eventId: number"><strong>Admite un ID grande y conserva el nombre en DynamoDB</strong><p><code>big: true</code> admite <code>BigInt</code>. <code>key()</code> marca el atributo como parte de la clave y <code>savedAs</code> indica el nombre físico.</p></div>
-  <div data-prefix="title: string"><strong>Mapea el título</strong><p>El repository pasa <code>title</code> como texto y Toolbox escribe <code>TITLE</code> en DynamoDB.</p></div>
+  <div data-prefix="title: any"><strong>Mapea el título</strong><p><code>any().optional()</code> permite que el título falte o llegue tal cual. <code>savedAs</code> guarda el valor recibido con el nombre <code>TITLE</code>.</p></div>
   <div data-prefix="const eventId = await obtenerSiguienteIdGuardado"><strong>Reutiliza la consulta que calcula el ID</strong><p>La función pide el mayor <code>EVENT_ID</code> del grupo <code>EVENTO</code> y suma uno.</p></div>
   <div data-prefix="const comando ="><strong>Construye el comando de escritura</strong><p><code>item</code> entrega los valores al modelo. Toolbox aplica los tipos y nombres que declaraste en <code>evento.model.mjs</code>.</p></div>
   <div data-prefix="condition:"><strong>Protege la clave durante la escritura</strong><p>Toolbox traduce <code>eventId</code> a <code>EVENT_ID</code> y genera la condición <code>attribute_not_exists</code>. Si dos altas proponen el mismo ID, DynamoDB solo acepta una.</p></div>
@@ -1112,6 +1101,7 @@ touch src/eventos/crear-evento/evento.model.mjs &amp;&amp; vi src/eventos/crear-
     <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/eventos/crear-evento/evento.model.mjs" data-explanations="capas-orm-notas"><code>import { Entity } from 'dynamodb-toolbox/entity';
 import { Table } from 'dynamodb-toolbox/table';
 import { item } from 'dynamodb-toolbox/schema/item';
+import { any } from 'dynamodb-toolbox/schema/any';
 import { number } from 'dynamodb-toolbox/schema/number';
 import { string } from 'dynamodb-toolbox/schema/string';
 import { db, GRUPO_EVENTOS, TABLA_EVENTOS_FCI } from '../../datos/dynamo.mjs';
@@ -1131,7 +1121,7 @@ export const MODELO_EVENTO = new Entity({
   schema: item({
     tipoRegistro: string().key().savedAs('TIPO_REGISTRO'),
     eventId: number({ big: true }).key().savedAs('EVENT_ID'),
-    title: string().savedAs('TITLE')
+    title: any().optional().savedAs('TITLE')
   })
 });</code></pre></div>
   </section>
@@ -1143,12 +1133,12 @@ export const MODELO_EVENTO = new Entity({
 import { GRUPO_EVENTOS, obtenerSiguienteIdGuardado } from '../../datos/dynamo.mjs';
 import { MODELO_EVENTO } from './evento.model.mjs';
 
-export async function guardarEvento(titulo) {
+export async function guardarEvento(title) {
   const eventId = await obtenerSiguienteIdGuardado(GRUPO_EVENTOS);
   const evento = {
     tipoRegistro: GRUPO_EVENTOS,
     eventId,
-    title: titulo
+    title
   };
 
   const comando = MODELO_EVENTO.build(PutItemCommand)
@@ -1167,7 +1157,7 @@ export async function guardarEvento(titulo) {
 <pre><code>node --input-type=module -e 'await import("./src/eventos/crear-evento/handler.mjs"); console.log("Imports comprobados")' &amp;&amp;
 npx serverless deploy --stage dev --aws-profile "$perfil"</code></pre>
 <p>Invoca la Lambda y usa el ID que devuelve para leer el registro por su clave completa.</p>
-<pre><code>evento_orm_id=$(crear_evento '{"title":"  Feria de robótica  "}') &amp;&amp;
+<pre><code>evento_orm_id=$(crear_evento '{"title":"Feria de robótica"}') &amp;&amp;
 printf 'ID creado: %s\n' "$evento_orm_id" &amp;&amp;
 aws dynamodb execute-statement \
   --profile "$perfil" --region "$region" --consistent-read \
