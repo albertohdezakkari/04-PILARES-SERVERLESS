@@ -1071,6 +1071,108 @@ aws dynamodb execute-statement \
   --parameters "[{\"S\":\"EVENTO\"},{\"N\":\"$evento_capas_id\"}]"</code></pre>
 <p class="checkpoint"><strong>Antes de avanzar</strong> El <code>SELECT</code> devuelve un ítem con el ID que asignó la Lambda y el título «Noche de ciencia» sin los espacios de los extremos.</p>
 </article>
+<article id="capas-eventos-orm" class="guide-step" data-step="Crear con ORM">
+<h3>Crea un evento por capas con DynamoDB Toolbox</h3>
+<p>Completa primero <a href="#capas-eventos">Crear por capas</a>. Vas a cambiar cómo se guarda un evento en <code>FCI_EVENTOS</code>. DynamoDB Toolbox es un <strong>ODM</strong>, un modelador que traduce los datos de JavaScript a los atributos del ítem de DynamoDB.</p>
+<ol class="route-map" aria-label="Recorrido del alta con DynamoDB Toolbox">
+  <li><strong>Handler → Service</strong><p><code>crear.mjs</code> recibe <code>title</code> y llama a <code>crearEvento</code>. El service limpia el título y llama a <code>guardarEvento</code>.</p></li>
+  <li><strong>Repository → Modelo</strong><p><code>guardarEvento</code> pide el siguiente ID y le entrega al modelo el grupo, el ID y el título.</p></li>
+  <li><strong>Modelo → DynamoDB</strong><p>El modelo transforma <code>eventId</code> en <code>EVENT_ID</code>. El comando escribe en la tabla creada por <code>serverless.yml</code>.</p></li>
+</ol>
+<h4>Instala el modelador</h4>
+<p>Desde la raíz de <code>festival-checkin</code>, en Git Bash o en Terminal, instala la dependencia. Se añade a <code>package.json</code> para que viaje con Lambda al desplegar.</p>
+<pre><code>npm install --save-exact dynamodb-toolbox@2.11.1</code></pre>
+<p>Crea el <strong>Modelo</strong> primero y después actualiza el <strong>Repository</strong>. Conserva <a href="#capas-eventos">el Service y el Handler del paso anterior</a>. Pasa el ratón o selecciona una línea resaltada para ver su explicación.</p>
+<template id="capas-orm-notas">
+  <div data-prefix="const TABLA_MODELO_EVENTO"><strong>Conecta el modelo a la tabla existente</strong><p><code>Table</code> describe el nombre y las claves que ya definiste en <code>serverless.yml</code>. <code>documentClient</code> usa el cliente compartido en <code>dynamo.mjs</code>.</p></div>
+  <div data-prefix="partitionKey:"><strong>Clave de partición</strong><p><code>TIPO_REGISTRO</code> agrupa los eventos bajo el valor <code>EVENTO</code>.</p></div>
+  <div data-prefix="sortKey:"><strong>Clave de ordenación</strong><p><code>EVENT_ID</code> ordena los eventos por su número dentro de ese grupo.</p></div>
+  <div data-prefix="entityAttribute:"><strong>Usa los mismos atributos que ya guardabas</strong><p>Desactivas la etiqueta automática del modelador y las fechas automáticas. Tu modelo ya escribe <code>TIPO_REGISTRO</code> para distinguir los eventos.</p></div>
+  <div data-prefix="eventId: number"><strong>Admite un ID grande y conserva el nombre en DynamoDB</strong><p><code>big: true</code> admite <code>BigInt</code>. <code>key()</code> marca el atributo como parte de la clave y <code>savedAs</code> indica el nombre físico.</p></div>
+  <div data-prefix="title: string"><strong>Mapea el título</strong><p>El repository pasa <code>title</code> como texto y Toolbox escribe <code>TITLE</code> en DynamoDB.</p></div>
+  <div data-prefix="const eventId = await obtenerSiguienteIdGuardado"><strong>Reutiliza la consulta que calcula el ID</strong><p>La función pide el mayor <code>EVENT_ID</code> del grupo <code>EVENTO</code> y suma uno.</p></div>
+  <div data-prefix="const comando ="><strong>Construye el comando de escritura</strong><p><code>item</code> entrega los valores al modelo. Toolbox aplica los tipos y nombres que declaraste en <code>evento.model.mjs</code>.</p></div>
+  <div data-prefix="condition:"><strong>Protege la clave durante la escritura</strong><p>Toolbox traduce <code>eventId</code> a <code>EVENT_ID</code> y genera la condición <code>attribute_not_exists</code>. Si dos altas proponen el mismo ID, DynamoDB solo acepta una.</p></div>
+  <div data-prefix="await comando.send()"><strong>Espera la confirmación</strong><p>Cuando DynamoDB confirma la escritura, el repository devuelve el ID al service.</p></div>
+</template>
+<div class="guided-explainer" data-explainer>
+  <div class="guided-options" role="group" aria-label="Archivos de creación con DynamoDB Toolbox">
+    <button type="button" data-explain="evento-orm-modelo" aria-controls="evento-orm-modelo" aria-pressed="true">Modelo</button>
+    <button type="button" data-explain="evento-orm-repository" aria-controls="evento-orm-repository" aria-pressed="false">Repository</button>
+  </div>
+  <section id="evento-orm-modelo" data-explanation>
+    <h4><code>src/eventos/evento.model.mjs</code></h4>
+    <p>El modelo conecta los nombres de JavaScript con los de DynamoDB. Por ejemplo, el número <code>3n</code> que pasas como <code>eventId</code> se guarda en <code>EVENT_ID</code> como número.</p>
+    <pre><code>mkdir -p src/eventos &amp;&amp; ls -ld src/eventos &amp;&amp;
+touch src/eventos/evento.model.mjs &amp;&amp; vi src/eventos/evento.model.mjs</code></pre>
+    <p>En <code>vi</code>, escribe <code>:set paste</code> y pulsa Intro. Pulsa <kbd>i</kbd>, pega el archivo y guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro.</p>
+    <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/eventos/evento.model.mjs" data-explanations="capas-orm-notas"><code>import { Entity } from 'dynamodb-toolbox/entity';
+import { Table } from 'dynamodb-toolbox/table';
+import { item } from 'dynamodb-toolbox/schema/item';
+import { number } from 'dynamodb-toolbox/schema/number';
+import { string } from 'dynamodb-toolbox/schema/string';
+import { db, GRUPO_EVENTOS, TABLA_EVENTOS_FCI } from '../datos/dynamo.mjs';
+
+const TABLA_MODELO_EVENTO = new Table({
+  name: TABLA_EVENTOS_FCI,
+  documentClient: db,
+  partitionKey: { name: 'TIPO_REGISTRO', type: 'string' },
+  sortKey: { name: 'EVENT_ID', type: 'number' }
+});
+
+export const MODELO_EVENTO = new Entity({
+  name: GRUPO_EVENTOS,
+  table: TABLA_MODELO_EVENTO,
+  entityAttribute: false,
+  timestamps: false,
+  schema: item({
+    tipoRegistro: string().key().savedAs('TIPO_REGISTRO'),
+    eventId: number({ big: true }).key().savedAs('EVENT_ID'),
+    title: string().savedAs('TITLE')
+  })
+});</code></pre></div>
+  </section>
+  <section id="evento-orm-repository" data-explanation hidden>
+    <h4><code>src/eventos/eventos.repository.mjs</code></h4>
+    <p>Abre el repository que creaste. En <code>vi</code>, ejecuta <code>:%d</code> para borrar el contenido anterior. Después activa <code>:set paste</code>, pulsa <kbd>i</kbd> y pega el archivo completo. Guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro.</p>
+    <pre><code>vi src/eventos/eventos.repository.mjs</code></pre>
+    <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/eventos/eventos.repository.mjs" data-explanations="capas-orm-notas"><code>import { PutItemCommand } from 'dynamodb-toolbox/entity/actions/put';
+import { GRUPO_EVENTOS, obtenerSiguienteIdGuardado } from '../datos/dynamo.mjs';
+import { MODELO_EVENTO } from './evento.model.mjs';
+
+export async function guardarEvento(titulo) {
+  const eventId = await obtenerSiguienteIdGuardado(GRUPO_EVENTOS);
+  const evento = {
+    tipoRegistro: GRUPO_EVENTOS,
+    eventId,
+    title: titulo
+  };
+
+  const comando = MODELO_EVENTO.build(PutItemCommand)
+    .item(evento)
+    .options({
+      condition: { attr: 'eventId', exists: false }
+    });
+
+  await comando.send();
+  return eventId;
+}</code></pre></div>
+  </section>
+</div>
+<h4>Despliega y comprueba el resultado</h4>
+<p>Desde <code>festival-checkin</code>, usa la terminal del laboratorio. Si abriste una nueva, repite <a href="#probar-aws">Comprobación</a>, <a href="#rol-laboratorio">Rol</a> y <a href="#salidas-stack">Salidas</a> en ese orden. Recupera también la función <code>crear_evento</code> del paso <a href="#guardar-evento">Crear eventos</a>. Comprueba primero que Node puede cargar la Lambda y todos sus imports.</p>
+<pre><code>node --input-type=module -e 'await import("./src/eventos/crear.mjs"); console.log("Imports comprobados")' &amp;&amp;
+npx serverless deploy --stage dev --aws-profile "$perfil"</code></pre>
+<p>Invoca la Lambda y usa el ID que devuelve para leer el registro por su clave completa.</p>
+<pre><code>evento_orm_id=$(crear_evento '{"title":"  Feria de robótica  "}') &amp;&amp;
+printf 'ID creado: %s\n' "$evento_orm_id" &amp;&amp;
+aws dynamodb execute-statement \
+  --profile "$perfil" --region "$region" --consistent-read \
+  --statement "SELECT * FROM \"$tabla_eventos\" WHERE \"TIPO_REGISTRO\" = ? AND \"EVENT_ID\" = ?" \
+  --parameters "[{\"S\":\"EVENTO\"},{\"N\":\"$evento_orm_id\"}]"</code></pre>
+<p class="checkpoint"><strong>Antes de avanzar</strong> Comprueba que PartiQL devuelve el ID de la terminal en <code>EVENT_ID.N</code>, <code>EVENTO</code> en <code>TIPO_REGISTRO.S</code> y «Feria de robótica» en <code>TITLE.S</code>. Si solo tú estás dando altas, el ID es uno más que el último evento que guardaste.</p>
+<p><a href="https://www.dynamodbtoolbox.com/docs/entities/usage">Documentación del modelo Entity</a> · <a href="https://www.dynamodbtoolbox.com/docs/entities/actions/put-item">Documentación de PutItem y su condición</a></p>
+</article>
 </section>
 <section id="lectura" class="phase" hidden>
 <h2>Leer desde Lambda</h2>
