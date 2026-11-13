@@ -6,7 +6,6 @@ const event = { eventId: 1, title: 'Festival de otoño' };
 const registration = {
   eventId: 1,
   userId: 'usuario-02',
-  registrationId: 2,
   registeredAt: '2026-11-01T10:00:00.000Z'
 };
 
@@ -32,7 +31,7 @@ form.addEventListener('submit', submission => {
   const item = scenario === 'inscrito' ? registration : null;
 
   putObject('dynamo-event', eventFound ? {
-    Item: { TIPO_REGISTRO: 'EVENTO', EVENT_ID: event.eventId, TITLE: event.title }
+    Item: { EVENT_ID: event.eventId, TITLE: event.title }
   } : {});
   putText('dynamo-event-value', eventFound
     ? 'Item se guarda en la variable event.'
@@ -43,7 +42,6 @@ form.addEventListener('submit', submission => {
       Item: {
         EVENT_ID: item.eventId,
         USER_ID: item.userId,
-        REGISTRATION_ID: item.registrationId,
         REGISTERED_AT: item.registeredAt
       }
     } : {});

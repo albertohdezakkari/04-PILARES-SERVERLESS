@@ -4,14 +4,13 @@
     "Author": "Festival Check-in",
     "Description": "Modelo de aula con registros ficticios para comparar inscripción y asistencia.",
     "AWSService": "Amazon DynamoDB",
-    "Version": "3.0"
+    "Version": "4.0"
   },
   "DataModel": [
     {
       "TableName": "FCI_EVENTOS",
       "KeyAttributes": {
-        "PartitionKey": { "AttributeName": "TIPO_REGISTRO", "AttributeType": "S" },
-        "SortKey": { "AttributeName": "EVENT_ID", "AttributeType": "N" }
+        "PartitionKey": { "AttributeName": "EVENT_ID", "AttributeType": "N" }
       },
       "NonKeyAttributes": [
         { "AttributeName": "TITLE", "AttributeType": "S" }
@@ -19,9 +18,8 @@
       "GlobalSecondaryIndexes": [],
       "DataAccess": {},
       "TableData": [
-        { "TIPO_REGISTRO": { "S": "EVENTO" }, "EVENT_ID": { "N": "1" }, "TITLE": { "S": "Festival de otoño" } },
-        { "TIPO_REGISTRO": { "S": "NUMERO_INSCRIPCION" }, "EVENT_ID": { "N": "1" } },
-        { "TIPO_REGISTRO": { "S": "NUMERO_INSCRIPCION" }, "EVENT_ID": { "N": "2" } }
+        { "EVENT_ID": { "N": "1" }, "TITLE": { "S": "Festival de otoño" } },
+        { "EVENT_ID": { "N": "2" }, "TITLE": { "S": "Feria de invierno" } }
       ]
     },
     {
@@ -31,7 +29,6 @@
         "SortKey": { "AttributeName": "USER_ID", "AttributeType": "S" }
       },
       "NonKeyAttributes": [
-        { "AttributeName": "REGISTRATION_ID", "AttributeType": "N" },
         { "AttributeName": "REGISTERED_AT", "AttributeType": "S" },
         { "AttributeName": "CHECKED_IN_AT", "AttributeType": "S" }
       ],
@@ -50,15 +47,18 @@
         {
           "EVENT_ID": { "N": "1" },
           "USER_ID": { "S": "usuario-01" },
-          "REGISTRATION_ID": { "N": "1" },
           "REGISTERED_AT": { "S": "2026-11-12T09:05:00Z" }
         },
         {
           "EVENT_ID": { "N": "1" },
           "USER_ID": { "S": "usuario-02" },
-          "REGISTRATION_ID": { "N": "2" },
           "REGISTERED_AT": { "S": "2026-11-12T09:06:00Z" },
           "CHECKED_IN_AT": { "S": "2026-11-12T09:12:00Z" }
+        },
+        {
+          "EVENT_ID": { "N": "2" },
+          "USER_ID": { "S": "usuario-02" },
+          "REGISTERED_AT": { "S": "2026-11-12T09:15:00Z" }
         }
       ]
     }

@@ -43,15 +43,12 @@ function demoRequest(method, userId) {
     return { status: 200, body: { eventId: DEMO_EVENT_ID, title: DEMO_TITLE, registration: registration ?? null } };
   }
   if (method === 'POST' && !registration) {
-    const numerosGuardados = [...demoRegistrations.values()].map(({ registrationId }) => registrationId);
-    const registrationId = Math.max(0, ...numerosGuardados) + 1;
     demoRegistrations.set(userId, {
       eventId: DEMO_EVENT_ID,
       userId,
-      registrationId,
       registeredAt: new Date().toISOString()
     });
-    return { status: 201, body: { message: 'Inscripción creada', registrationId } };
+    return { status: 201, body: { message: 'Inscripción creada' } };
   }
   if (method === 'PATCH' && registration && !registration.checkedInAt) {
     registration.checkedInAt = new Date().toISOString();
