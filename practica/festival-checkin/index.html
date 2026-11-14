@@ -15,7 +15,7 @@
 <header class="course-header">
   <div><a href="../../">← Cuaderno Serverless</a><h1>Festival <em>Check-in</em></h1>
 </div>
-  <div class="actions"><a href="#iniciar-lab">Preparar AWS</a><a href="#nombres-tablas">Preparar proyecto</a><a href="#infografia-terminal">Infografía</a><a href="#json-modelo">Modelo JSON</a>
+  <div class="actions"><a href="#iniciar-lab">Preparar AWS</a><a href="#nombres-tablas">Preparar proyecto</a><a href="#infraestructura"><code>serverless.yml</code></a><a href="#infografia-terminal">Infografía</a><a href="#json-modelo">Modelo JSON</a>
 </div>
 </header>
 <nav class="phases" aria-label="Fases de la práctica">
@@ -146,7 +146,7 @@
 <p class="checkpoint"><strong>Antes de avanzar</strong> En <code>FCI_USUARIOS</code>, localiza a Leo con <code>USER_ID = usuario-02</code>. Pulsa <strong>Ver inscritos del evento</strong>. Aparecen dos filas con <code>EVENT_ID = 1</code> y dos <code>USER_ID</code> distintos. Pulsa <strong>Buscar a usuario-02</strong>. Ahora solo aparece la fila de <code>usuario-02</code>.</p>
 <h4>Del modelo a las tablas del laboratorio</h4>
 <p>En <strong>Preparar las tablas</strong> escribirás en <code>serverless.yml</code> las claves que acabas de probar. Después, <strong>Lambdas</strong> te guía para programar el alta y desplegar las tres tablas. Si ya tienes el YAML, puedes ir a Lambdas directamente.</p>
-<div class="actions"><a class="lesson-action" href="#nombres-tablas">Preparar las tablas →</a></div>
+<div class="actions"><a class="lesson-action" href="#nombres-tablas">Preparar las tablas →</a><a href="#infraestructura">Abrir el árbol de <code>serverless.yml</code></a></div>
 </article>
 </section>
 <section id="conexion" class="phase" data-reference hidden>
@@ -623,7 +623,7 @@ resources:
 <div class="lambda-hero">
   <div>
     <h3>Programa tu primera Lambda</h3>
-    <p>Trabaja en <code>festival-checkin</code>. Si empiezas de cero, abre <a href="#iniciar-lab">Preparar AWS</a> y <a href="#nombres-tablas">Preparar proyecto</a> para dejar lista la sesión, la carpeta y <code>serverless.yml</code>.</p>
+    <p>Trabaja en <code>festival-checkin</code>. Si empiezas de cero, abre <a href="#iniciar-lab">Preparar AWS</a> y <a href="#nombres-tablas">Preparar proyecto</a> para dejar listas la sesión y la carpeta. En <a href="#infraestructura">Leer el YAML</a> puedes explorar la configuración y en <a href="#escribir-yaml">Crear el YAML</a> tienes el archivo completo para copiar.</p>
     <p>Primero escribe el cliente de DynamoDB y el <code>handler.mjs</code> que guarda un evento. Después prepara los puntos de entrada de los pases en <code>src/pases/</code>. Completarás su lógica en <strong>Consultar · Capas</strong> e <strong>Inscribir · Capas</strong>.</p>
   </div>
   <div class="lambda-ticket">
