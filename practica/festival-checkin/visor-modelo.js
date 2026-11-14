@@ -3,6 +3,7 @@ const result = document.querySelector('#model-result');
 const status = document.querySelector('#model-status');
 const feedback = document.querySelector('#model-feedback');
 const search = document.querySelector('#model-search');
+const preview = document.querySelector('#model-search-preview');
 const dataToggle = document.querySelector('#model-data-toggle');
 const example = document.querySelector('#model-example');
 
@@ -87,7 +88,6 @@ function createPractice(events, registrations, users) {
 
   const title = formatValue(event.row.TITLE);
   const firstName = person.row.FIRST_NAME ? formatValue(person.row.FIRST_NAME) : profileName(person.row);
-  const panel = element('div', undefined, 'model-search-card');
   const filters = element('div', undefined, 'actions model-search-filters');
   const byEvent = element('button', 'Todos los inscritos');
   const byPerson = element('button', 'Solo el pase de ' + firstName);
@@ -135,9 +135,8 @@ function createPractice(events, registrations, users) {
   criteria.append(element('h4', title), filters, explanation, key);
   const results = element('div', undefined, 'model-search-results');
   results.append(summary, passes);
-  panel.append(criteria, results);
   query(false);
-  return panel;
+  return { criteria, results };
 }
 
 dataToggle.addEventListener('click', () => {
@@ -169,7 +168,9 @@ function showModel(message = status) {
     const practice = events && registrations && users ? createPractice(events, registrations, users) : null;
 
     result.replaceChildren(...tables.map(({ section }) => section));
-    search.replaceChildren(...(practice ? [practice] : []));
+    search.replaceChildren(...(practice ? [practice.criteria] : []));
+    preview.replaceChildren(...(practice ? [practice.results] : []));
+    preview.hidden = !practice;
     search.hidden = !practice;
     result.hidden = Boolean(practice);
     dataToggle.hidden = !practice;

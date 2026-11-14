@@ -119,12 +119,13 @@ window.addEventListener('hashchange', showRoute);
 
 function addYamlReader(pre, toolbar, lines) {
   const code = pre.querySelector('code');
-  const notes = pre.parentElement.querySelector('.code-notes');
+  const reader = pre.closest('.yaml-reader');
+  const notes = reader.querySelector('.code-notes');
   const sections = [...notes.querySelectorAll('[data-code-start]')];
   const starts = sections.map(section => lines.findIndex(line => line.startsWith(section.dataset.codeStart)));
-  const tree = pre.parentElement.querySelector('.yaml-tree');
+  const tree = reader.querySelector('.yaml-tree');
   const nodes = [...tree.querySelectorAll('[data-yaml-block]')];
-  const narrow = matchMedia('(max-width: 999px)');
+  const narrow = matchMedia('(max-width: 760px)');
   const outcome = document.createElement('p');
   outcome.className = 'yaml-outcome';
   const nodePreview = document.createElement('p');
@@ -137,7 +138,6 @@ function addYamlReader(pre, toolbar, lines) {
   backToTree.className = 'yaml-back';
   notes.prepend(outcome, backToTree);
   toolbar.remove();
-  pre.after(notes);
 
   for (const [index, node] of nodes.entries()) {
     const branch = node.nextElementSibling;
