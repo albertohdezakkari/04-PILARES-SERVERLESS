@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Festival Check-in · práctica guiada</title>
-<link rel="stylesheet" href="style.css?v=mesa-montaje">
+<link rel="stylesheet" href="style.css?v=mitades-montaje">
 <script type="module" src="app.js?v=pase-leo"></script>
 <script type="module" src="guia.js?v=seguir-claves"></script>
 <script type="module" src="visor-modelo.js?v=perfil-usuario"></script>
@@ -205,15 +205,70 @@ aws dynamodb list-tables --profile "$perfil" --region "$region"</code></pre><p><
 <h3>Prepara la carpeta de trabajo</h3>
 <p>Abre la terminal en la carpeta donde guardas tus prácticas. Selecciona un paso del montaje para ver cómo cambia el proyecto. Si te falta la sesión del laboratorio, vuelve a <a href="#iniciar-lab">Preparar AWS</a>.</p>
 <div class="project-workbench" data-explainer>
-  <ol class="workbench-steps" aria-label="Comandos para preparar el proyecto">
-    <li><button type="button" data-explain="project-line-1" aria-controls="project-line-1" aria-pressed="true">Node.js</button></li>
-    <li><button type="button" data-explain="project-line-2" aria-controls="project-line-2" aria-pressed="false">Crear carpeta</button></li>
-    <li><button type="button" data-explain="project-line-3" aria-controls="project-line-3" aria-pressed="false">Entrar</button></li>
-    <li><button type="button" data-explain="project-line-4" aria-controls="project-line-4" aria-pressed="false">Crear ficha</button></li>
-    <li><button type="button" data-explain="project-line-5" aria-controls="project-line-5" aria-pressed="false">Serverless</button></li>
-    <li><button type="button" data-explain="project-line-6" aria-controls="project-line-6" aria-pressed="false">SDK DynamoDB</button></li>
-    <li><button type="button" data-explain="project-line-7" aria-controls="project-line-7" aria-pressed="false">Verificar</button></li>
-  </ol>
+  <div class="workbench-tasks">
+    <ol class="workbench-steps" aria-label="Comandos para preparar el proyecto">
+      <li><button type="button" data-explain="project-line-1" aria-controls="project-line-1" aria-pressed="true">Node.js</button></li>
+      <li><button type="button" data-explain="project-line-2" aria-controls="project-line-2" aria-pressed="false">Crear carpeta</button></li>
+      <li><button type="button" data-explain="project-line-3" aria-controls="project-line-3" aria-pressed="false">Entrar</button></li>
+      <li><button type="button" data-explain="project-line-4" aria-controls="project-line-4" aria-pressed="false">Crear ficha</button></li>
+      <li><button type="button" data-explain="project-line-5" aria-controls="project-line-5" aria-pressed="false">Serverless</button></li>
+      <li><button type="button" data-explain="project-line-6" aria-controls="project-line-6" aria-pressed="false">SDK DynamoDB</button></li>
+      <li><button type="button" data-explain="project-line-7" aria-controls="project-line-7" aria-pressed="false">Verificar</button></li>
+    </ol>
+    <div class="workbench-inspector" aria-live="polite">
+      <section id="project-line-1" data-explanation>
+        <h4>Comprueba Node.js</h4>
+        <pre class="workbench-command"><code>node --version</code></pre>
+        <p><code>--version</code> muestra la versión instalada. Busca una que empiece por <code>v22.</code></p>
+      </section>
+      <section id="project-line-2" data-explanation hidden>
+        <h4>Crea tu espacio de trabajo</h4>
+        <pre class="workbench-command"><code>mkdir -p festival-checkin</code></pre>
+        <p><code>mkdir</code> crea <code>festival-checkin/</code>. <code>-p</code> permite repetir el comando si la carpeta ya existe.</p>
+      </section>
+      <section id="project-line-3" data-explanation hidden>
+        <h4>Entra en la carpeta</h4>
+        <pre class="workbench-command"><code>cd festival-checkin</code></pre>
+        <p><code>cd</code> mueve la terminal a <code>festival-checkin/</code>. Los siguientes comandos se ejecutan ahí.</p>
+      </section>
+      <section id="project-line-4" data-explanation hidden>
+        <h4>Abre la ficha del proyecto</h4>
+        <pre class="workbench-command"><code>npm init -y</code></pre>
+        <p><code>npm init</code> crea <code>package.json</code>. Con <code>-y</code> aceptas los valores iniciales, como el nombre y la versión.</p>
+      </section>
+      <section id="project-line-5" data-explanation hidden>
+        <h4>Coloca Serverless en su sitio</h4>
+        <pre class="workbench-command"><code>npm install --save-dev --save-exact serverless@4.45.0</code></pre>
+        <fieldset class="workbench-flags">
+          <legend>Inspecciona una opción</legend>
+          <label><input type="radio" name="serverless-flag" value="dev" checked><code>--save-dev</code></label>
+          <label><input type="radio" name="serverless-flag" value="exact"><code>--save-exact</code></label>
+        </fieldset>
+        <p class="workbench-flag-dev">Serverless queda en <code>devDependencies</code>, donde npm registra las herramientas de desarrollo.</p>
+        <p class="workbench-flag-exact">npm guarda exactamente <code>4.45.0</code> en <code>package.json</code>.</p>
+        <p>Al desplegar, Serverless leerá <code>serverless.yml</code>.</p>
+      </section>
+      <section id="project-line-6" data-explanation hidden>
+        <h4>Prepara el acceso a DynamoDB</h4>
+        <pre class="workbench-command"><code>npm install @aws-sdk/client-dynamodb @aws-sdk/lib-dynamodb</code></pre>
+        <dl class="workbench-dependencies">
+          <div><dt><code>lib-dynamodb</code></dt><dd>Trabaja con objetos JavaScript.</dd></div>
+          <div><dt><code>client-dynamodb</code></dt><dd>Envía la petición a DynamoDB.</dd></div>
+        </dl>
+        <p>El dibujo muestra cómo Lambda usará ambos paquetes de <code>dependencies</code> después del despliegue.</p>
+      </section>
+      <section id="project-line-7" data-explanation hidden>
+        <h4>Verifica Serverless</h4>
+        <pre class="workbench-command"><code>npx serverless --version</code></pre>
+        <p><code>npx</code> ejecuta el Serverless del proyecto. <code>--version</code> debe mostrar <code>4.45.0</code>.</p>
+      </section>
+    </div>
+    <div class="workbench-execution">
+      <p class="checkpoint"><strong>Antes de avanzar</strong> Después del paso 7, comprueba la carpeta y el contenido de <code>package.json</code>. La ruta termina en <code>festival-checkin</code>. En <code>devDependencies</code> aparece Serverless <code>4.45.0</code> y en <code>dependencies</code> los dos paquetes de DynamoDB.</p>
+      <pre><code>pwd
+npm pkg get devDependencies.serverless dependencies</code></pre>
+    </div>
+  </div>
   <div class="workbench-stage">
     <div class="workbench-illustration" aria-hidden="true">
       <div class="workbench-floor"></div>
@@ -249,68 +304,19 @@ aws dynamodb list-tables --profile "$perfil" --region "$region"</code></pre><p><
         <span>Lambda</span><span class="workbench-wire"></span><span>DynamoDB</span>
       </div>
     </div>
-    <div class="workbench-inspector" aria-live="polite">
-      <section id="project-line-1" data-explanation>
-        <h4>Comprueba Node.js</h4>
-        <code class="workbench-command">node --version</code>
-        <p><code>--version</code> muestra la versión instalada. Busca una que empiece por <code>v22.</code></p>
-      </section>
-      <section id="project-line-2" data-explanation hidden>
-        <h4>Crea tu espacio de trabajo</h4>
-        <code class="workbench-command">mkdir -p festival-checkin</code>
-        <p><code>mkdir</code> crea <code>festival-checkin/</code>. <code>-p</code> permite repetir el comando si la carpeta ya existe.</p>
-      </section>
-      <section id="project-line-3" data-explanation hidden>
-        <h4>Entra en la carpeta</h4>
-        <code class="workbench-command">cd festival-checkin</code>
-        <p><code>cd</code> mueve la terminal a <code>festival-checkin/</code>. Los siguientes comandos se ejecutan ahí.</p>
-      </section>
-      <section id="project-line-4" data-explanation hidden>
-        <h4>Abre la ficha del proyecto</h4>
-        <code class="workbench-command">npm init -y</code>
-        <p><code>npm init</code> crea <code>package.json</code>. Con <code>-y</code> aceptas los valores iniciales, como el nombre y la versión.</p>
-      </section>
-      <section id="project-line-5" data-explanation hidden>
-        <h4>Coloca Serverless en su sitio</h4>
-        <code class="workbench-command">npm install --save-dev --save-exact serverless@4.45.0</code>
-        <fieldset class="workbench-flags">
-          <legend>Inspecciona una opción</legend>
-          <label><input type="radio" name="serverless-flag" value="dev" checked><code>--save-dev</code></label>
-          <label><input type="radio" name="serverless-flag" value="exact"><code>--save-exact</code></label>
-        </fieldset>
-        <p class="workbench-flag-dev">Serverless queda en <code>devDependencies</code>, donde npm registra las herramientas de desarrollo.</p>
-        <p class="workbench-flag-exact">npm guarda exactamente <code>4.45.0</code> en <code>package.json</code>.</p>
-        <p>Al desplegar, Serverless leerá <code>serverless.yml</code>.</p>
-      </section>
-      <section id="project-line-6" data-explanation hidden>
-        <h4>Prepara el acceso a DynamoDB</h4>
-        <code class="workbench-command">npm install @aws-sdk/client-dynamodb @aws-sdk/lib-dynamodb</code>
-        <dl class="workbench-dependencies">
-          <div><dt><code>lib-dynamodb</code></dt><dd>Trabaja con objetos JavaScript.</dd></div>
-          <div><dt><code>client-dynamodb</code></dt><dd>Envía la petición a DynamoDB.</dd></div>
-        </dl>
-        <p>El dibujo muestra cómo Lambda usará ambos paquetes de <code>dependencies</code> después del despliegue.</p>
-      </section>
-      <section id="project-line-7" data-explanation hidden>
-        <h4>Verifica Serverless</h4>
-        <code class="workbench-command">npx serverless --version</code>
-        <p><code>npx</code> ejecuta el Serverless del proyecto. <code>--version</code> debe mostrar <code>4.45.0</code>.</p>
-      </section>
-    </div>
   </div>
 </div>
-<h4>Ejecuta los comandos en orden</h4>
-<p>Comprueba primero que Node.js sea de la versión 22. Después puedes copiar el bloque completo.</p>
-<pre><code>node --version
+<div class="workbench-batch">
+      <h4>Todos los comandos</h4>
+      <p>Si ya tienes Node.js 22, puedes copiar y ejecutar el bloque completo.</p>
+      <pre><code>node --version
 mkdir -p festival-checkin
 cd festival-checkin
 npm init -y
 npm install --save-dev --save-exact serverless@4.45.0
 npm install @aws-sdk/client-dynamodb @aws-sdk/lib-dynamodb
 npx serverless --version</code></pre>
-<p class="checkpoint"><strong>Antes de avanzar</strong> Comprueba la carpeta y el contenido del manifiesto con estos comandos. La ruta termina en <code>festival-checkin</code>. En <code>devDependencies</code> aparece Serverless <code>4.45.0</code> y en <code>dependencies</code> los dos paquetes de DynamoDB.</p>
-<pre><code>pwd
-npm pkg get devDependencies.serverless dependencies</code></pre>
+</div>
 <p>En esta carpeta crearás <code>serverless.yml</code> y las carpetas <code>src/datos</code>, <code>src/eventos/crear-evento</code> y <code>src/pases</code>. Sigue con el <a href="#rol-laboratorio">rol de Lambda</a>.</p>
 </article>
 <article id="rol-laboratorio" class="guide-step" data-step="Rol">

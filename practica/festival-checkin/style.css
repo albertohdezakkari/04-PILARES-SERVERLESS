@@ -1049,8 +1049,8 @@ code { overflow-wrap: anywhere; }
 }
 
 .project-workbench {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   --workbench-teal: #9ef4d2;
   --workbench-gold: #ffc382;
   --workbench-pale: #dce8e2;
@@ -1062,9 +1062,9 @@ code { overflow-wrap: anywhere; }
   overflow: clip;
 }
 .workbench-stage {
-  order: -1;
   display: grid;
-  grid-template-columns: minmax(0, 1.9fr) minmax(235px, 1fr);
+  grid-template-columns: minmax(0, 1fr);
+  border-inline-start: 1px solid #3e5554;
   align-items: center;
   overflow: clip;
   background: radial-gradient(ellipse at 35% 40%, #294140, #101c20 75%);
@@ -1283,9 +1283,8 @@ code { overflow-wrap: anywhere; }
 }
 @keyframes workbench-request { to { left: calc(100% - 7px); } }
 .workbench-inspector {
-  align-self: center;
-  margin: 18px clamp(16px, 3vw, 36px) 18px 0;
-  padding: 15px 0 15px 16px;
+  margin: 14px 0;
+  padding-left: 14px;
   border-left: 2px solid var(--workbench-gold);
   color: var(--workbench-pale);
 }
@@ -1315,26 +1314,41 @@ code { overflow-wrap: anywhere; }
 .workbench-dependencies div + div { margin-top: 6px; }
 .workbench-dependencies dt { color: var(--workbench-teal); }
 .workbench-dependencies dd { margin: 0; }
+.workbench-tasks {
+  min-width: 0;
+  padding: clamp(12px, 2vw, 24px);
+}
+.workbench-execution {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid #3e5554;
+}
+.workbench-execution .checkpoint { margin: 0 0 8px; }
+.workbench-batch { max-width: 66ch; }
+.workbench-batch h4 { margin-bottom: 6px; }
+.workbench-batch p { margin: 6px 0; }
+.project-workbench .code-toolbar { margin-block: 6px; }
+.project-workbench pre { font-size: .82rem; }
 .workbench-steps {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 103px), 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 132px), 1fr));
   list-style: none;
   padding: 0;
   margin: 0;
   background: #142428;
-  border-top: 1px solid #3e5554;
+  border: 1px solid #3e5554;
+  border-radius: 9px;
+  overflow: hidden;
 }
 .workbench-steps li { min-width: 0; margin: 0; }
 .workbench-steps button {
   display: flex;
-  flex-wrap: wrap;
-  align-content: center;
   justify-content: center;
   align-items: baseline;
   gap: 5px;
   width: 100%;
   height: 100%;
-  min-height: 54px;
+  min-height: 44px;
   padding: 7px 5px;
   border: 1px solid transparent;
   border-radius: 0;
@@ -1347,31 +1361,29 @@ code { overflow-wrap: anywhere; }
   border-top-color: var(--workbench-gold);
   background: #ffc38219;
 }
+.workbench-steps .phase-number { flex: none; }
 .workbench-steps button:focus-visible { outline-offset: -4px; }
-@media (max-width: 730px) {
-  .workbench-stage { display: contents; }
-  .workbench-illustration {
-    order: -1;
-    min-height: 245px;
-    aspect-ratio: 1.65;
-    background: radial-gradient(ellipse at 35% 40%, #294140, #101c20 75%);
+@media (max-width: 760px) {
+  .project-workbench { grid-template-columns: minmax(0, 1fr); }
+  .workbench-tasks { display: contents; }
+  .workbench-steps { margin: 12px; }
+  .workbench-inspector { margin: 4px 12px 16px; }
+  .workbench-stage {
+    grid-row: 3;
+    border-inline-start: 0;
+    border-block: 1px solid #3e5554;
   }
+  .workbench-execution { margin: 0; padding: 14px 12px; border-top: 0; }
+  .workbench-illustration { min-height: 245px; }
   .workbench-floor { inset: 33% 14% 6%; }
   .workbench-folder { bottom: 10%; }
-  .workbench-inspector { order: 1; align-self: stretch; margin: 12px 14px 16px; }
-  .workbench-steps button { flex-wrap: nowrap; }
-  .workbench-steps .phase-number { flex: none; }
+  .workbench-steps { grid-template-columns: repeat(auto-fit, minmax(min(100%, 96px), 1fr)); }
 }
 @media (prefers-reduced-motion: reduce) {
   .project-workbench *, .project-workbench *::before { animation: none !important; transition: none !important; }
 }
 .workbench-command {
-  display: block;
-  width: fit-content;
-  margin-top: 9px;
-  padding: 4px 7px;
-  border-radius: 5px;
+  margin-top: 6px;
   background: #091417;
   color: var(--workbench-gold);
-  font-size: .82rem;
 }
