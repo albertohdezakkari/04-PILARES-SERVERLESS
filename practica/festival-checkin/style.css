@@ -29,23 +29,55 @@ h3 { margin: 0 0 8px; font-size: clamp(1.12rem, 2.5vw, 1.45rem); }
 p, li { line-height: 1.55; }
 li + li { margin-top: .65rem; }
 .eyebrow { color: var(--muted); font-size: .8rem; letter-spacing: .12em; text-transform: uppercase; margin: 1.5em 0 .65em; }
-.phases, .actions { display: flex; gap: 8px; flex-wrap: wrap; }
-.phases, #guide-steps { padding: 4px; }
-.phases button, #guide-steps button, .guided-options button {
+.actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.phases {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-block: 10px 2px;
+}
+.phases button {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+  padding: 12px;
+  text-align: left;
+  border-top: 3px solid var(--border);
+}
+.phases button[aria-pressed="true"] {
+  color: var(--ink);
+  background: #33253c;
+  border-color: var(--border);
+  border-top-color: var(--accent);
+}
+.phases strong, .phases small { display: block; overflow-wrap: anywhere; }
+.phases small { margin-top: 4px; color: var(--muted); font-weight: 400; }
+.phases button > .phase-number { flex: none; color: var(--accent); }
+#guide-toolbar { padding: 10px 12px; border-radius: 10px; background: var(--surface); }
+#guide-progress { margin: 0 0 8px; color: var(--muted); font-size: .875rem; }
+#guide-progress:last-child { margin-bottom: 0; }
+#guide-steps button, .guided-options button {
   max-width: 100%;
   min-width: 0;
   overflow-wrap: anywhere;
 }
-@media (min-width: 900px) {
-  .phases { flex-wrap: wrap; gap: 6px; }
-  .phases button { padding-inline: 9px; }
+#guide-steps button { min-height: 40px; padding: 6px 10px; }
+.course-references {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  padding: 10px 2px;
+  border-top: 1px solid var(--border);
+  font-size: .875rem;
+}
+@media (max-width: 720px) {
+  .phases { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 540px) {
-  .phases, #guide-steps { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .phases button, #guide-steps button { text-align: left; }
+  #guide-steps { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  #guide-steps button { text-align: left; }
 }
-#guide-progress { margin: 0 3px 5px; color: var(--muted); }
-#guide-steps button { min-height: 40px; padding: 6px 10px; }
 .course-content {
   min-width: 0;
   border: 1px solid var(--border);
@@ -68,7 +100,7 @@ button[aria-pressed="true"], [data-method="POST"] { color: #25131b; background: 
 button:disabled { opacity: .65; cursor: wait; }
 :focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
 .phase { padding: clamp(12px, 2.5vw, 22px); }
-.phase > h2:first-child { font-size: 1rem; color: var(--muted); margin-bottom: 10px; }
+.phase:not(.console) > h2:first-child { display: none; }
 .guide-step > p { margin: 8px 0 12px; }
 .phase-number {
   display: inline-grid;
@@ -166,11 +198,10 @@ button[aria-pressed="true"] > .phase-number { color: inherit; }
   background: var(--surface);
 }
 .dynamo-map-card:nth-child(2) { grid-column: 3; }
-.dynamo-map-reference { grid-column: 5; border-top-color: var(--accent); }
+.dynamo-map-card:nth-child(3) { grid-column: 5; }
 .dynamo-map-card p { margin: 8px 0 0; font-size: .9rem; }
 .dynamo-map-card .dynamo-map-origin { margin: 0 0 7px; color: var(--muted); font-weight: 650; }
 .dynamo-map-origin span { color: #9ee4d8; }
-.dynamo-map-reference .dynamo-map-origin span, .dynamo-map-target { color: var(--accent); }
 .dynamo-map-card h5 { margin: 0; font-size: clamp(1.03rem, 2.4vw, 1.3rem); }
 .dynamo-map-card dl { margin: 8px 0 0; }
 .dynamo-map-card dl > div {
@@ -198,8 +229,6 @@ button[aria-pressed="true"] > .phase-number { color: inherit; }
   .dynamo-map { grid-template-columns: minmax(0, 1fr); gap: 8px; }
   .dynamo-map-card:nth-child(n) { grid-column: auto; }
   .dynamo-map-origin span { display: none; }
-}
-@media (max-width: 620px) {
   .er-diagram { grid-template-columns: minmax(0, 1fr); justify-items: center; }
   .er-diagram section { width: min(100%, 320px); }
   .er-edge { flex-direction: column; min-height: 54px; }

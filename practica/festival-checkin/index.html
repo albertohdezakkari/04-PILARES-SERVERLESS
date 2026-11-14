@@ -4,25 +4,26 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Festival Check-in · práctica guiada</title>
-<link rel="stylesheet" href="style.css?v=recorrido-lambda">
+<link rel="stylesheet" href="style.css?v=recorrido-guiado">
 <script type="module" src="app.js?v=pases-orm"></script>
-<script type="module" src="guia.js?v=modelo-primero"></script>
+<script type="module" src="guia.js?v=recorrido-guiado"></script>
 <script type="module" src="visor-modelo.js?v=referencias"></script>
 <script type="module" src="entrenamiento-dynamo.js?v=referencias"></script>
 </head>
 <body>
 <main>
 <header class="course-header">
-  <div><a href="../../">← Cuaderno Serverless</a><h1>Festival <em>Check-in</em></h1>
-</div>
-  <div class="actions"><a href="#iniciar-lab">Preparar AWS</a><a href="#nombres-tablas">Preparar proyecto</a><a href="#infraestructura"><code>serverless.yml</code></a><a href="#infografia-terminal">Infografía</a><a href="#json-modelo">Modelo JSON</a>
-</div>
-</header>
-<nav class="phases" aria-label="Fases de la práctica">
-  <button type="button" data-phase="diseno" aria-pressed="true">Modelo de datos</button>
-  <button type="button" data-phase="datos" aria-pressed="false">Lambdas</button>
-  <button type="button" data-phase="prueba" aria-pressed="false">Validar</button>
+  <div>
+    <a href="../../">← Cuaderno Serverless</a>
+    <h1>Festival <em>Check-in</em></h1>
+  </div>
   <button type="button" data-phase="pantalla" aria-pressed="false">Pantalla de prueba</button>
+</header>
+<nav class="phases" aria-label="Recorrido de la práctica">
+  <button type="button" data-phase="diseno" aria-pressed="true"><span class="phase-number">1</span><span><strong>Modelo de datos</strong><small>Diagrama y claves</small></span></button>
+  <button type="button" data-phase="infra" aria-pressed="false"><span class="phase-number">2</span><span><strong>Preparación</strong><small>AWS Academy y serverless.yml</small></span></button>
+  <button type="button" data-phase="datos" aria-pressed="false"><span class="phase-number">3</span><span><strong>Lambdas</strong><small>Código y despliegue</small></span></button>
+  <button type="button" data-phase="prueba" aria-pressed="false"><span class="phase-number">4</span><span><strong>Validación</strong><small>API y datos guardados</small></span></button>
 </nav>
 <div id="guide-toolbar">
   <p id="guide-progress" aria-live="polite">
@@ -104,7 +105,7 @@
     <p>Busca por <code>USER_ID</code>, la clave de partición del índice. En este ejemplo, <code>usuario-02</code> devuelve <code>1</code> y <code>2</code>.</p>
   </li>
 </ul>
-<p class="checkpoint"><strong>Antes de avanzar</strong> Comprueba en cuál de las dos consultas empiezas por <code>1</code> y en cuál por <code>usuario-02</code>. Después <a href="#ensayar-pase">prueba el pase en el móvil</a>. Puedes ejecutar ambas consultas en <a href="#consultar-indice">Validar → Consultar índice</a>.</p>
+<p class="checkpoint"><strong>Antes de avanzar</strong> Comprueba en cuál de las dos consultas empiezas por <code>1</code> y en cuál por <code>usuario-02</code>. Después <a href="#ensayar-pase">prueba el pase en el móvil</a>. Puedes ejecutar ambas consultas en <a href="#consultar-indice">Validación → Consultar índice</a>.</p>
 </article>
 <article id="ensayar-pase" class="guide-step" data-step="Ensayar el pase">
 <h3>Prueba el pase que vas a construir</h3>
@@ -129,7 +130,7 @@
     <section data-access-panel="usuario" hidden><h4>Los eventos de un usuario</h4><p>Guardas cada inscripción una vez. DynamoDB mantiene el índice <code>PorUsuario</code>, que agrupa esas inscripciones por <code>USER_ID</code> (PK) y las ordena por <code>EVENT_ID</code> (SK).</p><code>PorUsuario → PK usuario-02 → 1, 2</code></section>
   </div>
 </div>
-<p class="checkpoint"><strong>Antes de avanzar</strong> Compara «¿Quién se ha inscrito al evento?» con «¿En qué eventos está inscrito usuario-02?». En la primera, entra por <code>EVENT_ID</code> en la tabla. En la segunda, entra por <code>USER_ID</code> en el índice. Probarás ambas búsquedas en <a href="#consultar-indice">Validar → Consultar índice</a>.</p>
+<p class="checkpoint"><strong>Antes de avanzar</strong> Compara «¿Quién se ha inscrito al evento?» con «¿En qué eventos está inscrito usuario-02?». En la primera, entra por <code>EVENT_ID</code> en la tabla. En la segunda, entra por <code>USER_ID</code> en el índice. Probarás ambas búsquedas en <a href="#consultar-indice">Validación → Consultar índice</a>.</p>
 </article>
 <article id="modelo-titulo" class="guide-step" data-step="Probar el diseño">
 <h3>Convierte el modelo en tres tablas y pruébalo</h3>
@@ -145,12 +146,12 @@
 <p><strong>Lee los datos de ejemplo.</strong> <code>REGISTERED_AT</code> indica cuándo se inscribió el usuario. <code>CHECKED_IN_AT</code> aparece en un pase de ejemplo con una entrada previa. En el laboratorio, la tabla de inscripciones empezará vacía y se llenará al probar POST.</p>
 <p class="checkpoint"><strong>Antes de avanzar</strong> En <code>FCI_USUARIOS</code>, localiza a Leo con <code>USER_ID = usuario-02</code>. Pulsa <strong>Ver inscritos del evento</strong>. Aparecen dos filas con <code>EVENT_ID = 1</code> y dos <code>USER_ID</code> distintos. Pulsa <strong>Buscar a usuario-02</strong>. Ahora solo aparece la fila de <code>usuario-02</code>.</p>
 <h4>Del modelo a las tablas del laboratorio</h4>
-<p>En <strong>Preparar las tablas</strong> escribirás en <code>serverless.yml</code> las claves que acabas de probar. Después, <strong>Lambdas</strong> te guía para programar el alta y desplegar las tres tablas. Si ya tienes el YAML, puedes ir a Lambdas directamente.</p>
-<div class="actions"><a class="lesson-action" href="#nombres-tablas">Preparar las tablas →</a><a href="#infraestructura">Abrir el árbol de <code>serverless.yml</code></a></div>
+<p>En <strong>Preparación</strong> abres el laboratorio y trasladas a <code>serverless.yml</code> las claves que acabas de probar. En <strong>Lambdas</strong> programas el alta y despliegas las tres tablas.</p>
+<div class="actions"><a class="lesson-action" href="#iniciar-lab">Continuar a preparación →</a><a href="#infraestructura">Abrir el árbol de <code>serverless.yml</code></a></div>
 </article>
 </section>
-<section id="conexion" class="phase" data-reference hidden>
-<h2>Conectar con AWS Academy</h2>
+<section id="infra" class="phase" hidden>
+<h2>Preparar AWS Academy y Serverless</h2>
 <article id="iniciar-lab" class="guide-step" data-step="Laboratorio">
 <h3>Abre el laboratorio</h3>
 <p class="lesson-note"><strong>Para qué sirve este paso.</strong> AWS Academy abre una sesión temporal. AWS CLI utilizará sus credenciales para identificarte cuando compruebes o despliegues recursos.</p>
@@ -183,12 +184,9 @@ aws sts get-caller-identity --profile "$perfil" --region "$region"
 aws dynamodb list-tables --profile "$perfil" --region "$region"</code></pre><p><strong>Si falla:</strong> si el perfil no existe, usa un nombre que aparezca en la lista. Si el token caducó, vuelve a AWS Details y copia los tres valores vigentes. Si STS funciona y DynamoDB devuelve <code>AccessDenied</code>, guarda el mensaje de error para revisar los permisos del laboratorio.</p>
 <p class="checkpoint"><strong>Antes de avanzar</strong> STS devuelve la identidad y DynamoDB muestra TableNames. Puede estar vacía.</p>
 </article>
-</section>
-<section id="infra" class="phase" data-reference hidden>
-<h2>Preparar el proyecto y su infraestructura</h2>
 <article id="nombres-tablas" class="guide-step" data-step="Proyecto">
 <h3>Prepara la carpeta de trabajo</h3>
-<p class="lesson-note"><strong>Tu primera Lambda se escribe en esta fase.</strong> Prepara la carpeta y el rol, crea <code>serverless.yml</code> y abre <a href="#archivo-lambda">Programar Lambda</a> para escribir el alta de eventos.</p>
+<p class="lesson-note"><strong>Aquí preparas el entorno para programar.</strong> Prepara la carpeta y el rol, crea <code>serverless.yml</code> y abre <a href="#archivo-lambda">Programar Lambda</a> para escribir el alta de eventos.</p>
 <dl class="command-reasons"><div><dt><code>npm init -y</code></dt><dd>Crea el manifiesto del proyecto.</dd></div><div><dt><code>serverless</code></dt><dd>Lee el YAML y prepara el despliegue.</dd></div><div><dt>SDK de DynamoDB</dt><dd>Permite que el código de Lambda lea y escriba ítems.</dd></div></dl>
 <p>Si aún no tienes la sesión del laboratorio, completa <a href="#iniciar-lab">Preparar AWS</a>. En esa misma terminal, abre la carpeta donde guardas tus prácticas. Usarás Node.js 22 y la misma versión de Serverless Framework del entrenamiento. Comprueba que <code>node --version</code> empieza por <code>v22</code>. Guarda aquí <code>serverless.yml</code> y las carpetas <code>src/datos</code>, <code>src/eventos/crear-evento</code> y <code>src/pases</code> que prepararás en los pasos siguientes.</p><pre><code>node --version
 mkdir -p festival-checkin
@@ -201,7 +199,7 @@ npx serverless --version</code></pre><p class="checkpoint"><strong>Antes de avan
 <article id="rol-laboratorio" class="guide-step" data-step="Rol">
 <h3>Recupera el rol de Lambda</h3>
 <p class="lesson-note"><strong>Quién actúa en cada momento.</strong> Tu perfil ejecuta el despliegue. El rol <code>LabRole</code> da permisos a Lambda cuando atiende una petición y necesita acceder a DynamoDB.</p>
-<p>En <a href="#probar-aws">Conectar → Comprobación</a> verificaste tu perfil y tu región. El bloque conserva esos valores en la misma terminal. Si abriste otra, vuelve primero a <a href="#probar-aws">Comprobación</a> para seleccionar tu perfil y región.</p>
+<p>En <a href="#probar-aws">Preparación → Comprobación</a> verificaste tu perfil y tu región. El bloque conserva esos valores en la misma terminal. Si abriste otra, vuelve primero a <a href="#probar-aws">Comprobación</a> para seleccionar tu perfil y región.</p>
 <dl class="command-reasons">
   <div><dt><code>AWS_PROFILE</code></dt><dd>Copia el nombre del perfil de <code>$perfil</code>. Las credenciales temporales están en el perfil que guardaste en <code>~/.aws/credentials</code>.</dd></div>
   <div><dt><code>AWS_REGION</code></dt><dd>Copia <code>$region</code>. Serverless usa ese valor en <code>provider.region</code>.</dd></div>
@@ -623,7 +621,7 @@ resources:
 <div class="lambda-hero">
   <div>
     <h3>Programa tu primera Lambda</h3>
-    <p>Trabaja en <code>festival-checkin</code>. Si empiezas de cero, abre <a href="#iniciar-lab">Preparar AWS</a> y <a href="#nombres-tablas">Preparar proyecto</a> para dejar listas la sesión y la carpeta. En <a href="#infraestructura">Leer el YAML</a> puedes explorar la configuración y en <a href="#escribir-yaml">Crear el YAML</a> tienes el archivo completo para copiar.</p>
+    <p>Trabaja en <code>festival-checkin</code>. Antes de escribir código, completa <a href="#iniciar-lab">Preparación</a>. Puedes volver directamente a <a href="#infraestructura">Leer el YAML</a> o a <a href="#escribir-yaml">Crear el YAML</a>.</p>
     <p>Primero escribe el cliente de DynamoDB y el <code>handler.mjs</code> que guarda un evento. Después prepara los puntos de entrada de los pases en <code>src/pases/</code>. Completarás su lógica en <strong>Consultar · Capas</strong> e <strong>Inscribir · Capas</strong>.</p>
   </div>
   <div class="lambda-ticket">
@@ -1775,6 +1773,10 @@ aws dynamodb execute-statement \
 <nav class="guide-footer actions" aria-label="Avanzar por la práctica">
   <button type="button" id="guide-back">← Atrás</button>
   <button type="button" id="guide-next">Siguiente →</button>
+</nav>
+<nav class="course-references" aria-label="Material de consulta">
+  <a href="#infografia-terminal">Infografía</a>
+  <a href="#json-modelo">Modelo JSON</a>
 </nav>
 </main>
 </body>

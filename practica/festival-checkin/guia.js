@@ -33,6 +33,7 @@ function navigate(id) {
 }
 
 const previousSteps = new Map([
+  ['conexion', 'iniciar-lab'],
   ['crear-eventos', 'infraestructura'],
   ['crear-inscripciones', 'infraestructura'],
   ['crear-lambda', 'archivo-lambda'],
@@ -48,7 +49,7 @@ const previousSteps = new Map([
   ['capas-patch', 'otro-equipo']
 ]);
 
-function showRoute() {
+function showRoute(event) {
   const hash = location.hash.slice(1);
   const target = document.getElementById(previousSteps.get(hash) ?? hash) ?? courseSteps[0];
   const phase = target.closest('.phase') ?? courseSteps[0].closest('.phase');
@@ -81,13 +82,18 @@ function showRoute() {
   back.textContent = courseIndex < 0 ? '← Volver al paso' : '← Atrás';
   back.disabled = courseIndex === 0;
   next.hidden = index < 0;
+  const followingStep = courseSteps[courseIndex + 1];
+  const followingPhase = followingStep?.closest('.phase');
+  const followingLabel = phaseButtons.find(control => control.dataset.phase === followingPhase?.id)
+    ?.querySelector('strong')?.textContent;
   next.textContent = courseIndex === courseSteps.length - 1 ? 'Abrir pantalla de prueba →'
-    : activeStep?.id === 'modelo-titulo' ? 'Preparar las tablas →'
-    : courseIndex < 0 && index === phaseSteps.length - 1 ? 'Ir a Lambdas →' : 'Siguiente →';
+    : courseIndex < 0 && index === phaseSteps.length - 1 ? 'Volver al recorrido →'
+    : courseIndex >= 0 && followingPhase !== phase && followingLabel ? 'Ir a ' + followingLabel + ' →'
+    : 'Siguiente →';
   window.scrollTo(0, 0);
   const heading = activeStep?.querySelector('h3') ?? phase.querySelector('h2');
   heading.tabIndex = -1;
-  heading.focus({ preventScroll: true });
+  if (event) heading.focus({ preventScroll: true });
 }
 
 for (const control of phaseButtons) {
@@ -99,13 +105,11 @@ back.addEventListener('click', () => {
 });
 next.addEventListener('click', () => {
   const index = courseSteps.indexOf(activeStep);
-  if (activeStep?.id === 'modelo-titulo') {
-    navigate('nombres-tablas');
-  } else if (index >= 0) {
+  if (index >= 0) {
     navigate(courseSteps[index + 1]?.id ?? 'pantalla');
   } else {
     const sibling = activeStep?.nextElementSibling;
-    navigate(sibling?.matches('.guide-step') ? sibling.id : 'archivo-lambda');
+    navigate(sibling?.matches('.guide-step') ? sibling.id : lastCourseStep.id);
   }
 });
 window.addEventListener('hashchange', showRoute);
@@ -372,7 +376,7 @@ for (const choice of accessButtons) {
   });
 }
 
-const commands = '#conexion .guide-step:not(#pegar-aws) pre, #infra pre, #datos pre, #prueba pre';
+const commands = '#infra .guide-step:not(#pegar-aws) pre, #datos pre, #prueba pre';
 for (const pre of document.querySelectorAll(commands)) {
   if (!pre.hasAttribute('data-diagram')) addCodeControls(pre);
 }
