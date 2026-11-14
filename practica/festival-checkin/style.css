@@ -904,3 +904,58 @@ code { overflow-wrap: anywhere; }
 .dynamo-results h5 { margin: 0 0 8px; font-size: 1rem; color: #9ee4d8; }
 .dynamo-results pre { white-space: pre-wrap; overflow-wrap: anywhere; }
 .dynamo-results p { margin: 0; }
+
+.festival-ticket {
+  --ticket-ink: #1d2825;
+  --ticket-paper: #e3f3cc;
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(160px, 1fr);
+  overflow: hidden;
+  border-radius: 16px;
+  color: var(--ticket-ink);
+  background: var(--ticket-paper);
+  margin-bottom: 18px;
+}
+.festival-ticket-story { padding: clamp(18px, 4vw, 44px); }
+.festival-ticket-label {
+  margin: 0 0 4px;
+  font-weight: 700;
+  color: #325748;
+}
+.festival-ticket h3 {
+  margin: 0;
+  font-size: clamp(1.9rem, 5vw, 3.6rem);
+  line-height: 1.06;
+  letter-spacing: -.05em;
+}
+.festival-ticket-story > p:last-child { margin: 10px 0 0; }
+.festival-ticket-ids {
+  display: grid;
+  align-content: center;
+  gap: 12px;
+  margin: 0;
+  padding: 18px clamp(16px, 3vw, 36px);
+  border-inline-start: 2px dashed #7d9a78;
+  background: #d5e9bc;
+}
+.festival-ticket-ids dt { font-size: .85rem; color: #325748; }
+.festival-ticket-ids dd { margin: 3px 0 0; font-size: 1.1rem; font-weight: 750; }
+.festival-rehearsal { display: grid; gap: 16px; align-items: start; }
+#ensayo-pantalla .phone-layout { grid-template-columns: minmax(0, 370px); justify-content: center; margin: 0; }
+#ensayo-pantalla .phone-inspector { display: none; }
+#ensayo-pantalla .phone-settings { display: none; }
+.learning-choice { padding: 16px; background: var(--surface); border-radius: 12px; }
+.learning-choice h4 { margin: 0 0 10px; }
+.learning-feedback { margin: 10px 0 0; color: #9ee4d8; }
+.learning-feedback:empty { margin: 0; }
+@media (min-width: 761px) {
+  .festival-rehearsal { grid-template-columns: minmax(0, 370px) minmax(0, 460px); justify-content: center; }
+}
+@media (max-width: 600px) {
+  .festival-ticket { grid-template-columns: minmax(0, 1fr); }
+  .festival-ticket-ids {
+    grid-template-columns: 1fr 1fr;
+    border-inline-start: 0;
+    border-block-start: 2px dashed #7d9a78;
+  }
+}

@@ -21,7 +21,7 @@ const DEMO_TITLE = 'Festival de otoño';
 const demoRegistrations = new Map();
 
 function clearScreen() {
-  const demo = mode.value === 'demo';
+  const demo = inGuidedRehearsal() || mode.value === 'demo';
   document.querySelector('#endpoint-field').hidden = demo;
   document.querySelector('#event-id-field').hidden = demo;
   requestTrace.hidden = true;
@@ -31,6 +31,11 @@ function clearScreen() {
   feedback.textContent = demo ? 'Ensayo · datos en memoria' : 'AWS · pulsa Consultar para leer la API';
   response.textContent = 'Pulsa Consultar para empezar.';
 }
+function inGuidedRehearsal() {
+  return Boolean(mode.closest('#ensayo-pantalla'));
+}
+
+document.addEventListener('festival:screen-change', clearScreen);
 mode.addEventListener('change', clearScreen);
 user.addEventListener('input', clearScreen);
 endpoint.addEventListener('input', clearScreen);
@@ -79,8 +84,9 @@ function showPass(body) {
 }
 
 async function run(method) {
-  const userId = user.value.trim();
-  const demo = mode.value === 'demo';
+  const rehearsing = inGuidedRehearsal();
+  const userId = rehearsing ? 'usuario-02' : user.value.trim();
+  const demo = rehearsing || mode.value === 'demo';
   const eventId = demo ? String(DEMO_EVENT_ID) : eventInput.value.trim();
   const label = demo ? 'Ensayo' : 'AWS';
   if (!userId) {

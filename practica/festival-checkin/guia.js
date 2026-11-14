@@ -58,7 +58,10 @@ function showRoute(event) {
   if (courseSteps.includes(activeStep)) lastCourseStep = activeStep;
 
   const phoneDestination = activeStep?.id === 'ensayar-pase' ? previewScreen : testScreen;
-  if (phoneLayout.parentElement !== phoneDestination) phoneDestination.append(phoneLayout);
+  if (phoneLayout.parentElement !== phoneDestination) {
+    phoneDestination.append(phoneLayout);
+    document.dispatchEvent(new Event('festival:screen-change'));
+  }
 
   for (const section of phases) section.hidden = section !== phase;
   for (const step of steps) step.hidden = step !== activeStep;
@@ -364,6 +367,16 @@ for (const diagram of document.querySelectorAll('[data-architecture]')) {
 
   diagram.addEventListener('keydown', event => {
     if (event.key === 'Escape') openNote(null);
+  });
+}
+
+const prediction = document.querySelector('.learning-choice');
+const answers = prediction.querySelectorAll('[data-answer]');
+const predictionFeedback = prediction.querySelector('.learning-feedback');
+for (const answer of answers) {
+  answer.addEventListener('click', () => {
+    for (const option of answers) option.setAttribute('aria-pressed', String(option === answer));
+    predictionFeedback.textContent = answer.dataset.answer;
   });
 }
 

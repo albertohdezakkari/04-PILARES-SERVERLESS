@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Festival Check-in · práctica guiada</title>
-<link rel="stylesheet" href="style.css?v=recorrido-guiado">
-<script type="module" src="app.js?v=pases-orm"></script>
-<script type="module" src="guia.js?v=recorrido-guiado"></script>
+<link rel="stylesheet" href="style.css?v=pase-leo">
+<script type="module" src="app.js?v=pase-leo"></script>
+<script type="module" src="guia.js?v=pase-leo"></script>
 <script type="module" src="visor-modelo.js?v=referencias"></script>
 <script type="module" src="entrenamiento-dynamo.js?v=referencias"></script>
 </head>
@@ -48,9 +48,34 @@
 </section>
 <section id="diseno" class="phase" hidden>
 <h2>Del caso de uso al diseño de datos</h2>
+<article id="ensayar-pase" class="guide-step" data-step="Inscribir a Leo">
+<div class="festival-ticket">
+  <div class="festival-ticket-story">
+    <p class="festival-ticket-label">Festival de otoño</p>
+    <h3>Inscríbete como Leo</h3>
+    <p>Consulta el pase en el móvil. Después pulsa <strong>Inscribirse</strong> y vuelve a consultar.</p>
+  </div>
+  <dl class="festival-ticket-ids">
+    <div><dt>Evento</dt><dd><code>1</code></dd></div>
+    <div><dt>Usuario</dt><dd><code>usuario-02</code></dd></div>
+  </dl>
+</div>
+<div class="festival-rehearsal">
+<div id="ensayo-pantalla"></div>
+<section class="learning-choice" aria-labelledby="pregunta-leo">
+  <h4 id="pregunta-leo">¿Qué identifica el pase de Leo para este festival?</h4>
+  <div class="actions" role="group" aria-labelledby="pregunta-leo">
+    <button type="button" data-answer="Leo puede apuntarse a otro evento. ¿Qué dato distingue los dos pases?" aria-pressed="false">El código de Leo</button>
+    <button type="button" data-answer="Exacto. El evento 1 y usuario-02 juntos identifican este pase." aria-pressed="false">El evento y el usuario</button>
+    <button type="button" data-answer="Al evento se apuntan varias personas. ¿Qué dato distingue el pase de Leo?" aria-pressed="false">El número del evento</button>
+  </div>
+  <p class="learning-feedback" role="status"></p>
+</section>
+</div>
+</article>
 <article id="entidad-relacion" class="guide-step" data-step="Entidad–relación">
 <h3>Del diagrama entidad–relación a DynamoDB</h3>
-<p>Un usuario puede inscribirse en varios eventos y cada evento puede tener varios usuarios inscritos. <strong>INSCRIPCION</strong> representa ese vínculo <strong>muchos a muchos</strong> y guarda cuándo se inscribió el usuario y cuándo entró.</p>
+<p>Leo puede apuntarse a varios eventos. Al Festival de otoño pueden apuntarse varias personas. Cada <strong>inscripción</strong> une a una persona con un evento.</p>
 <h4 class="design-label">Entidades y cardinalidades</h4>
 <div class="er-diagram" role="group" aria-label="Un evento tiene de cero a muchas inscripciones. Un usuario tiene de cero a muchas inscripciones. Cada inscripción vincula un evento y un usuario.">
   <section><h4>EVENTO</h4><code>EVENT_ID</code><span><code>TITLE</code> · obligatorio</span></section>
@@ -92,26 +117,7 @@
     <p>Lee el perfil con <code>USER_ID</code>. Ese mismo código aparece en las inscripciones de Leo.</p>
   </section>
 </div>
-<h4 class="design-label">Dos consultas sobre las mismas inscripciones</h4>
-<ul class="route-map" role="list">
-  <li>
-    <span>Tabla <code>FCI_INSCRIPCIONES</code> · <code>Query</code></span>
-    <strong>Usuarios de un evento</strong>
-    <p>Busca por <code>EVENT_ID</code>, la clave de partición. En este ejemplo, <code>1</code> devuelve <code>usuario-01</code> y <code>usuario-02</code>.</p>
-  </li>
-  <li>
-    <span>Índice <code>PorUsuario</code> · <code>Query</code></span>
-    <strong>Eventos de un usuario</strong>
-    <p>Busca por <code>USER_ID</code>, la clave de partición del índice. En este ejemplo, <code>usuario-02</code> devuelve <code>1</code> y <code>2</code>.</p>
-  </li>
-</ul>
-<p class="checkpoint"><strong>Antes de avanzar</strong> Comprueba en cuál de las dos consultas empiezas por <code>1</code> y en cuál por <code>usuario-02</code>. Después <a href="#ensayar-pase">prueba el pase en el móvil</a>. Puedes ejecutar ambas consultas en <a href="#consultar-indice">Validación → Consultar índice</a>.</p>
-</article>
-<article id="ensayar-pase" class="guide-step" data-step="Ensayar el pase">
-<h3>Prueba el pase que vas a construir</h3>
-<p>Selecciona <strong>Ensayo</strong> y usa un código nuevo, por ejemplo <code>usuario-02</code>. Pulsa <strong>Consultar → Inscribirse</strong> y fíjate en cómo cambia el estado del pase.</p>
-<div id="ensayo-pantalla"></div>
-<p class="checkpoint"><strong>Antes de avanzar</strong> El pase pasa por <strong>Sin inscripción → Inscrito</strong>. Pulsa <strong>Consultar</strong> otra vez y localiza <code>registeredAt</code> en la respuesta. En <strong>Preguntas y claves</strong> verás qué datos necesita cada búsqueda.</p>
+<p class="lesson-note">Sigue el <code>1</code> desde Eventos hasta Inscripciones. Sigue <code>usuario-02</code> desde Usuarios hasta la misma inscripción. DynamoDB localiza el pase con esas dos claves. El servicio comprueba que existan el evento y el usuario antes de guardar.</p>
 </article>
 <article id="patrones-acceso" class="guide-step" data-step="Preguntas y claves">
 <h3>De las preguntas a las claves de DynamoDB</h3>
@@ -134,19 +140,11 @@
 </article>
 <article id="modelo-titulo" class="guide-step" data-step="Probar el diseño">
 <h3>Convierte el modelo en tres tablas y pruébalo</h3>
-<p>Escribe los atributos de DynamoDB en mayúsculas con guion bajo, como <code>EVENT_ID</code>. Cuando la API recibe o devuelve JSON, usa nombres como <code>eventId</code>. Verás cómo traducirlos en <a href="#leer-pase">Consultar · Capas</a>.</p>
-<p class="lesson-note"><strong>Convención de Base de Datos.</strong> Llama a las entidades <strong>Evento</strong>, <strong>Inscripción</strong> y <strong>Usuario</strong>. Usa la abreviatura del proyecto, un guion bajo y el nombre de la tabla en plural. En Festival Check-in obtienes <code>FCI_EVENTOS</code>, <code>FCI_INSCRIPCIONES</code> y <code>FCI_USUARIOS</code>. «San Valentín» sería el título de un evento guardado en <code>FCI_EVENTOS</code>.</p>
-<p><strong>Evento → EVENTOS.</strong> Guarda <code>EVENT_ID</code> y <code>TITLE</code>, ambos obligatorios. <strong>Inscripción → INSCRIPCIONES.</strong> Guarda <code>EVENT_ID</code>, <code>USER_ID</code>, <code>REGISTERED_AT</code> y, si hay una fecha de entrada registrada, <code>CHECKED_IN_AT</code>.</p>
-<p><code>EVENT_ID</code> y <code>USER_ID</code> son referencias al evento y a la persona, como dos claves foráneas en un modelo relacional. La clave primaria de la inscripción es la pareja <code>EVENT_ID</code> + <code>USER_ID</code>, que garantiza una inscripción por persona y evento.</p>
-<p><strong>Usuario → USUARIOS.</strong> Guarda <code>USER_ID</code>, <code>DISPLAY_NAME</code> y <code>CITY</code>. Si Leo cambia de ciudad, actualiza su perfil una vez. Sus inscripciones conservan el mismo <code>USER_ID</code>.</p>
-<p>Las referencias funcionan como claves foráneas en el dibujo. En DynamoDB las comprueba el service antes de guardar la inscripción. Si falta el evento o el usuario, POST devuelve <code>404</code>. Crea y consulta los perfiles desde <a href="#sembrar-usuarios">Invocar crearUsuario</a>.</p>
+<p>Localiza a <strong>Leo Martín</strong> y el <strong>Festival de otoño</strong>. Sus identificadores se juntan en la inscripción. Prueba a filtrar por evento y luego por evento y usuario.</p>
 <p id="model-status" role="status">Cargando el ejemplo…</p>
 <div id="model-result">
 </div>
-<p><strong>Lee los datos de ejemplo.</strong> <code>REGISTERED_AT</code> indica cuándo se inscribió el usuario. <code>CHECKED_IN_AT</code> aparece en un pase de ejemplo con una entrada previa. En el laboratorio, la tabla de inscripciones empezará vacía y se llenará al probar POST.</p>
-<p class="checkpoint"><strong>Antes de avanzar</strong> En <code>FCI_USUARIOS</code>, localiza a Leo con <code>USER_ID = usuario-02</code>. Pulsa <strong>Ver inscritos del evento</strong>. Aparecen dos filas con <code>EVENT_ID = 1</code> y dos <code>USER_ID</code> distintos. Pulsa <strong>Buscar a usuario-02</strong>. Ahora solo aparece la fila de <code>usuario-02</code>.</p>
-<h4>Del modelo a las tablas del laboratorio</h4>
-<p>En <strong>Preparación</strong> abres el laboratorio y trasladas a <code>serverless.yml</code> las claves que acabas de probar. En <strong>Lambdas</strong> programas el alta y despliegas las tres tablas.</p>
+<p class="checkpoint"><strong>Antes de avanzar</strong> Al buscar por evento ves dos inscritos. Al añadir <code>usuario-02</code> queda solo el pase de Leo. En Preparación llevarás esas claves a <code>serverless.yml</code>.</p>
 <div class="actions"><a class="lesson-action" href="#iniciar-lab">Continuar a preparación →</a><a href="#infraestructura">Abrir el árbol de <code>serverless.yml</code></a></div>
 </article>
 </section>
@@ -1748,7 +1746,7 @@ aws dynamodb execute-statement \
           <label>Conexión<select id="mode"><option value="demo">Ensayo · datos en memoria</option><option value="aws">AWS · API del equipo</option></select></label>
           <label id="endpoint-field" hidden>URL de invocación<input id="endpoint" type="url" placeholder="https://…execute-api.…amazonaws.com" autocomplete="off"></label>
           <label id="event-id-field" hidden>ID del evento<input id="event-id" inputmode="numeric" value="1" autocomplete="off"></label>
-          <label>Usuario ficticio<input id="user" value="usuario-01" autocomplete="off"></label>
+          <label>Usuario ficticio<input id="user" value="usuario-02" autocomplete="off"></label>
         </div>
         <div class="phone-actions">
           <button type="button" data-method="GET">Consultar</button>
