@@ -4,7 +4,7 @@
     "Author": "Festival Check-in",
     "Description": "Modelo de aula con registros ficticios para comparar inscripción y asistencia.",
     "AWSService": "Amazon DynamoDB",
-    "Version": "6.0"
+    "Version": "7.0"
   },
   "DataModel": [
     {
@@ -68,14 +68,16 @@
         "PartitionKey": { "AttributeName": "USER_ID", "AttributeType": "S" }
       },
       "NonKeyAttributes": [
-        { "AttributeName": "DISPLAY_NAME", "AttributeType": "S" },
+        { "AttributeName": "FIRST_NAME", "AttributeType": "S" },
+        { "AttributeName": "LAST_NAME", "AttributeType": "S" },
+        { "AttributeName": "EMAIL", "AttributeType": "S" },
         { "AttributeName": "CITY", "AttributeType": "S" }
       ],
       "GlobalSecondaryIndexes": [],
       "DataAccess": {},
       "TableData": [
-        { "USER_ID": { "S": "usuario-01" }, "DISPLAY_NAME": { "S": "Ana Ruiz" }, "CITY": { "S": "Zaragoza" } },
-        { "USER_ID": { "S": "usuario-02" }, "DISPLAY_NAME": { "S": "Leo Martín" }, "CITY": { "S": "Huesca" } }
+        { "USER_ID": { "S": "usuario-01" }, "FIRST_NAME": { "S": "Ana" }, "LAST_NAME": { "S": "Ruiz" }, "EMAIL": { "S": "ana.ruiz@example.com" }, "CITY": { "S": "Zaragoza" } },
+        { "USER_ID": { "S": "usuario-02" }, "FIRST_NAME": { "S": "Leo" }, "LAST_NAME": { "S": "Martín" }, "EMAIL": { "S": "leo.martin@example.com" }, "CITY": { "S": "Huesca" } }
       ]
     }
   ]

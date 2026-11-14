@@ -75,17 +75,22 @@ function renderTable(model) {
   return { name, section, renderedRows };
 }
 
+function profileName(row) {
+  const names = [row.FIRST_NAME, row.LAST_NAME].filter(value => value !== undefined);
+  return names.map(formatValue).join(' ') || formatValue(row.DISPLAY_NAME ?? row.USER_ID);
+}
+
 function createPractice(events, registrations, users) {
   const event = events.renderedRows.find(({ row }) => formatValue(row.EVENT_ID) === '1');
   const person = users.renderedRows.find(({ row }) => formatValue(row.USER_ID) === 'usuario-02');
   if (!event || !person) return null;
 
   const title = formatValue(event.row.TITLE);
-  const name = formatValue(person.row.DISPLAY_NAME);
+  const firstName = person.row.FIRST_NAME ? formatValue(person.row.FIRST_NAME) : profileName(person.row);
   const panel = element('div', undefined, 'model-search-card');
   const filters = element('div', undefined, 'actions model-search-filters');
   const byEvent = element('button', 'Todos los inscritos');
-  const byPerson = element('button', 'Solo el pase de ' + name.split(' ')[0]);
+  const byPerson = element('button', 'Solo el pase de ' + firstName);
   byEvent.type = byPerson.type = 'button';
   filters.append(byEvent, byPerson);
   const summary = element('p', undefined, 'model-search-count');
@@ -110,7 +115,7 @@ function createPractice(events, registrations, users) {
       const profile = users.renderedRows.find(({ row }) => formatValue(row.USER_ID) === userId);
       const pass = element('li');
       pass.append(
-        element('strong', profile ? formatValue(profile.row.DISPLAY_NAME) : userId),
+        element('strong', profile ? profileName(profile.row) : userId),
         element('code', userId)
       );
       return pass;
@@ -180,7 +185,7 @@ function showModel(message = status) {
 async function loadExample(message, onlyIfEmpty = false) {
   example.disabled = true;
   try {
-    const response = await fetch('modelo-dynamodb.json?v=referencias');
+    const response = await fetch('modelo-dynamodb.json?v=perfil-usuario');
     if (!response.ok) throw new Error('El ejemplo no está disponible en este momento.');
     const source = await response.text();
     if (onlyIfEmpty && input.value.trim()) return;

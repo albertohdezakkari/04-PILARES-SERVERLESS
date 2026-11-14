@@ -14,7 +14,7 @@
 <p>Modelo inicial de Festival Control. Sigue las conexiones para entender qué guarda cada tabla y cómo una inscripción relaciona a un usuario con un evento.</p>
 <img class="poster" src="infografia.png" alt="Infografía de Users, Events y Registrations: relaciones uno a muchos, claves PK y SK y diferencia entre inscribirse y registrar la entrada. Explicación equivalente a continuación.">
 <details id="lectura" open><summary>Las tres tablas y sus relaciones</summary>
-<ul><li><strong>Users: quién es la persona.</strong> userId es la clave de partición (PK). displayName guarda el nombre visible y createdAt la fecha de creación.</li>
+<ul><li><strong>Users: quién es la persona.</strong> userId es la clave de partición (PK). firstName y lastName guardan el nombre y los apellidos por separado. email guarda el correo y createdAt la fecha de creación.</li>
 <li><strong>Events: qué ocurre.</strong> eventId es la PK. También guarda organizerId, title, startsAt, capacity y status. organizerId identifica al usuario organizador.</li>
 <li><strong>Registrations: quién se apunta a qué evento.</strong> eventId es la PK y userId la clave de ordenación (SK). La pareja identifica una inscripción. Guarda status, registeredAt y, al registrar la entrada, checkedInAt y checkedInBy.</li></ul>
 <p>Un usuario puede tener cero o muchas inscripciones; cada inscripción corresponde a un usuario. Un evento puede tener cero o muchas inscripciones; cada inscripción corresponde a un evento. Un organizador puede organizar muchos eventos.</p>

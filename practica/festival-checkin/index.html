@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="style.css?v=seguir-claves">
 <script type="module" src="app.js?v=pase-leo"></script>
 <script type="module" src="guia.js?v=seguir-claves"></script>
-<script type="module" src="visor-modelo.js?v=buscar-pase"></script>
+<script type="module" src="visor-modelo.js?v=perfil-usuario"></script>
 <script type="module" src="entrenamiento-dynamo.js?v=referencias"></script>
 </head>
 <body>
@@ -83,7 +83,7 @@
   <div class="er-edge" aria-hidden="true"><b>1</b><i></i><b>0..N</b></div>
   <section class="schema-registration"><h4>INSCRIPCION</h4><div class="schema-keys"><code data-schema-key="event">EVENT_ID</code><span aria-hidden="true">+</span><code data-schema-key="user">USER_ID</code></div><span><code>REGISTERED_AT</code> · inscripción</span><span><code>CHECKED_IN_AT</code> · entrada opcional</span></section>
   <div class="er-edge" aria-hidden="true"><b>0..N</b><i></i><b>1</b></div>
-  <section class="schema-user"><h4>USUARIO</h4><code data-schema-key="user">USER_ID</code><span><code>DISPLAY_NAME</code> · nombre visible</span><span><code>CITY</code> · ciudad</span></section>
+  <section class="schema-user"><h4>USUARIO</h4><code data-schema-key="user">USER_ID</code><span><code>FIRST_NAME</code> · nombre</span><span><code>LAST_NAME</code> · apellidos</span><span><code>EMAIL</code> · correo</span><span><code>CITY</code> · ciudad</span></section>
 </div>
 <div class="schema-bridge">
   <h4 id="dynamo-mapping">Cómo se guardan en DynamoDB</h4>
@@ -119,10 +119,12 @@
     <h5><code>FCI_USUARIOS</code></h5>
     <dl>
       <div data-schema-key="user"><dt><abbr class="dynamo-pk" title="Clave de partición">PK</abbr> <code>USER_ID</code></dt><dd><code>usuario-02</code></dd></div>
-      <div><dt><code>DISPLAY_NAME</code></dt><dd>Leo Martín</dd></div>
+      <div><dt><code>FIRST_NAME</code></dt><dd>Leo</dd></div>
+      <div><dt><code>LAST_NAME</code></dt><dd>Martín</dd></div>
+      <div><dt><code>EMAIL</code></dt><dd>leo.martin@example.com</dd></div>
       <div><dt><code>CITY</code></dt><dd>Huesca</dd></div>
     </dl>
-    <p>Lee el perfil con <code>USER_ID</code>. Ese mismo código aparece en las inscripciones de Leo.</p>
+    <p>Las inscripciones referencian <code>USER_ID</code>. Si Leo cambia de correo, actualizas su perfil y sus pases siguen vinculados al mismo identificador.</p>
   </section>
 </div>
 </div>
@@ -412,7 +414,7 @@ LAMBDA_ROLE_ARN=$(aws iam get-role --role-name LabRole --profile "$perfil" --reg
       <div><dt><code>inscribirUsuario:</code></dt><dd>Lambda que crea la inscripción cuando API Gateway recibe <code>POST</code> en la ruta del pase.</dd></div>
       <div><dt><code>handler: src/pases/inscribir-usuario/handler.handler</code></dt><dd><code>src/pases/inscribir-usuario/handler</code> identifica el archivo <code>handler.mjs</code>. Lambda ejecuta su función exportada <code>handler</code>.</dd></div>
       <div><dt data-lines="crearEvento:|handler: src/eventos/crear-evento/handler.handler"><code>crearEvento:</code></dt><dd>Lambda que invocas desde la terminal para guardar un evento con el ID que envías. En <code>handler.handler</code>, el primer <code>handler</code> identifica el archivo <code>handler.mjs</code> y el segundo, la función que exporta. <code>name</code> fija el nombre usado por AWS CLI.</dd></div>
-      <div><dt data-lines="crearUsuario:|handler: src/usuarios/crear-usuario/handler.handler"><code>crearUsuario:</code></dt><dd>Lambda que guarda un perfil en <code>FCI_USUARIOS</code>. La invocas desde AWS CLI con el código, el nombre visible y la ciudad.</dd></div>
+      <div><dt data-lines="crearUsuario:|handler: src/usuarios/crear-usuario/handler.handler"><code>crearUsuario:</code></dt><dd>Lambda que guarda un perfil en <code>FCI_USUARIOS</code>. La invocas desde AWS CLI con el código, el nombre, los apellidos, el correo y la ciudad.</dd></div>
       <div><dt data-lines="events:|httpApi:"><code>events:</code></dt><dd>Lista lo que puede activar esa Lambda. Cada <code>- httpApi:</code> añade una ruta HTTP.</dd></div>
       <div><dt><code>method:</code></dt><dd>Selecciona el método HTTP de la ruta. Junto con <code>path</code>, identifica la ruta que activa el handler de ese bloque.</dd></div>
       <div><dt><code>path:</code></dt><dd>Define la dirección que se compara con la petición. En <code>/events/1/registrations/usuario-02</code>, las llaves de la plantilla marcan los huecos: <code>{eventId}</code> recibe <code>1</code> y <code>{userId}</code> recibe <code>usuario-02</code>.</dd></div>
@@ -485,7 +487,7 @@ LAMBDA_ROLE_ARN=$(aws iam get-role --role-name LabRole --profile "$perfil" --reg
     <h4>Cómo se crea USUARIOS</h4>
     <dl class="yaml-terms">
       <div><dt><code>FestivalCheckInUsuarios:</code></dt><dd>Nombre lógico del recurso que crea <code>FCI_USUARIOS</code>.</dd></div>
-      <div><dt data-lines="AttributeDefinitions:|AttributeType:"><code>AttributeDefinitions:</code></dt><dd><code>USER_ID</code> es de tipo <code>S</code>, texto. Añadirás <code>DISPLAY_NAME</code> y <code>CITY</code> al escribir cada ítem.</dd></div>
+      <div><dt data-lines="AttributeDefinitions:|AttributeType:"><code>AttributeDefinitions:</code></dt><dd><code>USER_ID</code> es de tipo <code>S</code>, texto. El alta escribe <code>FIRST_NAME</code>, <code>LAST_NAME</code>, <code>EMAIL</code> y <code>CITY</code> como atributos del perfil. <code>AttributeDefinitions</code> declara los atributos usados en claves.</dd></div>
       <div><dt data-lines="KeySchema:|KeyType:"><code>KeySchema:</code></dt><dd><code>HASH</code> declara <code>USER_ID</code> como única clave. Cada código corresponde a un perfil.</dd></div>
     </dl>
   </section>
@@ -751,16 +753,29 @@ export async function handler({ eventId, title } = {}) {
   </section>
   <section id="modulo-lambda-usuarios" data-explanation hidden>
     <h5><code>src/usuarios/crear-usuario/handler.mjs</code></h5>
-    <p>La Lambda guarda el perfil que luego referencia la inscripción. La condición protege un <code>USER_ID</code> que ya existe.</p>
+    <p>La Lambda exige nombre, apellidos y correo. La condición protege un <code>USER_ID</code> que ya existe.</p>
     <pre><code>mkdir -p src/usuarios/crear-usuario &amp;&amp; ls -ld src/usuarios/crear-usuario &amp;&amp;
 touch src/usuarios/crear-usuario/handler.mjs &amp;&amp; vi src/usuarios/crear-usuario/handler.mjs</code></pre>
     <pre data-file="src/usuarios/crear-usuario/handler.mjs"><code>import { PutCommand } from &#x27;@aws-sdk/lib-dynamodb&#x27;;
 import { db, TABLA_USUARIOS_FCI } from &#x27;../../datos/dynamo.mjs&#x27;;
 
-export async function handler({ userId, displayName, city }) {
+export async function handler({ userId, firstName, lastName, email, city } = {}) {
+  if (typeof userId !== 'string' || !userId.trim()) {
+    throw new Error('Indica el código de usuario');
+  }
+  if (typeof firstName !== 'string' || !firstName.trim() ||
+      typeof lastName !== 'string' || !lastName.trim()) {
+    throw new Error('Indica el nombre y los apellidos');
+  }
+  if (typeof email !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+    throw new Error('Indica un correo con formato válido');
+  }
+
   const perfil = {
-    USER_ID: userId,
-    DISPLAY_NAME: displayName,
+    USER_ID: userId.trim(),
+    FIRST_NAME: firstName.trim(),
+    LAST_NAME: lastName.trim(),
+    EMAIL: email.trim(),
     CITY: city
   };
 
@@ -770,7 +785,7 @@ export async function handler({ userId, displayName, city }) {
     ConditionExpression: &#x27;attribute_not_exists(USER_ID)&#x27;
   }));
 
-  return { userId, displayName, city };
+  return { userId: perfil.USER_ID };
 }</code></pre>
   </section>
   <section id="modulo-lambda-5" data-explanation hidden>
@@ -898,7 +913,7 @@ done</code></pre>
 </article>
 <article id="sembrar-usuarios" class="guide-step" data-step="Invocar crearUsuario">
 <h3>Crea los perfiles con la Lambda</h3>
-<p>Desde <code>festival-checkin</code>, usa la terminal del paso <a href="#salidas-stack">Salidas</a>. Cada llamada entrega un perfil ficticio al handler <code>crearUsuario</code>. Ejecuta el bloque una vez. Si un código ya existe, DynamoDB conserva su perfil.</p>
+<p>Desde <code>festival-checkin</code>, usa la terminal del paso <a href="#salidas-stack">Salidas</a>. Cada llamada entrega un perfil ficticio al handler <code>crearUsuario</code>. Ejecuta el bloque una vez con los datos ficticios. Si ya cargaste los perfiles de una versión anterior y quieres repetir el ejercicio, usa códigos libres y reutiliza esos mismos códigos en las pruebas de inscripción.</p>
 <pre><code>crear_usuario() (
   respuesta=$(mktemp) || exit 1
   trap &#x27;rm -f &quot;$respuesta&quot;&#x27; EXIT
@@ -918,18 +933,18 @@ done</code></pre>
   &#x27; &quot;$respuesta&quot;
 )
 
-crear_usuario &#x27;{&quot;userId&quot;:&quot;usuario-01&quot;,&quot;displayName&quot;:&quot;Ana Ruiz&quot;,&quot;city&quot;:&quot;Zaragoza&quot;}&#x27;
-crear_usuario &#x27;{&quot;userId&quot;:&quot;usuario-02&quot;,&quot;displayName&quot;:&quot;Leo Martín&quot;,&quot;city&quot;:&quot;Huesca&quot;}&#x27;
-crear_usuario &#x27;{&quot;userId&quot;:&quot;usuario-03&quot;,&quot;displayName&quot;:&quot;Eva Gil&quot;,&quot;city&quot;:&quot;Teruel&quot;}&#x27;
-crear_usuario &#x27;{&quot;userId&quot;:&quot;usuario-04&quot;,&quot;displayName&quot;:&quot;Hugo Sol&quot;,&quot;city&quot;:&quot;Huesca&quot;}&#x27;
-crear_usuario &#x27;{&quot;userId&quot;:&quot;usuario-05&quot;,&quot;displayName&quot;:&quot;Irene Rey&quot;,&quot;city&quot;:&quot;Zaragoza&quot;}&#x27;
-crear_usuario &#x27;{&quot;userId&quot;:&quot;usuario-06&quot;,&quot;displayName&quot;:&quot;Pablo Vidal&quot;,&quot;city&quot;:&quot;Teruel&quot;}&#x27;</code></pre>
+crear_usuario &#x27;{&quot;userId&quot;:&quot;usuario-01&quot;,&quot;firstName&quot;:&quot;Ana&quot;,&quot;lastName&quot;:&quot;Ruiz&quot;,&quot;email&quot;:&quot;ana.ruiz@example.com&quot;,&quot;city&quot;:&quot;Zaragoza&quot;}&#x27;
+crear_usuario &#x27;{&quot;userId&quot;:&quot;usuario-02&quot;,&quot;firstName&quot;:&quot;Leo&quot;,&quot;lastName&quot;:&quot;Martín&quot;,&quot;email&quot;:&quot;leo.martin@example.com&quot;,&quot;city&quot;:&quot;Huesca&quot;}&#x27;
+crear_usuario &#x27;{&quot;userId&quot;:&quot;usuario-03&quot;,&quot;firstName&quot;:&quot;Eva&quot;,&quot;lastName&quot;:&quot;Gil&quot;,&quot;email&quot;:&quot;eva.gil@example.com&quot;,&quot;city&quot;:&quot;Teruel&quot;}&#x27;
+crear_usuario &#x27;{&quot;userId&quot;:&quot;usuario-04&quot;,&quot;firstName&quot;:&quot;Hugo&quot;,&quot;lastName&quot;:&quot;Sol&quot;,&quot;email&quot;:&quot;hugo.sol@example.com&quot;,&quot;city&quot;:&quot;Huesca&quot;}&#x27;
+crear_usuario &#x27;{&quot;userId&quot;:&quot;usuario-05&quot;,&quot;firstName&quot;:&quot;Irene&quot;,&quot;lastName&quot;:&quot;Rey&quot;,&quot;email&quot;:&quot;irene.rey@example.com&quot;,&quot;city&quot;:&quot;Zaragoza&quot;}&#x27;
+crear_usuario &#x27;{&quot;userId&quot;:&quot;usuario-06&quot;,&quot;firstName&quot;:&quot;Pablo&quot;,&quot;lastName&quot;:&quot;Vidal&quot;,&quot;email&quot;:&quot;pablo.vidal@example.com&quot;,&quot;city&quot;:&quot;Teruel&quot;}&#x27;</code></pre>
 <p>Comprueba que el perfil de Leo se guardó con el mismo <code>USER_ID</code> que utilizarás al inscribirlo.</p>
 <pre><code>aws dynamodb execute-statement \
   --profile "$perfil" --region "$region" --consistent-read \
   --statement "SELECT * FROM \"$tabla_usuarios\" WHERE \"USER_ID\" = ?" \
   --parameters '[{"S":"usuario-02"}]'</code></pre>
-<p class="checkpoint"><strong>Antes de avanzar</strong> El resultado muestra <code>usuario-02</code>, «Leo Martín» y «Huesca». Los perfiles de las otras pruebas ya están disponibles.</p>
+<p class="checkpoint"><strong>Antes de avanzar</strong> El resultado muestra <code>usuario-02</code>, <code>FIRST_NAME</code> con «Leo», <code>LAST_NAME</code> con «Martín» y <code>EMAIL</code> con <code>leo.martin@example.com</code>.</p>
 </article>
 <article id="guardar-evento" class="guide-step" data-step="Crear eventos">
 <h3>Crea dos eventos y guarda sus identificadores</h3>
