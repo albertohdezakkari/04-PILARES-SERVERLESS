@@ -6,7 +6,7 @@
 <title>Festival Check-in · práctica guiada</title>
 <link rel="stylesheet" href="style.css?v=recorrido-lambda">
 <script type="module" src="app.js?v=pases-orm"></script>
-<script type="module" src="guia.js?v=recorrido-lambda"></script>
+<script type="module" src="guia.js?v=modelo-primero"></script>
 <script type="module" src="visor-modelo.js?v=referencias"></script>
 <script type="module" src="entrenamiento-dynamo.js?v=referencias"></script>
 </head>
@@ -15,11 +15,12 @@
 <header class="course-header">
   <div><a href="../../">← Cuaderno Serverless</a><h1>Festival <em>Check-in</em></h1>
 </div>
-  <div class="actions"><a href="#iniciar-lab">Preparar AWS</a><a href="#nombres-tablas">Preparar proyecto</a><a href="#entidad-relacion">Modelo de datos</a><a href="#infografia-terminal">Infografía</a><a href="#json-modelo">Modelo JSON</a>
+  <div class="actions"><a href="#iniciar-lab">Preparar AWS</a><a href="#nombres-tablas">Preparar proyecto</a><a href="#infografia-terminal">Infografía</a><a href="#json-modelo">Modelo JSON</a>
 </div>
 </header>
 <nav class="phases" aria-label="Fases de la práctica">
-  <button type="button" data-phase="datos" aria-pressed="true">Lambdas</button>
+  <button type="button" data-phase="diseno" aria-pressed="true">Modelo de datos</button>
+  <button type="button" data-phase="datos" aria-pressed="false">Lambdas</button>
   <button type="button" data-phase="prueba" aria-pressed="false">Validar</button>
   <button type="button" data-phase="pantalla" aria-pressed="false">Pantalla de prueba</button>
 </nav>
@@ -44,7 +45,7 @@
 <p class="checkpoint"><strong>Antes de avanzar</strong> En modo Ensayo, el mismo código pasa por los dos estados. En la siguiente fase diseñarás qué debe guardar la base de datos para distinguirlos.</p>
 </article>
 </section>
-<section id="diseno" class="phase" data-reference hidden>
+<section id="diseno" class="phase" hidden>
 <h2>Del caso de uso al diseño de datos</h2>
 <article id="entidad-relacion" class="guide-step" data-step="Entidad–relación">
 <h3>Del diagrama entidad–relación a DynamoDB</h3>
@@ -132,17 +133,20 @@
 </article>
 <article id="modelo-titulo" class="guide-step" data-step="Probar el diseño">
 <h3>Convierte el modelo en tres tablas y pruébalo</h3>
-<p>Escribe los atributos de DynamoDB en mayúsculas con guion bajo, como <code>EVENT_ID</code>. Cuando la API recibe o devuelve JSON, usa nombres como <code>eventId</code>. Verás cómo traducirlos en <a href="#leer-pase">Lectura</a>.</p>
+<p>Escribe los atributos de DynamoDB en mayúsculas con guion bajo, como <code>EVENT_ID</code>. Cuando la API recibe o devuelve JSON, usa nombres como <code>eventId</code>. Verás cómo traducirlos en <a href="#leer-pase">Consultar · Capas</a>.</p>
 <p class="lesson-note"><strong>Convención de Base de Datos.</strong> Llama a las entidades <strong>Evento</strong>, <strong>Inscripción</strong> y <strong>Usuario</strong>. Usa la abreviatura del proyecto, un guion bajo y el nombre de la tabla en plural. En Festival Check-in obtienes <code>FCI_EVENTOS</code>, <code>FCI_INSCRIPCIONES</code> y <code>FCI_USUARIOS</code>. «San Valentín» sería el título de un evento guardado en <code>FCI_EVENTOS</code>.</p>
 <p><strong>Evento → EVENTOS.</strong> Guarda <code>EVENT_ID</code> y <code>TITLE</code>, ambos obligatorios. <strong>Inscripción → INSCRIPCIONES.</strong> Guarda <code>EVENT_ID</code>, <code>USER_ID</code>, <code>REGISTERED_AT</code> y, si hay una fecha de entrada registrada, <code>CHECKED_IN_AT</code>.</p>
 <p><code>EVENT_ID</code> y <code>USER_ID</code> son referencias al evento y a la persona, como dos claves foráneas en un modelo relacional. La clave primaria de la inscripción es la pareja <code>EVENT_ID</code> + <code>USER_ID</code>, que garantiza una inscripción por persona y evento.</p>
 <p><strong>Usuario → USUARIOS.</strong> Guarda <code>USER_ID</code>, <code>DISPLAY_NAME</code> y <code>CITY</code>. Si Leo cambia de ciudad, actualiza su perfil una vez. Sus inscripciones conservan el mismo <code>USER_ID</code>.</p>
-<p>Las referencias funcionan como claves foráneas en el dibujo. En DynamoDB las comprueba el service antes de guardar la inscripción. Si falta el evento o el usuario, POST devuelve <code>404</code>. Crea y consulta los perfiles desde <a href="#sembrar-usuarios">Lambdas → Usuarios</a>.</p>
+<p>Las referencias funcionan como claves foráneas en el dibujo. En DynamoDB las comprueba el service antes de guardar la inscripción. Si falta el evento o el usuario, POST devuelve <code>404</code>. Crea y consulta los perfiles desde <a href="#sembrar-usuarios">Invocar crearUsuario</a>.</p>
 <p id="model-status" role="status">Cargando el ejemplo…</p>
 <div id="model-result">
 </div>
 <p><strong>Lee los datos de ejemplo.</strong> <code>REGISTERED_AT</code> indica cuándo se inscribió el usuario. <code>CHECKED_IN_AT</code> aparece en un pase de ejemplo con una entrada previa. En el laboratorio, la tabla de inscripciones empezará vacía y se llenará al probar POST.</p>
 <p class="checkpoint"><strong>Antes de avanzar</strong> En <code>FCI_USUARIOS</code>, localiza a Leo con <code>USER_ID = usuario-02</code>. Pulsa <strong>Ver inscritos del evento</strong>. Aparecen dos filas con <code>EVENT_ID = 1</code> y dos <code>USER_ID</code> distintos. Pulsa <strong>Buscar a usuario-02</strong>. Ahora solo aparece la fila de <code>usuario-02</code>.</p>
+<h4>Del modelo a las tablas del laboratorio</h4>
+<p>En <strong>Preparar las tablas</strong> escribirás en <code>serverless.yml</code> las claves que acabas de probar. Después, <strong>Lambdas</strong> te guía para programar el alta y desplegar las tres tablas. Si ya tienes el YAML, puedes ir a Lambdas directamente.</p>
+<div class="actions"><a class="lesson-action" href="#nombres-tablas">Preparar las tablas →</a></div>
 </article>
 </section>
 <section id="conexion" class="phase" data-reference hidden>
@@ -186,7 +190,7 @@ aws dynamodb list-tables --profile "$perfil" --region "$region"</code></pre><p><
 <h3>Prepara la carpeta de trabajo</h3>
 <p class="lesson-note"><strong>Tu primera Lambda se escribe en esta fase.</strong> Prepara la carpeta y el rol, crea <code>serverless.yml</code> y abre <a href="#archivo-lambda">Programar Lambda</a> para escribir el alta de eventos.</p>
 <dl class="command-reasons"><div><dt><code>npm init -y</code></dt><dd>Crea el manifiesto del proyecto.</dd></div><div><dt><code>serverless</code></dt><dd>Lee el YAML y prepara el despliegue.</dd></div><div><dt>SDK de DynamoDB</dt><dd>Permite que el código de Lambda lea y escriba ítems.</dd></div></dl>
-<p>En la misma terminal de Conexión, abre la carpeta donde guardas tus prácticas. Usarás Node.js 22 y la misma versión de Serverless Framework del entrenamiento. Comprueba que <code>node --version</code> empieza por <code>v22</code>. Guarda aquí <code>serverless.yml</code> y las carpetas <code>src/datos</code>, <code>src/eventos/crear-evento</code> y <code>src/pases</code> que prepararás en los pasos siguientes.</p><pre><code>node --version
+<p>Si aún no tienes la sesión del laboratorio, completa <a href="#iniciar-lab">Preparar AWS</a>. En esa misma terminal, abre la carpeta donde guardas tus prácticas. Usarás Node.js 22 y la misma versión de Serverless Framework del entrenamiento. Comprueba que <code>node --version</code> empieza por <code>v22</code>. Guarda aquí <code>serverless.yml</code> y las carpetas <code>src/datos</code>, <code>src/eventos/crear-evento</code> y <code>src/pases</code> que prepararás en los pasos siguientes.</p><pre><code>node --version
 mkdir -p festival-checkin
 cd festival-checkin
 npm init -y

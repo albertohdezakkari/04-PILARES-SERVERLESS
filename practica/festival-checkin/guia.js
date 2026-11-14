@@ -82,7 +82,8 @@ function showRoute() {
   back.disabled = courseIndex === 0;
   next.hidden = index < 0;
   next.textContent = courseIndex === courseSteps.length - 1 ? 'Abrir pantalla de prueba →'
-    : courseIndex < 0 && index === phaseSteps.length - 1 ? 'Volver a Lambdas →' : 'Siguiente →';
+    : activeStep?.id === 'modelo-titulo' ? 'Preparar las tablas →'
+    : courseIndex < 0 && index === phaseSteps.length - 1 ? 'Ir a Lambdas →' : 'Siguiente →';
   window.scrollTo(0, 0);
   const heading = activeStep?.querySelector('h3') ?? phase.querySelector('h2');
   heading.tabIndex = -1;
@@ -98,7 +99,9 @@ back.addEventListener('click', () => {
 });
 next.addEventListener('click', () => {
   const index = courseSteps.indexOf(activeStep);
-  if (index >= 0) {
+  if (activeStep?.id === 'modelo-titulo') {
+    navigate('nombres-tablas');
+  } else if (index >= 0) {
     navigate(courseSteps[index + 1]?.id ?? 'pantalla');
   } else {
     const sibling = activeStep?.nextElementSibling;
