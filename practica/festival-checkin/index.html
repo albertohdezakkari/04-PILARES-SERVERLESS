@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Festival Check-in · práctica guiada</title>
-<link rel="stylesheet" href="style.css?v=seguir-claves">
+<link rel="stylesheet" href="style.css?v=capas-comandos">
 <script type="module" src="app.js?v=pase-leo"></script>
 <script type="module" src="guia.js?v=seguir-claves"></script>
 <script type="module" src="visor-modelo.js?v=perfil-usuario"></script>
@@ -203,15 +203,85 @@ aws dynamodb list-tables --profile "$perfil" --region "$region"</code></pre><p><
 </article>
 <article id="nombres-tablas" class="guide-step" data-step="Proyecto">
 <h3>Prepara la carpeta de trabajo</h3>
-<p class="lesson-note"><strong>Aquí preparas el entorno para programar.</strong> Prepara la carpeta y el rol, crea <code>serverless.yml</code> y abre <a href="#archivo-lambda">Programar Lambda</a> para escribir el alta de eventos.</p>
-<dl class="command-reasons"><div><dt><code>npm init -y</code></dt><dd>Crea el manifiesto del proyecto.</dd></div><div><dt><code>serverless</code></dt><dd>Lee el YAML y prepara el despliegue.</dd></div><div><dt>SDK de DynamoDB</dt><dd>Permite que el código de Lambda lea y escriba ítems.</dd></div></dl>
-<p>Si aún no tienes la sesión del laboratorio, completa <a href="#iniciar-lab">Preparar AWS</a>. En esa misma terminal, abre la carpeta donde guardas tus prácticas. Usarás Node.js 22 y la misma versión de Serverless Framework del entrenamiento. Comprueba que <code>node --version</code> empieza por <code>v22</code>. Guarda aquí <code>serverless.yml</code> y las carpetas <code>src/datos</code>, <code>src/eventos/crear-evento</code> y <code>src/pases</code> que prepararás en los pasos siguientes.</p><pre><code>node --version
+<p>Abre la terminal en la carpeta donde guardas tus prácticas. Selecciona una línea para ver qué hace y qué cambia en el proyecto. Si te falta la sesión del laboratorio, vuelve a <a href="#iniciar-lab">Preparar AWS</a>.</p>
+<ol class="command-canvas command-layers" data-explainer aria-label="Comandos para preparar el proyecto">
+  <li>
+    <button type="button" class="command-layer check" data-explain="project-line-1" aria-controls="project-line-1" aria-pressed="true"><span><strong>Comprueba Node.js</strong><code>node --version</code></span></button>
+    <section id="project-line-1" class="command-layer-detail" data-explanation>
+      <h4>Comprueba el motor antes de arrancar</h4>
+      <p><code>node --version</code> muestra la versión de Node.js instalada. Busca que empiece por <code>v22.</code>.</p>
+      <pre data-diagram aria-label="Qué verás en este paso"><code>terminal → v22.x.x</code></pre>
+    </section>
+  </li>
+  <li>
+    <button type="button" class="command-layer folder" data-explain="project-line-2" aria-controls="project-line-2" aria-pressed="false"><span><strong>Crea la carpeta</strong><code>mkdir -p festival-checkin</code></span></button>
+    <section id="project-line-2" class="command-layer-detail" data-explanation hidden>
+      <h4>Prepara una mesa de trabajo</h4>
+      <p><code>mkdir</code> crea la carpeta <code>festival-checkin</code>. Con <code>-p</code> puedes repetir el comando si la carpeta ya existe.</p>
+      <pre data-diagram aria-label="Qué verás en este paso"><code>carpeta de prácticas/
+└── festival-checkin/</code></pre>
+    </section>
+  </li>
+  <li>
+    <button type="button" class="command-layer folder" data-explain="project-line-3" aria-controls="project-line-3" aria-pressed="false"><span><strong>Entra en la carpeta</strong><code>cd festival-checkin</code></span></button>
+    <section id="project-line-3" class="command-layer-detail" data-explanation hidden>
+      <h4>Ponte en esa mesa</h4>
+      <p><code>cd</code> cambia la carpeta de trabajo de la terminal. Los siguientes comandos actuarán dentro de <code>festival-checkin</code>.</p>
+      <pre data-diagram aria-label="Qué verás en este paso"><code>carpeta de prácticas/ → festival-checkin/</code></pre>
+    </section>
+  </li>
+  <li>
+    <button type="button" class="command-layer package" data-explain="project-line-4" aria-controls="project-line-4" aria-pressed="false"><span><strong>Crea el manifiesto</strong><code>npm init -y</code></span></button>
+    <section id="project-line-4" class="command-layer-detail" data-explanation hidden>
+      <h4>Abre la ficha del proyecto</h4>
+      <p><code>npm init</code> crea <code>package.json</code>. Con <code>-y</code> acepta los valores iniciales sin hacer preguntas.</p>
+      <pre data-diagram aria-label="Qué verás en este paso"><code>festival-checkin/
+└── package.json</code></pre>
+    </section>
+  </li>
+  <li>
+    <button type="button" class="command-layer package" data-explain="project-line-5" aria-controls="project-line-5" aria-pressed="false"><span><strong>Instala Serverless</strong><code>npm install --save-dev --save-exact serverless@4.45.0</code></span></button>
+    <section id="project-line-5" class="command-layer-detail" data-explanation hidden>
+      <h4>Añade la herramienta de despliegue</h4>
+      <p><code>--save-dev</code> lo registra como herramienta de desarrollo. <code>--save-exact</code> fija la versión <code>4.45.0</code> sin rangos. Después usará <code>serverless.yml</code> para preparar el despliegue.</p>
+      <pre data-diagram aria-label="Qué verás en este paso"><code>package.json
+└── devDependencies
+    └── serverless: 4.45.0</code></pre>
+    </section>
+  </li>
+  <li>
+    <button type="button" class="command-layer package" data-explain="project-line-6" aria-controls="project-line-6" aria-pressed="false"><span><strong>Instala el SDK de DynamoDB</strong><code>npm install @aws-sdk/client-dynamodb @aws-sdk/lib-dynamodb</code></span></button>
+    <section id="project-line-6" class="command-layer-detail" data-explanation hidden>
+      <h4>Añade las herramientas que llevará Lambda</h4>
+      <p><code>client-dynamodb</code> envía peticiones a DynamoDB. <code>lib-dynamodb</code> permite trabajar con objetos de JavaScript. Ambas quedan en <code>dependencies</code> porque el código de Lambda las usa al ejecutarse.</p>
+      <pre data-diagram aria-label="Qué verás en este paso"><code>package.json
+└── dependencies
+    ├── @aws-sdk/client-dynamodb
+    └── @aws-sdk/lib-dynamodb</code></pre>
+    </section>
+  </li>
+  <li>
+    <button type="button" class="command-layer check" data-explain="project-line-7" aria-controls="project-line-7" aria-pressed="false"><span><strong>Comprueba Serverless</strong><code>npx serverless --version</code></span></button>
+    <section id="project-line-7" class="command-layer-detail" data-explanation hidden>
+      <h4>Prueba la herramienta que acabas de instalar</h4>
+      <p><code>npx</code> ejecuta el Serverless del proyecto. <code>--version</code> muestra la versión que estás usando. Busca <code>4.45.0</code>.</p>
+      <pre data-diagram aria-label="Qué verás en este paso"><code>terminal → Serverless Framework 4.45.0</code></pre>
+    </section>
+  </li>
+</ol>
+<h4>Ejecuta los comandos en orden</h4>
+<p>Comprueba primero que Node.js sea de la versión 22. Después puedes copiar el bloque completo.</p>
+<pre><code>node --version
 mkdir -p festival-checkin
 cd festival-checkin
 npm init -y
 npm install --save-dev --save-exact serverless@4.45.0
 npm install @aws-sdk/client-dynamodb @aws-sdk/lib-dynamodb
-npx serverless --version</code></pre><p class="checkpoint"><strong>Antes de avanzar</strong> Estás en festival-checkin y tienes package.json con Serverless Framework y el SDK de DynamoDB.</p>
+npx serverless --version</code></pre>
+<p class="checkpoint"><strong>Antes de avanzar</strong> Comprueba la carpeta y el contenido del manifiesto con estos comandos. La ruta termina en <code>festival-checkin</code>. En <code>devDependencies</code> aparece Serverless <code>4.45.0</code> y en <code>dependencies</code> los dos paquetes de DynamoDB.</p>
+<pre><code>pwd
+npm pkg get devDependencies.serverless dependencies</code></pre>
+<p>En esta carpeta crearás <code>serverless.yml</code> y las carpetas <code>src/datos</code>, <code>src/eventos/crear-evento</code> y <code>src/pases</code>. Sigue con el <a href="#rol-laboratorio">rol de Lambda</a>.</p>
 </article>
 <article id="rol-laboratorio" class="guide-step" data-step="Rol">
 <h3>Recupera el rol de Lambda</h3>
