@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Festival Check-in · práctica guiada</title>
-<link rel="stylesheet" href="style.css?v=buscar-pase">
+<link rel="stylesheet" href="style.css?v=seguir-claves">
 <script type="module" src="app.js?v=pase-leo"></script>
-<script type="module" src="guia.js?v=pase-leo"></script>
+<script type="module" src="guia.js?v=seguir-claves"></script>
 <script type="module" src="visor-modelo.js?v=buscar-pase"></script>
 <script type="module" src="entrenamiento-dynamo.js?v=referencias"></script>
 </head>
@@ -77,47 +77,60 @@
 <h3>Del diagrama entidad–relación a DynamoDB</h3>
 <p>Leo puede apuntarse a varios eventos. Al Festival de otoño pueden apuntarse varias personas. Cada <strong>inscripción</strong> une a una persona con un evento.</p>
 <h4 class="design-label">Entidades y cardinalidades</h4>
+<div class="schema-visual" data-schema-visual>
 <div class="er-diagram" role="group" aria-label="Un evento tiene de cero a muchas inscripciones. Un usuario tiene de cero a muchas inscripciones. Cada inscripción vincula un evento y un usuario.">
-  <section><h4>EVENTO</h4><code>EVENT_ID</code><span><code>TITLE</code> · obligatorio</span></section>
+  <section class="schema-event"><h4>EVENTO</h4><code data-schema-key="event">EVENT_ID</code><span><code>TITLE</code> · obligatorio</span></section>
   <div class="er-edge" aria-hidden="true"><b>1</b><i></i><b>0..N</b></div>
-  <section><h4>INSCRIPCION</h4><code>EVENT_ID + USER_ID</code><span><code>REGISTERED_AT</code> · inscripción</span><span><code>CHECKED_IN_AT</code> · entrada opcional</span></section>
+  <section class="schema-registration"><h4>INSCRIPCION</h4><div class="schema-keys"><code data-schema-key="event">EVENT_ID</code><span aria-hidden="true">+</span><code data-schema-key="user">USER_ID</code></div><span><code>REGISTERED_AT</code> · inscripción</span><span><code>CHECKED_IN_AT</code> · entrada opcional</span></section>
   <div class="er-edge" aria-hidden="true"><b>0..N</b><i></i><b>1</b></div>
-  <section><h4>USUARIO</h4><code>USER_ID</code><span><code>DISPLAY_NAME</code> · nombre visible</span><span><code>CITY</code> · ciudad</span></section>
+  <section class="schema-user"><h4>USUARIO</h4><code data-schema-key="user">USER_ID</code><span><code>DISPLAY_NAME</code> · nombre visible</span><span><code>CITY</code> · ciudad</span></section>
 </div>
-<h4 class="design-label" id="dynamo-mapping">Cómo se guardan en DynamoDB</h4>
+<div class="schema-bridge">
+  <h4 id="dynamo-mapping">Cómo se guardan en DynamoDB</h4>
+  <div class="actions" role="group" aria-label="Identificadores del pase de Leo">
+    <button type="button" data-follow-key="event" aria-pressed="false" aria-controls="schema-explanation">Seguir el evento <code>1</code></button>
+    <button type="button" data-follow-key="user" aria-pressed="false" aria-controls="schema-explanation">Seguir a Leo <code>usuario-02</code></button>
+  </div>
+  <p id="schema-explanation" aria-live="polite">Selecciona un identificador para ver dónde aparece en el modelo y en las tablas.</p>
+</div>
 <div class="dynamo-map" role="group" aria-labelledby="dynamo-mapping">
-  <section class="dynamo-map-card">
-    <p class="dynamo-map-origin"><span aria-hidden="true">↓</span> EVENTO se convierte en tabla</p>
+  <section class="dynamo-map-card schema-event">
+    <p class="dynamo-map-origin"><span aria-hidden="true">↓</span> De EVENTO</p>
     <h5><code>FCI_EVENTOS</code></h5>
     <dl>
-      <div><dt><abbr class="dynamo-pk" title="Clave de partición">PK</abbr> <code>EVENT_ID</code></dt><dd><code>1</code></dd></div>
+      <div data-schema-key="event"><dt><abbr class="dynamo-pk" title="Clave de partición">PK</abbr> <code>EVENT_ID</code></dt><dd><code>1</code></dd></div>
       <div><dt><code>TITLE</code></dt><dd>Festival de otoño</dd></div>
     </dl>
     <p>Con <code>EVENT_ID = 1</code> lees directamente el Festival de otoño. <code>TITLE</code> es obligatorio al crear el evento.</p>
   </section>
-  <section class="dynamo-map-card">
-    <p class="dynamo-map-origin"><span aria-hidden="true">↓</span> INSCRIPCION se convierte en tabla</p>
+  <section class="dynamo-map-card schema-registration">
+    <p class="dynamo-map-origin"><span aria-hidden="true">↓</span> De INSCRIPCION</p>
     <h5><code>FCI_INSCRIPCIONES</code></h5>
     <dl>
-      <div><dt><abbr class="dynamo-pk" title="Clave de partición">PK</abbr> <code>EVENT_ID</code></dt><dd><code>1</code></dd></div>
-      <div><dt><abbr class="dynamo-sk" title="Clave de ordenación">SK</abbr> <code>USER_ID</code></dt><dd><code>usuario-02</code></dd></div>
+      <div data-schema-key="event"><dt><abbr class="dynamo-pk" title="Clave de partición">PK</abbr> <code>EVENT_ID</code></dt><dd><code>1</code></dd></div>
+      <div data-schema-key="user"><dt><abbr class="dynamo-sk" title="Clave de ordenación">SK</abbr> <code>USER_ID</code></dt><dd><code>usuario-02</code></dd></div>
       <div><dt><code>REGISTERED_AT</code></dt><dd>Fecha de inscripción</dd></div>
       <div><dt><code>CHECKED_IN_AT</code></dt><dd>Fecha de entrada · opcional</dd></div>
     </dl>
     <p><code>EVENT_ID</code> referencia a <code>FCI_EVENTOS</code> y agrupa sus inscripciones. <code>USER_ID</code> referencia a <code>FCI_USUARIOS</code> y distingue a cada persona dentro del evento.</p>
   </section>
-  <section class="dynamo-map-card">
-    <p class="dynamo-map-origin"><span aria-hidden="true">↓</span> USUARIO se convierte en tabla</p>
+  <section class="dynamo-map-card schema-user">
+    <p class="dynamo-map-origin"><span aria-hidden="true">↓</span> De USUARIO</p>
     <h5><code>FCI_USUARIOS</code></h5>
     <dl>
-      <div><dt><abbr class="dynamo-pk" title="Clave de partición">PK</abbr> <code>USER_ID</code></dt><dd><code>usuario-02</code></dd></div>
+      <div data-schema-key="user"><dt><abbr class="dynamo-pk" title="Clave de partición">PK</abbr> <code>USER_ID</code></dt><dd><code>usuario-02</code></dd></div>
       <div><dt><code>DISPLAY_NAME</code></dt><dd>Leo Martín</dd></div>
       <div><dt><code>CITY</code></dt><dd>Huesca</dd></div>
     </dl>
     <p>Lee el perfil con <code>USER_ID</code>. Ese mismo código aparece en las inscripciones de Leo.</p>
   </section>
 </div>
-<p class="lesson-note">Sigue el <code>1</code> desde Eventos hasta Inscripciones. Sigue <code>usuario-02</code> desde Usuarios hasta la misma inscripción. DynamoDB localiza el pase con esas dos claves. El servicio comprueba que existan el evento y el usuario antes de guardar.</p>
+</div>
+<div class="schema-reading">
+  <section><h4>Cómo leer 1 y 0..N</h4><p>Cada inscripción corresponde a un solo evento y a un solo usuario. Un evento puede tener cero o muchas inscripciones. Lo mismo ocurre con un usuario. Así se representa la relación de muchos a muchos entre eventos y usuarios.</p></section>
+  <section><h4>Cómo se identifica el pase</h4><p><strong>PK</strong> significa clave de partición. <strong>SK</strong> significa clave de ordenación. En inscripciones, <code>EVENT_ID</code> agrupa por evento y <code>USER_ID</code> distingue cada pase del grupo. El servicio comprueba que existan el evento y el usuario antes de guardar.</p></section>
+</div>
+<p class="schema-next"><a href="#patrones-acceso">Ver cómo se buscan inscritos por evento y eventos por usuario →</a></p>
 </article>
 <article id="patrones-acceso" class="guide-step" data-step="Preguntas y claves">
 <h3>De las preguntas a las claves de DynamoDB</h3>
@@ -145,6 +158,11 @@
 <div id="model-search" hidden></div>
 <button id="model-data-toggle" type="button" aria-controls="model-result" aria-expanded="false" hidden>Ver las tres tablas de DynamoDB</button>
 <div id="model-result" hidden></div>
+<div class="schema-reading">
+  <section><h4>Nombres en la base y en la API</h4><p>Las tablas usan el prefijo <code>FCI_</code> y nombres en plural. DynamoDB guarda <code>EVENT_ID</code> y <code>USER_ID</code>. La API los presenta como <code>eventId</code> y <code>userId</code>.</p></section>
+  <section><h4>Qué cuenta cada fecha</h4><p><code>REGISTERED_AT</code> guarda cuándo se apuntó la persona. <code>CHECKED_IN_AT</code> aparece cuando hay una entrada registrada. En el laboratorio empezarás con la tabla de inscripciones vacía.</p></section>
+</div>
+<p class="checkpoint"><strong>Antes de avanzar</strong> Pulsa «Solo el pase de Leo» y abre las tablas. Localiza los dos identificadores resaltados en su inscripción. En el siguiente paso llevarás esas claves a <code>serverless.yml</code>.</p>
 </article>
 </section>
 <section id="infra" class="phase" hidden>

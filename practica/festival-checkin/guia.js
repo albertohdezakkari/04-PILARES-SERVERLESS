@@ -380,6 +380,23 @@ for (const answer of answers) {
   });
 }
 
+const schema = document.querySelector('[data-schema-visual]');
+const keyButtons = schema.querySelectorAll('[data-follow-key]');
+const keyExplanation = schema.querySelector('#schema-explanation');
+const keyMessages = {
+  event: 'El evento 1 está en FCI_EVENTOS. En FCI_INSCRIPCIONES, EVENT_ID agrupa los pases de ese evento.',
+  user: 'usuario-02 identifica a Leo en FCI_USUARIOS. En FCI_INSCRIPCIONES, USER_ID distingue su pase dentro del evento.'
+};
+
+for (const control of keyButtons) {
+  control.addEventListener('click', () => {
+    const key = control.dataset.followKey;
+    schema.dataset.activeKey = key;
+    for (const option of keyButtons) option.setAttribute('aria-pressed', String(option === control));
+    keyExplanation.textContent = keyMessages[key];
+  });
+}
+
 const accessButtons = [...document.querySelectorAll('[data-access]')];
 const accessPanels = document.querySelectorAll('[data-access-panel]');
 for (const choice of accessButtons) {

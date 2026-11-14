@@ -1005,3 +1005,45 @@ code { overflow-wrap: anywhere; }
     border-block-start: 2px dashed #7d9a78;
   }
 }
+
+.schema-visual {
+  --schema-event: #9ee4d8;
+  --schema-user: #ffb6d1;
+  --schema-registration: #ddc5fa;
+  padding: clamp(12px, 2vw, 22px);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: #171421;
+}
+.schema-event { --entity-color: var(--schema-event); }
+.schema-user { --entity-color: var(--schema-user); }
+.schema-registration { --entity-color: var(--schema-registration); }
+.schema-visual .er-diagram section { border-color: var(--entity-color); }
+.schema-visual .dynamo-map-card { border-top-color: var(--entity-color); }
+.schema-visual .dynamo-map-origin, .schema-visual .dynamo-map-origin span { color: var(--entity-color); }
+.schema-visual .dynamo-map { margin-bottom: 0; }
+.schema-keys { display: flex; gap: 5px; flex-wrap: wrap; }
+[data-schema-key="event"] { --reference-color: var(--schema-event); }
+[data-schema-key="user"] { --reference-color: var(--schema-user); }
+.schema-visual .er-diagram code[data-schema-key],
+.schema-visual .dynamo-map-card [data-schema-key] code { color: var(--reference-color); }
+.schema-visual .er-diagram code[data-schema-key] { width: fit-content; }
+.schema-visual[data-active-key="event"] [data-schema-key="event"],
+.schema-visual[data-active-key="user"] [data-schema-key="user"] {
+  background: color-mix(in srgb, var(--reference-color) 16%, transparent);
+  border-radius: 4px;
+  outline: 1px solid var(--reference-color);
+  outline-offset: 2px;
+}
+.schema-bridge { margin-block: 16px; padding-block: 12px; border-block: 1px solid var(--border); }
+.schema-bridge h4, .schema-reading h4 { margin: 0 0 8px; }
+.schema-bridge p, .schema-reading p { margin: 8px 0 0; color: var(--muted); }
+.schema-bridge button { border-color: var(--reference-color); }
+.schema-bridge [data-follow-key="event"] { --reference-color: var(--schema-event); }
+.schema-bridge [data-follow-key="user"] { --reference-color: var(--schema-user); }
+.schema-bridge button[aria-pressed="true"] { background: var(--reference-color); color: #1b1724; }
+.schema-reading { display: grid; gap: 10px; margin-top: 12px; }
+.schema-reading section { padding: 12px 16px; border-radius: 10px; background: var(--surface); }
+@media (min-width: 821px) {
+  .schema-reading { grid-template-columns: 1fr 1fr; }
+}
