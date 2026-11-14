@@ -2,6 +2,8 @@ const input = document.querySelector('#model-json');
 const result = document.querySelector('#model-result');
 const status = document.querySelector('#model-status');
 const feedback = document.querySelector('#model-feedback');
+const search = document.querySelector('#model-search');
+const dataToggle = document.querySelector('#model-data-toggle');
 const example = document.querySelector('#model-example');
 
 function element(tag, text, className) {
@@ -26,7 +28,6 @@ function renderTable(model) {
   const name = model?.TableName;
   const partitionKey = model?.KeyAttributes?.PartitionKey;
   const sortKey = model?.KeyAttributes?.SortKey;
-  const showPractice = partitionKey?.AttributeName === 'EVENT_ID' && sortKey?.AttributeName === 'USER_ID';
   const rows = model?.TableData ?? [];
   const attributes = model?.NonKeyAttributes ?? [];
   if (typeof name !== 'string' || !name.trim() || !partitionKey?.AttributeName) {
@@ -47,6 +48,7 @@ function renderTable(model) {
   }
 
   const section = element('section');
+  section.dataset.modelTable = name;
   const table = element('table');
   const header = table.createTHead().insertRow();
   for (const column of columns) {
@@ -68,44 +70,77 @@ function renderTable(model) {
   const wrapper = element('div', undefined, 'model-table-scroll');
   wrapper.append(table);
   section.append(element('h3', name));
-  if (showPractice) section.append(createPractice(renderedRows));
   section.append(wrapper);
   if (rows.length === 0) section.append(element('p', 'Sin registros de ejemplo.'));
-  return section;
+  return { name, section, renderedRows };
 }
 
-function createPractice(renderedRows) {
-  const panel = element('div', undefined, 'model-practice');
-  const buttons = element('div', undefined, 'actions');
-  const all = element('button', 'Ver inscritos del evento');
-  const one = element('button', 'Buscar a usuario-02');
-  all.type = one.type = 'button';
-  const condition = element('code');
-  const output = element('p');
-  output.setAttribute('role', 'status');
+function createPractice(events, registrations, users) {
+  const event = events.renderedRows.find(({ row }) => formatValue(row.EVENT_ID) === '1');
+  const person = users.renderedRows.find(({ row }) => formatValue(row.USER_ID) === 'usuario-02');
+  if (!event || !person) return null;
+
+  const title = formatValue(event.row.TITLE);
+  const name = formatValue(person.row.DISPLAY_NAME);
+  const panel = element('div', undefined, 'model-search-card');
+  const filters = element('div', undefined, 'actions model-search-filters');
+  const byEvent = element('button', 'Todos los inscritos');
+  const byPerson = element('button', 'Solo el pase de ' + name.split(' ')[0]);
+  byEvent.type = byPerson.type = 'button';
+  filters.append(byEvent, byPerson);
+  const summary = element('p', undefined, 'model-search-count');
+  summary.setAttribute('role', 'status');
+  const passes = element('ul', undefined, 'model-search-passes');
+  const key = element('code', undefined, 'model-search-key');
+  const explanation = element('p', undefined, 'model-search-explanation');
 
   function query(onlyOne) {
-    let count = 0;
-    for (const { row, line } of renderedRows) {
-      const match = formatValue(row.EVENT_ID) === '1' &&
-        (!onlyOne || formatValue(row.USER_ID) === 'usuario-02');
-      line.hidden = !match;
-      if (match) count++;
+    const matches = registrations.renderedRows.filter(({ row }) =>
+      formatValue(row.EVENT_ID) === '1' &&
+      (!onlyOne || formatValue(row.USER_ID) === 'usuario-02')
+    );
+    const selected = new Set(matches);
+    for (const entry of registrations.renderedRows) {
+      entry.line.toggleAttribute('data-model-match', selected.has(entry));
     }
-    all.setAttribute('aria-pressed', String(!onlyOne));
-    one.setAttribute('aria-pressed', String(onlyOne));
-    condition.textContent = 'WHERE EVENT_ID = 1' + (onlyOne ? " AND USER_ID = 'usuario-02'" : '');
-    const rows = count === 1 ? '1 inscripción' : count + ' inscripciones';
-    output.textContent = rows + (onlyOne ? ' al buscar por evento y persona.' : ' al buscar por evento.');
+    event.line.setAttribute('data-model-match', '');
+    person.line.toggleAttribute('data-model-match', onlyOne);
+    passes.replaceChildren(...matches.map(({ row }) => {
+      const userId = formatValue(row.USER_ID);
+      const profile = users.renderedRows.find(({ row }) => formatValue(row.USER_ID) === userId);
+      const pass = element('li');
+      pass.append(
+        element('strong', profile ? formatValue(profile.row.DISPLAY_NAME) : userId),
+        element('code', userId)
+      );
+      return pass;
+    }));
+    byEvent.setAttribute('aria-pressed', String(!onlyOne));
+    byPerson.setAttribute('aria-pressed', String(onlyOne));
+    key.textContent = 'EVENT_ID = 1' + (onlyOne ? ' · USER_ID = usuario-02' : '');
+    explanation.textContent = onlyOne
+      ? 'En el mismo festival, el código de Leo distingue su pase.'
+      : 'El número del festival agrupa a todas las personas inscritas.';
+    summary.textContent = matches.length === 1 ? '1 pase encontrado' : matches.length + ' pases encontrados';
   }
 
-  all.addEventListener('click', () => query(false));
-  one.addEventListener('click', () => query(true));
-  buttons.append(all, one);
-  panel.append(element('p', 'Predice cuántas filas saldrán y prueba las dos búsquedas con los datos de ejemplo.'), buttons, condition, output);
+  byEvent.addEventListener('click', () => query(false));
+  byPerson.addEventListener('click', () => query(true));
+  const criteria = element('div', undefined, 'model-search-criteria');
+  criteria.append(element('h4', title), filters, explanation, key);
+  const results = element('div', undefined, 'model-search-results');
+  results.append(summary, passes);
+  panel.append(criteria, results);
   query(false);
   return panel;
 }
+
+dataToggle.addEventListener('click', () => {
+  const open = result.hidden;
+  result.hidden = !open;
+  dataToggle.setAttribute('aria-expanded', String(open));
+  dataToggle.textContent = open ? 'Ocultar las tablas de DynamoDB' : 'Ver las tres tablas de DynamoDB';
+});
 
 function showModel(message = status) {
   message.textContent = '';
@@ -121,9 +156,22 @@ function showModel(message = status) {
     return;
   }
   try {
-    result.replaceChildren(...model.DataModel.map(renderTable));
-    status.textContent = 'Tablas del modelo: ' + model.DataModel.length + '. PK = partición, SK = ordenación, N = número, S = texto.';
-    if (message === feedback) feedback.textContent = 'Tablas actualizadas en Diseñar → Probar el diseño.';
+    const tables = model.DataModel.map(renderTable);
+    const byName = new Map(tables.map(table => [table.name, table]));
+    const events = byName.get('FCI_EVENTOS');
+    const registrations = byName.get('FCI_INSCRIPCIONES');
+    const users = byName.get('FCI_USUARIOS');
+    const practice = events && registrations && users ? createPractice(events, registrations, users) : null;
+
+    result.replaceChildren(...tables.map(({ section }) => section));
+    search.replaceChildren(...(practice ? [practice] : []));
+    search.hidden = !practice;
+    result.hidden = Boolean(practice);
+    dataToggle.hidden = !practice;
+    dataToggle.setAttribute('aria-expanded', 'false');
+    dataToggle.textContent = 'Ver las tres tablas de DynamoDB';
+    status.textContent = practice ? '' : 'Tablas del modelo: ' + tables.length + '.';
+    if (message === feedback) feedback.textContent = 'Tablas actualizadas en Modelo de datos → Probar el diseño.';
   } catch (error) {
     message.textContent = error.message;
   }

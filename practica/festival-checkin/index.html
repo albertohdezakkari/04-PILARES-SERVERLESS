@@ -4,10 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Festival Check-in · práctica guiada</title>
-<link rel="stylesheet" href="style.css?v=pase-leo">
+<link rel="stylesheet" href="style.css?v=buscar-pase">
 <script type="module" src="app.js?v=pase-leo"></script>
 <script type="module" src="guia.js?v=pase-leo"></script>
-<script type="module" src="visor-modelo.js?v=referencias"></script>
+<script type="module" src="visor-modelo.js?v=buscar-pase"></script>
 <script type="module" src="entrenamiento-dynamo.js?v=referencias"></script>
 </head>
 <body>
@@ -139,13 +139,12 @@
 <p class="checkpoint"><strong>Antes de avanzar</strong> Compara «¿Quién se ha inscrito al evento?» con «¿En qué eventos está inscrito usuario-02?». En la primera, entra por <code>EVENT_ID</code> en la tabla. En la segunda, entra por <code>USER_ID</code> en el índice. Probarás ambas búsquedas en <a href="#consultar-indice">Validación → Consultar índice</a>.</p>
 </article>
 <article id="modelo-titulo" class="guide-step" data-step="Probar el diseño">
-<h3>Convierte el modelo en tres tablas y pruébalo</h3>
-<p>Localiza a <strong>Leo Martín</strong> y el <strong>Festival de otoño</strong>. Sus identificadores se juntan en la inscripción. Prueba a filtrar por evento y luego por evento y usuario.</p>
+<h3>Encuentra el pase de Leo</h3>
+<p>¿Qué cambia cuando buscas por festival y luego añades a Leo?</p>
 <p id="model-status" role="status">Cargando el ejemplo…</p>
-<div id="model-result">
-</div>
-<p class="checkpoint"><strong>Antes de avanzar</strong> Al buscar por evento ves dos inscritos. Al añadir <code>usuario-02</code> queda solo el pase de Leo. En Preparación llevarás esas claves a <code>serverless.yml</code>.</p>
-<div class="actions"><a class="lesson-action" href="#iniciar-lab">Continuar a preparación →</a><a href="#infraestructura">Abrir el árbol de <code>serverless.yml</code></a></div>
+<div id="model-search" hidden></div>
+<button id="model-data-toggle" type="button" aria-controls="model-result" aria-expanded="false" hidden>Ver las tres tablas de DynamoDB</button>
+<div id="model-result" hidden></div>
 </article>
 </section>
 <section id="infra" class="phase" hidden>
