@@ -1,4 +1,4 @@
-import { explicaciones } from './lineas.js?v=eventos-persistencia';
+import { explicaciones } from './lineas.js?v=crear-evento-capas';
 
 const capas = [...document.querySelectorAll('.capas button')];
 const anterior = document.querySelector('#anterior');

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Crear un evento · Festival Check-in</title>
 <link rel="stylesheet" href="traza.css?v=cuadros-por-capa">
-<script type="module" src="traza.js?v=eventos-persistencia"></script>
+<script type="module" src="traza.js?v=crear-evento-capas"></script>
 </head>
 <body>
 <main>
@@ -62,15 +62,15 @@ name: ${self:service}-${self:provider.stage}-crearEvento</code></pre></div>
       </section>
       <section id="paso-2" class="paso" hidden>
         <h2>Recibe el evento</h2>
-        <p>El handler desestructura el objeto recibido. Pasa el número y el título al service mediante <code>crearEvento(eventId, title)</code>.</p>
+        <p>El handler desestructura el objeto recibido. Pasa el número y el título al service mediante <code>crearEventoService(eventId, title)</code>.</p>
         <div class="explicacion-capa">
 <section class="secuencia-cuadro" aria-labelledby="secuencia-2">
           <h3 id="secuencia-2"><span>02</span> El handler recoge los datos</h3>
           <div class="secuencia-cuerpo">
             <div class="secuencia-codigo"><strong>handler.mjs</strong><pre tabindex="0"><code>export function handler({ eventId, title } = {}) {
-  return crearEvento(eventId, title);
+  return crearEventoService(eventId, title);
 }</code></pre></div>
-            <div class="secuencia-nota"><p>Las llaves extraen dos propiedades del objeto recibido. Al llamar a <code>crearEvento</code>, el handler entrega esos valores al service.</p>
+            <div class="secuencia-nota"><p>Las llaves extraen dos propiedades del objeto recibido. Al llamar a <code>crearEventoService</code>, el handler entrega esos valores al service.</p>
               <a href="#lector" data-abrir-paso="2" data-abrir-linea="4">Ver la línea en su archivo ↓</a>
             </div>
           </div>
@@ -81,10 +81,10 @@ name: ${self:service}-${self:provider.stage}-crearEvento</code></pre></div>
 
         <div class="code-box">
           <div class="code-header"><strong>src/eventos/crear-evento/handler.mjs</strong><button type="button" data-copy>Copiar archivo</button></div>
-          <pre tabindex="0"><code>import { crearEvento } from &#x27;./service.mjs&#x27;;
+          <pre tabindex="0"><code>import { crearEventoService } from &#x27;./service.mjs&#x27;;
 
 export function handler({ eventId, title } = {}) {
-  return crearEvento(eventId, title);
+  return crearEventoService(eventId, title);
 }</code></pre>
         </div>
         <a class="fuente" href="https://github.com/albertohdezakkari/festival-checkin-01/blob/main/src/eventos/crear-evento/handler.mjs">Abrir src/eventos/crear-evento/handler.mjs en GitHub</a>
@@ -100,7 +100,7 @@ export function handler({ eventId, title } = {}) {
   throw new Error(&#x27;Escribe un título para el evento&#x27;);
 }
 
-await guardarEvento(eventId, title);</code></pre></div>
+await crearEventoRepository(eventId, title);</code></pre></div>
             <div class="secuencia-nota"><p>El <code>||</code> se lee «o». Si el título tiene otro tipo o al quitar los espacios queda vacío, <code>throw</code> detiene el alta. Con datos válidos, <code>await</code> espera a que termine la escritura.</p>
               <a href="#lector" data-abrir-paso="3" data-abrir-linea="7">Ver la línea en su archivo ↓</a>
             </div>
@@ -112,9 +112,9 @@ await guardarEvento(eventId, title);</code></pre></div>
 
         <div class="code-box">
           <div class="code-header"><strong>src/eventos/crear-evento/service.mjs</strong><button type="button" data-copy>Copiar archivo</button></div>
-          <pre tabindex="0"><code>import { guardarEvento } from &#x27;./repository.mjs&#x27;;
+          <pre tabindex="0"><code>import { crearEventoRepository } from &#x27;./repository.mjs&#x27;;
 
-export async function crearEvento(eventId, title) {
+export async function crearEventoService(eventId, title) {
   if (!Number.isSafeInteger(eventId) || eventId &lt; 1) {
     throw new Error(&#x27;Indica un ID de evento entero positivo&#x27;);
   }
@@ -122,7 +122,7 @@ export async function crearEvento(eventId, title) {
     throw new Error(&#x27;Escribe un título para el evento&#x27;);
   }
 
-  await guardarEvento(eventId, title);
+  await crearEventoRepository(eventId, title);
   return { eventId, title };
 }</code></pre>
         </div>
@@ -156,7 +156,7 @@ await comando.send();</code></pre></div>
           <pre tabindex="0"><code>import { PutItemCommand } from &#x27;dynamodb-toolbox/entity/actions/put&#x27;;
 import { MODELO_EVENTO } from &#x27;../persistencia/evento.model.mjs&#x27;;
 
-export async function guardarEvento(eventId, title) {
+export async function crearEventoRepository(eventId, title) {
   const evento = {
     eventId,
     title

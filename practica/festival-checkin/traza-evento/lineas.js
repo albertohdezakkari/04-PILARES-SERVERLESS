@@ -6,13 +6,13 @@ export const explicaciones = [
     'Indica qué ejecutar. La ruta lleva a handler.mjs y el último .handler selecciona la función exportada dentro del archivo.'
   ],
   [
-    'Importa crearEvento del archivo service.mjs, que está en la misma carpeta. Así el punto de entrada puede delegar el trabajo.',
+    'Importa crearEventoService del archivo service.mjs, que está en la misma carpeta. Así el punto de entrada puede delegar el trabajo.',
     'export expone la función a Lambda. Las llaves extraen eventId y title del objeto de entrada. = {} permite entrar aunque se invoque sin argumento.',
-    'Pasa los dos valores al service y devuelve su resultado. Con el ejemplo, llama a crearEvento(3, "Concierto de aula").',
+    'Pasa los dos valores al service y devuelve su resultado. Con el ejemplo, llama a crearEventoService(3, "Concierto de aula").',
     'Cierra el cuerpo del handler. La llamada de la línea anterior determina la respuesta.'
   ],
   [
-    'Trae guardarEvento del repository. El service puede pedir que se guarde el evento mediante esa función.',
+    'Trae crearEventoRepository del repository. El service puede pedir que se guarde el evento mediante esa función.',
     'Declara y exporta el caso de uso con sus dos parámetros. async permite esperar la escritura y devolver el resultado cuando termine.',
     'Number.isSafeInteger comprueba que el ID sea un entero representable con precisión. ! invierte la comprobación y || significa «o». También se rechaza un ID menor que 1.',
     'throw detiene la función y devuelve un error a quien la invocó. En este camino no se llama al repository.',
@@ -22,7 +22,7 @@ export const explicaciones = [
     'Cierra la validación del título. Para llegar a la llamada siguiente, los dos valores deben ser válidos.',
     'Entrega ID y título al repository. await espera a que termine la escritura. Si falla, el código no alcanza el return.',
     'Devuelve un objeto con el mismo ID y título que recibió. { eventId, title } es la forma abreviada de escribir ambos nombres y valores.',
-    'Cierra crearEvento. Los caminos terminan devolviendo el evento o lanzando un error.'
+    'Cierra crearEventoService. Los caminos terminan devolviendo el evento o lanzando un error.'
   ],
   [
     'Importa la acción de DynamoDB Toolbox que construye una escritura PutItem.',
@@ -38,7 +38,7 @@ export const explicaciones = [
     'Pide a DynamoDB que escriba si la clave del ítem aún no existe. El modelo transforma eventId a EVENT_ID. DynamoDB comprueba la condición al escribir.',
     'Cierra las opciones y termina de preparar el comando. Todavía falta enviarlo.',
     'Envía el comando y espera la respuesta. Si el ID ya existe, DynamoDB rechaza la escritura y conserva el título original.',
-    'Cierra guardarEvento. Si la escritura terminó bien, el control vuelve al service.'
+    'Cierra crearEventoRepository. Si la escritura terminó bien, el control vuelve al service.'
   ],
   [
     'Importa Entity, la pieza de Toolbox que describe un tipo de ítem.',
