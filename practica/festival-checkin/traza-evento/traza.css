@@ -327,6 +327,18 @@ pre code { color: var(--ink); }
 .invoke-panels pre { background: #111a20; border-radius: .55rem; padding: .8rem; }
 .invoke-panels .lesson-note { background: #192a2d; border-inline-start: 3px solid var(--mint); padding: .8rem; }
 .invoke-panels .lesson-note > :last-child { margin-bottom: 0; }
+.invoke-panels .lesson-diagram { margin: 1rem 0 0; }
+.invoke-panels .lesson-diagram figcaption { font-weight: 700; }
+.invoke-panels .lesson-diagram ol { list-style: none; padding: 0; }
+.invoke-panels .lesson-diagram li {
+  border-inline-start: 2px solid var(--mint);
+  background: #152127;
+  padding: .55rem .7rem;
+  margin-block: .55rem;
+  overflow-wrap: anywhere;
+}
+.invoke-panels .lesson-diagram li span { display: block; }
+
 @media (max-width: 740px) {
   .invoke-panels .lesson-split { grid-template-columns: minmax(0, 1fr); }
 }
