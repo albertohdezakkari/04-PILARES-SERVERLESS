@@ -904,8 +904,8 @@ ls -l serverless.yml package.json</code></pre>
   <div data-prefix="async function inscribirUsuarioService"><strong>Crear una inscripción</strong><p>El handler llama a esta función al recibir POST. Usará la pareja de claves para guardar la inscripción de un usuario en un evento.</p></div>
   <div data-prefix="return json(501"><strong>Operación pendiente</strong><p>El archivo base responde 501 hasta que escribas la operación. Esta respuesta te permite distinguir una ruta conectada de una operación ya implementada.</p></div>
   <div data-prefix="export function leerClaveInscripcion"><strong>Prepara la clave de entrada</strong><p>Los dos handlers usan esta función para extraer los valores de la ruta y convertir el ID del evento a BigInt.</p></div>
-  <div data-prefix="const { eventId: routeId"><strong>La ruta entrega texto</strong><p>En <code>/events/1/registrations/usuario-02</code>, <code>routeId</code> recibe <code>"1"</code> y <code>userId</code> recibe <code>"usuario-02"</code>.</p></div>
-  <div data-prefix="return { eventId: BigInt(routeId)"><strong>Convierte el texto de la ruta en un entero</strong><p>API Gateway entrega <code>"1"</code> como texto. <code>BigInt("1")</code> devuelve <code>1n</code>, el entero que pasas a DynamoDB.</p></div>
+  <div data-prefix="const { eventId, userId } = event.pathParameters"><strong>La ruta entrega texto</strong><p>En <code>/events/1/registrations/usuario-02</code>, <code>eventId</code> recibe <code>"1"</code> y <code>userId</code> recibe <code>"usuario-02"</code>.</p></div>
+  <div data-prefix="return { eventId: BigInt(eventId)"><strong>Convierte el texto de la ruta en un entero</strong><p>API Gateway entrega <code>"1"</code> como texto. <code>BigInt("1")</code> devuelve <code>1n</code>, el entero que pasas a DynamoDB.</p></div>
   <div data-prefix="TableName: TABLA_EVENTOS_FCI"><strong>Usa la tabla FCI_EVENTOS</strong><p><code>TABLA_EVENTOS_FCI</code> contiene el valor de <code>FCI_TABLA_EVENTOS</code>. En el YAML, <code>Ref: FestivalCheckInEventos</code> obtiene el nombre <code>FCI_EVENTOS</code>.</p></div>
   <div data-prefix="ConditionExpression: &#x27;attribute_not_exists(EVENT_ID)&#x27;"><strong>La clave protege el número al escribir</strong><p>Si el evento <code>8</code> ya existe, DynamoDB rechaza la escritura. Para dar de alta otro evento, elige otro ID.</p></div>
   <div data-prefix="if (error.name ==="><strong>Una condición impide escribir</strong><p>Cuando DynamoDB rechaza una condición, el handler devuelve 409. Por ejemplo, al intentar inscribir dos veces al mismo usuario.</p></div>
@@ -1072,15 +1072,9 @@ touch src/inscripciones/errores.mjs &amp;&amp; vi src/inscripciones/errores.mjs<
 touch src/inscripciones/http/peticion.mjs &amp;&amp; vi src/inscripciones/http/peticion.mjs</code></pre>
     <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/inscripciones/http/peticion.mjs" data-explanations="index-explanations"><code>import { NoEncontradoError } from &#x27;../errores.mjs&#x27;;
 
-class ClaveInvalidaError extends Error {}
-
 export function leerClaveInscripcion(event) {
-  const { eventId: routeId, userId } = event?.pathParameters ?? {};
-  if (!/^[1-9]\d{0,18}$/.test(routeId ?? &#x27;&#x27;) || typeof userId !== &#x27;string&#x27; || !userId.trim()) {
-    throw new ClaveInvalidaError(&#x27;Indica un ID numérico positivo y un código de usuario&#x27;);
-  }
-
-  return { eventId: BigInt(routeId), userId };
+  const { eventId, userId } = event.pathParameters;
+  return { eventId: BigInt(eventId), userId };
 }
 
 export function json(statusCode, body) {
@@ -1093,9 +1087,6 @@ export function json(statusCode, body) {
 }
 
 export function responderError(error) {
-  if (error instanceof ClaveInvalidaError) {
-    return json(400, { message: error.message });
-  }
   if (error instanceof NoEncontradoError) {
     return json(404, { message: error.message });
   }
