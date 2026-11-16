@@ -5,6 +5,7 @@ const anterior = document.querySelector('#anterior');
 const siguiente = document.querySelector('#siguiente');
 const avance = document.querySelector('#paso-actual');
 const copia = document.querySelector('#estado-copia');
+const volverSecuencia = document.querySelector('#volver-secuencia');
 let actual = 0;
 
 function mostrarPaso(indice) {
@@ -16,6 +17,7 @@ function mostrarPaso(indice) {
   });
   avance.textContent = `Paso ${actual + 1} de ${capas.length}`;
   anterior.disabled = actual === 0;
+  volverSecuencia.hidden = actual === 0;
   siguiente.disabled = actual === capas.length - 1;
   copia.textContent = '';
   activarLinea(lineasPorPaso[actual][0]);
@@ -175,12 +177,21 @@ for (const boton of document.querySelectorAll('[data-copy]')) {
 }
 
 for (const enlace of document.querySelectorAll('[data-abrir-paso]')) {
-  enlace.addEventListener('click', () => {
+  enlace.addEventListener('click', event => {
     const paso = Number(enlace.dataset.abrirPaso) - 1;
     mostrarPaso(paso);
     const numero = Number(enlace.dataset.abrirLinea);
     const lineas = lineasPorPaso[paso];
     const linea = lineas.findLast(item => item.numero === numero);
-    activarLinea(linea);
+    if (linea) {
+      event.preventDefault();
+      linea.boton.focus();
+    }
   });
 }
+
+volverSecuencia.addEventListener('click', event => {
+  event.preventDefault();
+  mostrarPaso(0);
+  document.querySelector('#secuencia-titulo').focus();
+});
