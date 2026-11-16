@@ -200,7 +200,7 @@
 <h2>Preparar AWS Academy y Serverless</h2>
 <article id="iniciar-lab" class="guide-step" data-step="Laboratorio">
 <h3>Abre el laboratorio</h3>
-<p class="lesson-note"><strong>Si ya clonaste Festival Check-in.</strong> Conserva los archivos del repositorio. Usa este paso y los siguientes para preparar tu sesión de AWS Academy. Después sigue los comandos del <a href="https://github.com/albertohdezakkari/festival-checkin-01#3-despliega-y-prueba">proyecto de aula para desplegar y probar</a>. Puedes abrir <a href="#infraestructura">Leer el YAML</a> para entender cómo se conectan las rutas, las funciones y las tablas.</p>
+<p class="lesson-note"><strong>Si ya clonaste Festival Check-in.</strong> Conserva los archivos del repositorio. Usa este paso y los siguientes para preparar tu sesión de AWS Academy. Después sigue los comandos del <a href="https://github.com/albertohdezakkari/festival-checkin-01/blob/main/0-conf.md#5-despliega-y-carga-los-datos-de-ejemplo">proyecto de aula para desplegar y probar</a>. Puedes abrir <a href="#infraestructura">Leer el YAML</a> para entender cómo se conectan las rutas, las funciones y las tablas.</p>
 <div class="lesson-split">
 <div class="lesson-task">
 <p class="lesson-note"><strong>Para qué sirve este paso.</strong> AWS Academy abre una sesión temporal. AWS CLI utilizará sus credenciales para identificarte cuando compruebes o despliegues recursos.</p>
@@ -247,18 +247,18 @@
 <div class="lesson-split">
 <div class="lesson-task">
 <p>En <code>vi</code>, escribe <code>:set paste</code> y pulsa Intro. Si el perfil ya existe, reemplaza los tres valores debajo de su cabecera. Si el perfil es nuevo, pulsa <kbd>i</kbd> y pega el bloque de <strong>AWS Details</strong> en un espacio libre del archivo. Para guardar y volver a la terminal, pulsa <kbd>Esc</kbd>, escribe <code>:wq</code> y pulsa Intro. Estas son las líneas que debes reconocer:</p>
-<pre><code>[default]
+<pre><code>[academy]
 aws_access_key_id = VALOR_DE_LA_SESION
 aws_secret_access_key = VALOR_DE_LA_SESION
 aws_session_token = VALOR_DE_LA_SESION</code></pre>
-<p>Si ya usas <code>[default]</code> para otra cuenta, guarda el bloque del laboratorio con la cabecera <code>[academy]</code>. Si ya tienes un perfil del laboratorio, reemplaza sus tres valores juntos.</p>
-<p class="checkpoint"><strong>Antes de avanzar</strong> Comprueba que el archivo guardado contiene una cabecera (<code>[default]</code> o <code>[academy]</code>) y los tres campos del laboratorio debajo.</p>
+<p>Si AWS Details trae la cabecera <code>[default]</code>, cámbiala a <code>[academy]</code> en el bloque que vas a pegar. Si ya tienes una sección <code>[academy]</code>, reemplaza sus tres valores juntos.</p>
+<p class="checkpoint"><strong>Antes de avanzar</strong> Comprueba que el archivo guardado contiene una cabecera <code>[academy]</code> y los tres campos del laboratorio debajo.</p>
 </div>
 <div class="lesson-visual">
 <figure class="lesson-diagram lesson-file-tree">
 <figcaption>Los tres valores viajan juntos</figcaption>
 <ol>
-  <li><strong><code>[default] / [academy]</code></strong><span>Nombre del perfil</span></li>
+  <li><strong><code>[academy]</code></strong><span>Nombre del perfil</span></li>
   <li><strong><code>aws_access_key_id</code></strong><span>Identificador de la clave</span></li>
   <li><strong><code>aws_secret_access_key</code></strong><span>Clave secreta</span></li>
   <li><strong><code>aws_session_token</code></strong><span>Token de la sesión temporal</span></li>
@@ -271,9 +271,9 @@ aws_session_token = VALOR_DE_LA_SESION</code></pre>
 <h3>Comprueba identidad y región</h3>
 <div class="lesson-split">
 <div class="lesson-task">
-<p>Cambia <code>perfil</code> si has guardado <code>[academy]</code>. Sustituye <code>us-east-1</code> por la región autorizada de tu laboratorio. Conserva esta terminal.</p>
+<p>Usa <code>academy</code> tal como figura en la cabecera <code>[academy]</code>. Si ya guardaste la sesión en <code>[default]</code>, puedes usar <code>perfil=default</code>. Sustituye <code>us-east-1</code> por la región autorizada de tu laboratorio. Conserva esta terminal.</p>
 <pre><code>aws configure list-profiles
-perfil=default
+perfil=academy
 region=us-east-1
 export AWS_PAGER=""
 aws sts get-caller-identity --profile "$perfil" --region "$region"
@@ -467,8 +467,8 @@ LAMBDA_ROLE_ARN=$(aws iam get-role --role-name LabRole --profile "$perfil" --reg
       <dd>Para <code>LabRole</code>, IAM devuelve un valor con la forma <code>arn:aws:iam::&lt;ID_DE_TU_CUENTA&gt;:role/LabRole</code>. <code>provider.iam.role</code> lee <code>${env:LAMBDA_ROLE_ARN}</code>.</dd>
     </div>
     <div>
-      <dt><code>AWS_PROFILE=default</code></dt>
-      <dd>Sale de <code>perfil=default</code>. El comando de despliegue usa <code>--aws-profile "$perfil"</code>.</dd>
+      <dt><code>AWS_PROFILE=academy</code></dt>
+      <dd>Sale de <code>perfil=academy</code>. El comando de despliegue usa <code>--aws-profile "$perfil"</code>.</dd>
     </div>
   </dl>
   <p>Ejecuta este comando en la misma terminal para ver tus valores, incluido el ARN exacto de tu rol.</p>
