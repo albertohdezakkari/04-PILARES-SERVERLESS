@@ -1,4 +1,4 @@
-import { explicaciones } from './lineas.js?v=lectura';
+import { explicaciones } from './lineas.js?v=secuencia';
 
 const capas = [...document.querySelectorAll('.capas button')];
 const anterior = document.querySelector('#anterior');
@@ -171,5 +171,16 @@ for (const boton of document.querySelectorAll('[data-copy]')) {
     } catch {
       copia.textContent = 'Abre el archivo en GitHub para copiar el texto.';
     }
+  });
+}
+
+for (const enlace of document.querySelectorAll('[data-abrir-paso]')) {
+  enlace.addEventListener('click', () => {
+    const paso = Number(enlace.dataset.abrirPaso) - 1;
+    mostrarPaso(paso);
+    const numero = Number(enlace.dataset.abrirLinea);
+    const lineas = lineasPorPaso[paso];
+    const linea = lineas.findLast(item => item.numero === numero);
+    activarLinea(linea);
   });
 }
