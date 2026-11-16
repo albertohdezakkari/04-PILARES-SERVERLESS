@@ -64,17 +64,6 @@ export const explicaciones = [
     'Cierra la configuración de la entidad. El repository ya puede utilizar este modelo para construir el PutItem.'
   ],
   [
-    'Obtiene los milisegundos de la hora actual como número y los guarda en evento_id para esta prueba.',
-    'Imprime el ID para que puedas relacionar la invocación con la lectura posterior.',
-    'Inicia una invocación directa de Lambda mediante AWS CLI. La barra al final continúa el comando en la línea siguiente.',
-    'Construye el nombre de la función usando el mismo código de equipo con el que desplegaste.',
-    'Selecciona las credenciales del laboratorio y la región donde está la función.',
-    'Indica a AWS CLI v2 que el contenido de --payload se introduce directamente en JSON.',
-    'Entrega a Lambda los dos datos que espera el handler. El ID viaja como número y el título como texto.',
-    'Guarda el cuerpo de respuesta en un archivo. && ejecuta cat si el comando AWS CLI termina bien. Revisa además si la invocación muestra FunctionError.',
-    'Muestra lo que devolvió el handler. Comprueba el ID y el título.'
-  ],
-  [
     'Solicita a DynamoDB un único ítem por su clave primaria.',
     'Indica el nombre de la tabla de eventos del equipo.',
     'Selecciona la misma sesión y región del despliegue.',

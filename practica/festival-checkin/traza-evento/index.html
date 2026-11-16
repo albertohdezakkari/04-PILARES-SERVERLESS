@@ -4,8 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Crear un evento · Festival Check-in</title>
-<link rel="stylesheet" href="traza.css?v=guia-modelo-evento">
-<script type="module" src="traza.js?v=guia-modelo-evento"></script>
+<link rel="stylesheet" href="traza.css?v=invoke-lector">
+<script type="module" src="traza.js?v=invoke-lector"></script>
+<script type="module" src="invocaciones.js?v=invoke-lector"></script>
 </head>
 <body>
 <main>
@@ -14,6 +15,7 @@
     <a href="https://github.com/albertohdezakkari/festival-checkin-01/blob/main/0-conf.md">Preparar el entorno</a>
     <a href="#infografia">Ver la infografía ↓</a>
     <a href="#lector">Abrir el lector de código ↓</a>
+    <a href="#invocaciones">Invocaciones de Lambda ↓</a>
   </nav>
   <header class="cabecera">
     <p>FESTIVAL CHECK-IN / CASO 01</p>
@@ -253,23 +255,13 @@ export const MODELO_EVENTO = new Entity({
   &quot;TITLE&quot;: { &quot;S&quot;: &quot;Concierto de aula&quot; }
 }</code></pre></div>
             <div class="secuencia-nota"><p><code>get-item</code> localiza el ítem por su clave. En la salida de AWS CLI, <code>N</code> identifica un número y <code>S</code> un texto. Si vuelves a enviar el mismo ID, la condición de escritura conserva el registro anterior.</p>
-              <a href="#lector" data-abrir-paso="6" data-abrir-linea="4">Abrir los comandos de la prueba ↓</a>
+              <a href="#lector" data-abrir-paso="6" data-abrir-linea="4">Ir a la clave del comando de lectura ↓</a>
             </div>
           </div>
         </section>
         </div>
         <p class="pregunta">Antes de terminar, verifica que el ítem contiene el ID de tu prueba y el título Concierto de aula.</p>
-        <p><a href="../#invoke-crear-evento">Abrir la pestaña Invoke · Crear evento</a> · <a href="../#invoke-listar-eventos">Abrir Invoke · Listar eventos</a></p>
-        <h3>Invoca desde la raíz del clon</h3><div class="code-box"><button type="button" data-copy>Copiar invocación</button><pre tabindex="0"><code>evento_id=$(node -p &#x27;Date.now()&#x27;)
-printf &#x27;ID del evento de clase: %s\n&#x27; &quot;$evento_id&quot;
-
-aws lambda invoke \
-  --function-name &quot;festival-check-in-${FCI_EQUIPO}-crearEvento&quot; \
-  --profile &quot;$AWS_PROFILE&quot; --region &quot;$AWS_REGION&quot; \
-  --cli-binary-format raw-in-base64-out \
-  --payload &quot;{\&quot;eventId\&quot;:$evento_id,\&quot;title\&quot;:\&quot;Concierto de aula\&quot;}&quot; \
-  respuesta-evento.json &amp;&amp;
-cat respuesta-evento.json</code></pre></div>
+        <p><a href="#invoke-crear-evento">Abrir Invoke · Crear evento</a> · <a href="#invoke-listar-eventos">Abrir Invoke · Listar eventos</a></p>
         <div class="code-box">
           <div class="code-header"><strong>Leer en DynamoDB</strong><button type="button" data-copy>Copiar comando</button></div>
           <pre tabindex="0"><code>aws dynamodb get-item \
@@ -317,6 +309,14 @@ cat respuesta-evento.json</code></pre></div>
       </div>
     </section>
   </div>
+  <section id="invocaciones" class="invocaciones" aria-labelledby="invocaciones-titulo">
+    <h2 id="invocaciones-titulo">Invocaciones de Lambda</h2>
+    <p>Copia el comando de cada pestaña y ejecútalo en Git Bash o Terminal.</p>
+    <div class="invoke-tabs" role="tablist" aria-label="Funciones para invocar" hidden></div>
+    <p role="status" class="invoke-status">Cargando comandos…</p>
+    <div class="invoke-panels"></div>
+    <p class="invoke-fallback" hidden><a href="../#invocaciones">Abrir las invocaciones en el cuaderno</a></p>
+  </section>
   <figure id="infografia" class="infografia">
     <figcaption>
       <h2>Infografía · Crear un evento</h2>

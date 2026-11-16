@@ -1,4 +1,4 @@
-import { explicaciones } from './lineas.js?v=modelos-por-dominio';
+import { explicaciones } from './lineas.js?v=invoke-lector';
 
 const capas = [...document.querySelectorAll('.capas button')];
 const anterior = document.querySelector('#anterior');
@@ -91,7 +91,7 @@ const piezas = {
   archivo: 'Archivador · DynamoDB guarda o recupera el ítem por EVENT_ID.'
 };
 
-const focoInicial = ['terminal', 'entrega', 'control', 'prensa', 'sello', 'terminal', 'archivo'];
+const focoInicial = ['terminal', 'entrega', 'control', 'prensa', 'sello', 'archivo'];
 const focosPorLinea = {
   2: { 5: 'desvio', 8: 'desvio', 11: 'prensa', 12: 'entrega' },
   3: { 12: 'candado', 13: 'candado', 16: 'archivo' },

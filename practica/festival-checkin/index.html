@@ -451,7 +451,7 @@ LAMBDA_ROLE_ARN=$(aws iam get-role --role-name LabRole --profile "$perfil" --reg
 <div class="lesson-note">
   <h4>Si trabajas con el repositorio clonado</h4>
   <p>Abre tu <code>serverless.yml</code> y busca <code>provider.stage</code>. En el proyecto de aula, <code>${env:FCI_EQUIPO}</code> toma el código que exportaste en la terminal. Los nombres de las funciones y de las tablas leen ese valor con <code>${self:provider.stage}</code>. Por ejemplo, <code>equipo01</code> crea el stack <code>festival-check-in-equipo01</code> y la tabla <code>FCI_EVENTOS_equipo01</code>. Así cada equipo tiene sus propias tablas aunque comparta cuenta y región. El YAML guiado de abajo usa <code>dev</code> y nombres fijos para construir un despliegue compartido.</p>
-  <p><code>package.patterns</code> excluye las pruebas y los scripts de aula del paquete de Lambda. Las rutas, las claves y el índice <code>PorUsuario</code> se leen del mismo modo en los dos archivos.</p>
+  <p><code>package.patterns</code> excluye los scripts de aula del paquete de Lambda. Las rutas, las claves y el índice <code>PorUsuario</code> se leen del mismo modo en los dos archivos.</p>
   <p><a href="https://github.com/albertohdezakkari/festival-checkin-01/blob/main/serverless.yml">Abre el YAML del repositorio de aula</a>. Después sigue <a href="#capas-eventos-orm">Crear con ORM</a>, <a href="#consultar-orm">Consultar inscripción con ORM</a> e <a href="#inscribir-orm">Inscribir con ORM</a> para reconocer los modelos y repositorios que ya tienes.</p>
 </div>
 <p>Pasa el ratón sobre una etiqueta del árbol o del código para ver su explicación. Pulsa una rama para abrirla. En móvil, toca la etiqueta para consultar su explicación.</p>
