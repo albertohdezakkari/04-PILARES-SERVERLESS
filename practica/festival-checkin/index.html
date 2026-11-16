@@ -2232,23 +2232,33 @@ cat respuesta-evento.json</code></pre>
 </article>
 <article id="invoke-buscar-evento" class="guide-step" data-step="Invoke · Buscar evento">
 <h3>Busca un evento por su ID</h3>
-<p>Despliega la versión actual de <code>festival-checkin-01</code>. Desde su raíz, reutiliza <code>evento_id</code> de <a href="#invoke-crear-evento">Invoke · Crear evento</a>. <a href="https://github.com/albertohdezakkari/festival-checkin-01/blob/main/1-crear-evento.md#busca-el-evento-desde-lambda">Ver el recorrido del caso en GitHub</a></p>
+<p>Desde la raíz de <code>festival-checkin-01</code>, después de desplegar y ejecutar <code>npm run aula</code>, invoca la Lambda con el ID del evento de ejemplo. <a href="https://github.com/albertohdezakkari/festival-checkin-01/blob/main/1-crear-evento.md#busca-el-evento-desde-lambda">Ver el recorrido del caso en GitHub</a></p>
 <div class="lesson-split">
 <div class="lesson-task">
 <h4>Envía el ID a Lambda</h4>
 <pre><code>aws lambda invoke \
-  --function-name &quot;festival-check-in-${FCI_EQUIPO}-buscarEvento&quot; \
-  --profile &quot;$AWS_PROFILE&quot; --region &quot;$AWS_REGION&quot; \
+  --function-name festival-check-in-equipo01-buscarEvento \
+  --profile default \
+  --region us-east-1 \
   --cli-binary-format raw-in-base64-out \
-  --payload &quot;{\&quot;eventId\&quot;:${evento_id:?Ejecuta antes la Lambda crearEvento}}&quot; \
+  --payload &#x27;{&quot;eventId&quot;: 1}&#x27; \
   respuesta-buscar-evento.json &amp;&amp;
 cat respuesta-buscar-evento.json</code></pre>
+<p>El comando usa <code>equipo01</code>, el perfil <code>default</code> y la región <code>us-east-1</code>. Ajusta esos valores a tu despliegue. Para buscar el evento que creaste antes, cambia el <code>1</code> por su ID.</p>
 <h4>Lee lo que recibe el handler</h4>
 <pre data-file="src/eventos/buscar-evento/handler.mjs"><code>import { buscarEventoService } from &#x27;./service.mjs&#x27;;
 
 /**
  * AWS Lambda entrega el JSON enviado en --payload como un objeto JavaScript.
- * @param {{ eventId: number }} event Ejemplo de entrada: { eventId: 3 }
+ * @param {{ eventId: number }} event ID numérico enviado en el JSON.
+ * @example
+ * aws lambda invoke \
+ *   --function-name festival-check-in-equipo01-buscarEvento \
+ *   --profile default \
+ *   --region us-east-1 \
+ *   --cli-binary-format raw-in-base64-out \
+ *   --payload &#x27;{&quot;eventId&quot;: 1}&#x27; \
+ *   respuesta-buscar-evento.json
  */
 export function buscarEventoHandler(event) {
   const { eventId } = event ?? {};
@@ -2259,7 +2269,7 @@ export function buscarEventoHandler(event) {
   return buscarEventoService(eventId);
 }</code></pre>
 <p><code>event</code> es el objeto que Lambda construye con el JSON de <code>--payload</code>. En <code>const { eventId } = event ?? {};</code>, las llaves sacan la propiedad <code>eventId</code>. Si falta el objeto, <code>?? {}</code> permite comprobar el ID ausente.</p>
-<p class="checkpoint"><strong>Antes de avanzar.</strong> Comprueba que la salida contiene el ID que enviaste y el título «Concierto de aula». Un ID válido que no existe devuelve <code>null</code>.</p>
+<p class="checkpoint"><strong>Antes de avanzar.</strong> Comprueba que la salida contiene <code>eventId: 1</code> y el título «Festival de otoño». Un ID válido que no existe devuelve <code>null</code>.</p>
 </div>
 <aside class="lesson-visual lesson-note">
 <h4>¿Qué función ejecuta AWS?</h4>
@@ -2267,12 +2277,12 @@ export function buscarEventoHandler(event) {
     name: ${self:service}-${self:provider.stage}-buscarEvento
     handler: src/eventos/buscar-evento/handler.buscarEventoHandler</code></pre>
 <figure class="lesson-diagram">
-<figcaption>Sigue el ID <code>3</code> en la ida y la vuelta</figcaption>
+<figcaption>Sigue el ID <code>1</code> en la ida y la vuelta</figcaption>
 <ol>
-  <li><strong>1 · Terminal → Handler</strong><span><code>--function-name</code> elige la Lambda. Con <code>evento_id=3</code>, <code>--payload</code> lleva <code>{"eventId": 3}</code>.</span></li>
-  <li><strong>2 · Handler → Service → Repository</strong><span>El handler comprueba el entero positivo y llama a <code>buscarEventoService(3)</code>. El service pasa ese número a <code>buscarEventoRepository(3)</code>.</span></li>
-  <li><strong>3 · Repository → DynamoDB</strong><span><code>.key({ eventId })</code> crea <code>{ eventId: 3 }</code>. <code>MODELO_EVENTO</code> lo traduce a <code>Key: { EVENT_ID: 3 }</code>. <code>.send()</code> ejecuta <code>GetItem</code> en la tabla del equipo. Solo hace falta el ID porque es la clave primaria de Eventos.</span></li>
-  <li><strong>4 · DynamoDB → Terminal</strong><span>DynamoDB devuelve <code>EVENT_ID</code> y <code>TITLE</code>. Toolbox los entrega como <code>Item: { eventId: 3, title: "Concierto de aula" }</code>. La respuesta pasa por el service y el handler hasta <code>respuesta-buscar-evento.json</code>.</span></li>
+  <li><strong>1 · Terminal → Handler</strong><span><code>--function-name</code> elige la Lambda. <code>--payload</code> lleva <code>{"eventId": 1}</code>.</span></li>
+  <li><strong>2 · Handler → Service → Repository</strong><span>El handler comprueba el entero positivo y llama a <code>buscarEventoService(1)</code>. El service pasa ese número a <code>buscarEventoRepository(1)</code>.</span></li>
+  <li><strong>3 · Repository → DynamoDB</strong><span><code>.key({ eventId })</code> crea <code>{ eventId: 1 }</code>. <code>MODELO_EVENTO</code> lo traduce a <code>Key: { EVENT_ID: 1 }</code>. <code>.send()</code> ejecuta <code>GetItem</code> en la tabla del equipo. Solo hace falta el ID porque es la clave primaria de Eventos.</span></li>
+  <li><strong>4 · DynamoDB → Terminal</strong><span>DynamoDB devuelve <code>EVENT_ID</code> y <code>TITLE</code>. Toolbox los entrega como <code>Item: { eventId: 1, title: "Festival de otoño" }</code>. La respuesta pasa por el service y el handler hasta <code>respuesta-buscar-evento.json</code>.</span></li>
 </ol>
 </figure>
 </aside>
