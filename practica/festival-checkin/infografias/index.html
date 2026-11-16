@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Infografías de Festival Check-in</title>
+  <link rel="stylesheet" href="style.css">
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+<main>
+  <nav class="links" aria-label="Cuaderno y material de impresión">
+    <a href="../">← Cuaderno de Festival Check-in</a>
+    <a href="../traza-evento/#lector">Lector de «Crear un evento»</a>
+    <a class="print" href="festival-check-in-infografias.pdf">PDF con las seis láminas</a>
+  </nav>
+  <header>
+    <h1>De la terminal a DynamoDB</h1>
+    <p>Sigue cada caso por Serverless, handler, service, repository y Entity. Abre el PDF para imprimir una lámina A4 o sigue los enlaces al código completo.</p>
+    <p>Ejecuta los comandos desde la raíz de <code>festival-checkin-01</code>. Antes comprueba que ya desplegaste y que tienes <code>AWS_PROFILE</code>, <code>AWS_REGION</code> y <code>FCI_EQUIPO</code> en la terminal. <a href="https://github.com/albertohdezakkari/festival-checkin-01/blob/64fe613/0-codespaces.md">Preparar el entorno</a></p>
+  </header>
+  <section class="command setup"><div><h2>Obtén la URL para curl</h2><button class="copy" type="button">Copiar comando</button></div><pre tabindex="0"><code>api_url=&quot;$(aws cloudformation describe-stacks \
+  --stack-name &quot;festival-check-in-${FCI_EQUIPO}&quot; \
+  --profile &quot;$AWS_PROFILE&quot; --region &quot;$AWS_REGION&quot; \
+  --query &quot;Stacks[0].Outputs[?OutputKey==&#x27;HttpApiUrl&#x27;].OutputValue | [0]&quot; --output text)&quot;
+printf &#x27;%s\n&#x27; &quot;$api_url&quot;</code></pre></section>
+  <nav class="case-nav" role="tablist" aria-label="Casos de uso"><a href="#crear-evento" id="tab-crear-evento" role="tab" aria-controls="crear-evento" aria-selected="false">01 Crear un evento</a> <a href="#buscar-evento" id="tab-buscar-evento" role="tab" aria-controls="buscar-evento" aria-selected="false">02 Buscar un evento</a> <a href="#listar-eventos" id="tab-listar-eventos" role="tab" aria-controls="listar-eventos" aria-selected="false">03 Listar eventos</a> <a href="#crear-usuario" id="tab-crear-usuario" role="tab" aria-controls="crear-usuario" aria-selected="false">04 Crear un usuario</a> <a href="#inscribir-usuario" id="tab-inscribir-usuario" role="tab" aria-controls="inscribir-usuario" aria-selected="false">05 Inscribir a un usuario</a> <a href="#consultar-inscripcion" id="tab-consultar-inscripcion" role="tab" aria-controls="consultar-inscripcion" aria-selected="false">06 Consultar una inscripción</a></nav>
+  <p class="status" role="status"></p>
+    <article id="crear-evento" class="case" role="tabpanel" aria-labelledby="tab-crear-evento" tabindex="0">
+      <div class="heading"><span>01</span><h2>Crear un evento</h2><a href="01-crear-evento.pdf">PDF A4</a></div>
+      <div class="layout">
+        <a class="preview" href="01-crear-evento.pdf"><img src="01-crear-evento.png" alt="Abrir infografía de crear un evento en PDF" width="1684" height="1191" loading="lazy"></a>
+        <div class="detail">
+          <p>Usa un ID libre en cada alta. Elige Invoke o HTTP para crear el evento 3.</p>
+          <section class="command"><div><h3>Invoke</h3><button class="copy" type="button">Copiar comando</button></div><pre tabindex="0"><code>npx --no-install serverless invoke \
+  --function crearEvento --aws-profile &quot;$AWS_PROFILE&quot; \
+  --data &#x27;{&quot;eventId&quot;:3,&quot;title&quot;:&quot;Concierto de aula&quot;}&#x27;</code></pre></section><section class="command"><div><h3>HTTP con curl</h3><button class="copy" type="button">Copiar comando</button></div><pre tabindex="0"><code>curl -i -X POST &quot;$api_url/events&quot; \
+  -H &#x27;Content-Type: application/json&#x27; \
+  -d &#x27;{&quot;eventId&quot;:3,&quot;title&quot;:&quot;Concierto de aula&quot;}&#x27;</code></pre></section>
+          <nav class="files" aria-label="Archivos de crear un evento"><a href="https://github.com/albertohdezakkari/festival-checkin-01/blob/64fe613/serverless.yml">serverless.yml</a> <a href="https://github.com/albertohdezakkari/festival-checkin-01/blob/64fe613/src/eventos/crear-evento/handler.mjs">Handler</a> <a href="https://github.com/albertohdezakkari/festival-checkin-01/blob/64fe613/src/eventos/crear-evento/service.mjs">Service</a> <a href="https://github.com/albertohdezakkari/festival-checkin-01/blob/64fe613/src/eventos/crear-evento/repository.mjs">Repository</a> <a href="https://github.com/albertohdezakkari/festival-checkin-01/blob/64fe613/src/eventos/models/evento.model.mjs">Entity Evento</a></nav>
+        </div>
+      </div>
+    </article>
+    <article id="buscar-evento" class="case" role="tabpanel" aria-labelledby="tab-buscar-evento" tabindex="0">
+      <div class="heading"><span>02</span><h2>Buscar un evento</h2><a href="02-buscar-evento.pdf">PDF A4</a></div>
+      <div class="layout">
+        <a class="preview" href="02-buscar-evento.pdf"><img src="02-buscar-evento.png" alt="Abrir infografía de buscar un evento en PDF" width="1684" height="1191" loading="lazy"></a>
+        <div class="detail">
+          <p>Crea primero el evento 3. Si el ID no existe, HTTP devuelve 404.</p>
+          <section class="command"><div><h3>Invoke</h3><button class="copy" type="button">Copiar comando</button></div><pre tabindex="0"><code>npx --no-install serverless invoke \
+  --function buscarEvento --aws-profile &quot;$AWS_PROFILE&quot; \
+  --data &#x27;{&quot;eventId&quot;:3}&#x27;</code></pre></section><section class="command"><div><h3>HTTP con curl</h3><button class="copy" type="button">Copiar comando</button></div><pre tabindex="0"><code>curl -i &quot;$api_url/events/3&quot;</code></pre></section>
+          <nav class="files" aria-label="Archivos de buscar un evento"><a href="https://github.com/albertohdezakkari/festival-checkin-01/blob/64fe613/serverless.yml">serverless.yml</a> <a href="https://github.com/albertohdezakkari/festival-checkin-01/blob/64fe613/src/eventos/buscar-evento/handler.mjs">Handler</a> <a href="https://github.com/albertohdezakkari/festival-checkin-01/blob/64fe613/src/eventos/buscar-evento/service.mjs">Service</a> <a href="https://github.com/albertohdezakkari/festival-checkin-01/blob/64fe613/src/eventos/buscar-evento/repository.mjs">Repository</a> <a href="https://github.com/albertohdezakkari/festival-checkin-01/blob/64fe613/src/eventos/models/evento.model.mjs">Entity Evento</a></nav>
+        </div>
+      </div>
+    </article>
+    <article id="listar-eventos" class="case" role="tabpanel" aria-labelledby="tab-listar-eventos" tabindex="0">
+      <div class="heading"><span>03</span><h2>Listar eventos</h2><a href="03-listar-eventos.pdf">PDF A4</a></div>
+      <div class="layout">
+        <a class="preview" href="03-listar-eventos.pdf"><img src="03-listar-eventos.png" alt="Abrir infografía de listar eventos en PDF" width="1684" height="1191" loading="lazy"></a>
+        <div class="detail">
+          <p>Si recibes siguienteCursor, pásalo por --data o por ?cursor=… para continuar.</p>
+          <section class="command"><div><h3>Invoke</h3><button class="copy" type="button">Copiar comando</button></div><pre tabindex="0"><code>npx --no-install serverless invoke \
+  --function listarEventos --aws-profile &quot;$AWS_PROFILE&quot; \
+  --data &#x27;{}&#x27;</code></pre></section><section class="command"><div><h3>HTTP con curl</h3><button class="copy" type="button">Copiar comando</button></div><pre tabindex="0"><code>curl -i &quot;$api_url/events&quot;</code></pre></section>
+          <nav class="files" aria-label="Archivos de listar eventos"><a href="https://github.com/albertohdezakkari/festival-checkin-01/blob/64fe613/serverless.yml">serverless.yml</a> <a href="https://github.com/albertohdezakkari/festival-checkin-01/blob/64fe613/src/eventos/listar-eventos/handler.mjs">Handler</a> <a href="https://github.com/albertohdezakkari/festival-checkin-01/blob/64fe613/src/eventos/listar-eventos/service.mjs">Service</a> <a href="https://github.com/albertohdezakkari/festival-checkin-01/blob/64fe613/src/eventos/listar-eventos/repository.mjs">Repository</a> <a href="https://github.com/albertohdezakkari/festival-checkin-01/blob/64fe613/src/eventos/models/evento.model.mjs">Entity Evento</a></nav>
+        </div>
+      </div>
+    </article>
+    <article id="crear-usuario" class="case" role="tabpanel" aria-labelledby="tab-crear-usuario" tabindex="0">
+      <div class="heading"><span>04</span><h2>Crear un usuario</h2><a href="04-crear-usuario.pdf">PDF A4</a></div>
+      <div class="layout">
+        <a class="preview" href="04-crear-usuario.pdf"><img src="04-crear-usuario.png" alt="Abrir infografía de crear un usuario en PDF" width="1684" height="1191" loading="lazy"></a>
+        <div class="detail">
+          <p>Usa un código libre. Elige Invoke o HTTP para crear usuario-aula-03.</p>
+          <section class="command"><div><h3>Invoke</h3><button class="copy" type="button">Copiar comando</button></div><pre tabindex="0"><code>npx --no-install serverless invoke \
+  --function crearUsuario --aws-profile &quot;$AWS_PROFILE&quot; \
+  --data &#x27;{&quot;userId&quot;:&quot;usuario-aula-03&quot;,&quot;firstName&quot;:&quot;Leo&quot;,
+ &quot;lastName&quot;:&quot;Martin&quot;,&quot;email&quot;:&quot;leo@example.com&quot;,
+ &quot;city&quot;:&quot;Huesca&quot;}&#x27;</code></pre></section><section class="command"><div><h3>HTTP con curl</h3><button class="copy" type="button">Copiar comando</button></div><pre tabindex="0"><code>curl -i -X POST &quot;$api_url/users&quot; \
+  -H &#x27;Content-Type: application/json&#x27; \
+  -d &#x27;{&quot;userId&quot;:&quot;usuario-aula-03&quot;,&quot;firstName&quot;:&quot;Leo&quot;,
+ &quot;lastName&quot;:&quot;Martin&quot;,&quot;email&quot;:&quot;leo@example.com&quot;,
+ &quot;city&quot;:&quot;Huesca&quot;}&#x27;</code></pre></section>
+          <nav class="files" aria-label="Archivos de crear un usuario"><a href="https://github.com/albertohdezakkari/festival-checkin-01/blob/64fe613/serverless.yml">serverless.yml</a> <a href="https://github.com/albertohdezakkari/festival-checkin-01/blob/64fe613/src/usuarios/crear-usuario/handler.mjs">Handler</a> <a href="https://github.com/albertohdezakkari/festival-checkin-01/blob/64fe613/src/usuarios/crear-usuario/service.mjs">Service</a> <a href="https://github.com/albertohdezakkari/festival-checkin-01/blob/64fe613/src/usuarios/crear-usuario/repository.mjs">Repository</a> <a href="https://github.com/albertohdezakkari/festival-checkin-01/blob/64fe613/src/usuarios/models/usuario.model.mjs">Entity Usuario</a></nav>
+        </div>
+      </div>
+    </article>
+    <article id="inscribir-usuario" class="case" role="tabpanel" aria-labelledby="tab-inscribir-usuario" tabindex="0">
+      <div class="heading"><span>05</span><h2>Inscribir a un usuario</h2><a href="05-inscribir-usuario.pdf">PDF A4</a></div>
+      <div class="layout">
+        <a class="preview" href="05-inscribir-usuario.pdf"><img src="05-inscribir-usuario.png" alt="Abrir infografía de inscribir a un usuario en PDF" width="1684" height="1191" loading="lazy"></a>
+        <div class="detail">
+          <p>Crea antes el evento y el usuario. La misma pareja por segunda vez devuelve 409.</p>
+          <section class="command"><div><h3>Invoke</h3><button class="copy" type="button">Copiar comando</button></div><pre tabindex="0"><code>npx --no-install serverless invoke \
+  --function inscribirUsuario --aws-profile &quot;$AWS_PROFILE&quot; \
+  --data &#x27;{ &quot;pathParameters&quot;:{&quot;eventId&quot;:&quot;3&quot;},
+  &quot;body&quot;:&quot;{\&quot;userId\&quot;:\&quot;usuario-aula-03\&quot;}&quot; }&#x27;</code></pre></section><section class="command"><div><h3>HTTP con curl</h3><button class="copy" type="button">Copiar comando</button></div><pre tabindex="0"><code>curl -i -X POST &quot;$api_url/events/3/registrations&quot; \
+  -H &#x27;Content-Type: application/json&#x27; \
+  -d &#x27;{&quot;userId&quot;:&quot;usuario-aula-03&quot;}&#x27;</code></pre></section>
+          <nav class="files" aria-label="Archivos de inscribir a un usuario"><a href="https://github.com/albertohdezakkari/festival-checkin-01/blob/64fe613/serverless.yml">serverless.yml</a> <a href="https://github.com/albertohdezakkari/festival-checkin-01/blob/64fe613/src/inscripciones/inscribir-usuario/handler.mjs">Handler</a> <a href="https://github.com/albertohdezakkari/festival-checkin-01/blob/64fe613/src/inscripciones/inscribir-usuario/service.mjs">Service</a> <a href="https://github.com/albertohdezakkari/festival-checkin-01/blob/64fe613/src/inscripciones/inscribir-usuario/repository.mjs">Repository</a> <a href="https://github.com/albertohdezakkari/festival-checkin-01/blob/64fe613/src/inscripciones/models/inscripcion.model.mjs">Entity Inscripción</a> <a href="https://github.com/albertohdezakkari/festival-checkin-01/blob/64fe613/src/inscripciones/http/peticion.mjs">Lectura de la petición</a> <a href="https://github.com/albertohdezakkari/festival-checkin-01/blob/64fe613/src/eventos/buscar-evento/service.mjs">Buscar evento</a> <a href="https://github.com/albertohdezakkari/festival-checkin-01/blob/64fe613/src/usuarios/buscar-usuario/repository.mjs">Buscar usuario</a></nav>
+        </div>
+      </div>
+    </article>
+    <article id="consultar-inscripcion" class="case" role="tabpanel" aria-labelledby="tab-consultar-inscripcion" tabindex="0">
+      <div class="heading"><span>06</span><h2>Consultar una inscripción</h2><a href="06-consultar-inscripcion.pdf">PDF A4</a></div>
+      <div class="layout">
+        <a class="preview" href="06-consultar-inscripcion.pdf"><img src="06-consultar-inscripcion.png" alt="Abrir infografía de consultar una inscripción en PDF" width="1684" height="1191" loading="lazy"></a>
+        <div class="detail">
+          <p>Consulta antes y después de inscribir. Verás registration: null y después el pase.</p>
+          <section class="command"><div><h3>Invoke</h3><button class="copy" type="button">Copiar comando</button></div><pre tabindex="0"><code>npx --no-install serverless invoke \
+  --function consultarInscripcion --aws-profile &quot;$AWS_PROFILE&quot; \
+  --data &#x27;{&quot;pathParameters&quot;:
+  {&quot;eventId&quot;:&quot;3&quot;,&quot;userId&quot;:&quot;usuario-aula-03&quot;}}&#x27;</code></pre></section><section class="command"><div><h3>HTTP con curl</h3><button class="copy" type="button">Copiar comando</button></div><pre tabindex="0"><code>curl -i &quot;$api_url/events/3/registrations/usuario-aula-03&quot;</code></pre></section>
+          <nav class="files" aria-label="Archivos de consultar una inscripción"><a href="https://github.com/albertohdezakkari/festival-checkin-01/blob/64fe613/serverless.yml">serverless.yml</a> <a href="https://github.com/albertohdezakkari/festival-checkin-01/blob/64fe613/src/inscripciones/consultar-inscripcion/handler.mjs">Handler</a> <a href="https://github.com/albertohdezakkari/festival-checkin-01/blob/64fe613/src/inscripciones/consultar-inscripcion/service.mjs">Service</a> <a href="https://github.com/albertohdezakkari/festival-checkin-01/blob/64fe613/src/inscripciones/consultar-inscripcion/repository.mjs">Repository</a> <a href="https://github.com/albertohdezakkari/festival-checkin-01/blob/64fe613/src/inscripciones/models/inscripcion.model.mjs">Entity Inscripción</a> <a href="https://github.com/albertohdezakkari/festival-checkin-01/blob/64fe613/src/inscripciones/http/peticion.mjs">Lectura de la petición</a> <a href="https://github.com/albertohdezakkari/festival-checkin-01/blob/64fe613/src/eventos/buscar-evento/service.mjs">Buscar evento</a></nav>
+        </div>
+      </div>
+    </article>
+</main>
+</body>
+</html>
