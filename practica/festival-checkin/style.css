@@ -32,7 +32,7 @@ li + li { margin-top: .65rem; }
 .actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .phases {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 8px;
   margin-block: 10px 2px;
 }

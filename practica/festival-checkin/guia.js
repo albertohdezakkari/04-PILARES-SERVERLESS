@@ -406,7 +406,7 @@ for (const choice of accessButtons) {
   });
 }
 
-const commands = '#infra .guide-step:not(#pegar-aws) pre, #datos pre, #prueba pre';
+const commands = '#infra .guide-step:not(#pegar-aws) pre, #datos pre, #invocaciones pre, #prueba pre';
 for (const pre of document.querySelectorAll(commands)) {
   if (!pre.hasAttribute('data-diagram')) addCodeControls(pre);
 }

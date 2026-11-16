@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Festival Check-in · práctica guiada</title>
-<link rel="stylesheet" href="style.css?v=cuaderno-5050">
+<link rel="stylesheet" href="style.css?v=pestanas-invoke">
 <script type="module" src="app.js?v=consultar-inscripcion"></script>
-<script type="module" src="guia.js?v=cuaderno-5050"></script>
+<script type="module" src="guia.js?v=pestanas-invoke"></script>
 <script type="module" src="visor-modelo.js?v=cuaderno-5050"></script>
 <script type="module" src="entrenamiento-dynamo.js?v=referencias"></script>
 </head>
@@ -23,7 +23,8 @@
   <button type="button" data-phase="diseno" aria-pressed="true"><span class="phase-number">1</span><span><strong>Modelo de datos</strong><small>Diagrama y claves</small></span></button>
   <button type="button" data-phase="infra" aria-pressed="false"><span class="phase-number">2</span><span><strong>Preparación</strong><small>AWS Academy y serverless.yml</small></span></button>
   <button type="button" data-phase="datos" aria-pressed="false"><span class="phase-number">3</span><span><strong>Lambdas</strong><small>Código y despliegue</small></span></button>
-  <button type="button" data-phase="prueba" aria-pressed="false"><span class="phase-number">4</span><span><strong>Validación</strong><small>API y datos guardados</small></span></button>
+  <button type="button" data-phase="invocaciones" aria-pressed="false"><span class="phase-number">4</span><span><strong>Invocaciones</strong><small>Pruebas con AWS CLI</small></span></button>
+  <button type="button" data-phase="prueba" aria-pressed="false"><span class="phase-number">5</span><span><strong>Validación</strong><small>API y datos guardados</small></span></button>
 </nav>
 <div id="guide-toolbar">
   <p id="guide-progress" aria-live="polite">
@@ -2122,6 +2123,115 @@ curl -i &quot;$pase&quot;</code></pre>
   <div data-prefix="--expression-attribute-values"><strong>Asigna el valor al marcador.</strong><p>DynamoDB sustituye <code>:evento</code> por un número o <code>:usuario</code> por un texto, según el tipo indicado.</p></div>
   <div data-prefix="--query 'Items[]"><strong>Muestra los identificadores del resultado.</strong><p>AWS CLI extrae de cada ítem el identificador del usuario (<code>S</code>) o del evento (<code>N</code>), según la consulta.</p></div>
 </template>
+<section id="invocaciones" class="phase" hidden>
+<h2>Invocaciones de Lambda</h2>
+<article id="invoke-crear-evento" class="guide-step" data-step="Invoke · Crear evento">
+<h3>Crea el evento desde la terminal</h3>
+<p>Desde la raíz de <code>festival-checkin-01</code>, usa la terminal en la que configuraste y desplegaste el clon. <code>AWS_PROFILE</code> y <code>AWS_REGION</code> se leen del entorno. <a href="https://github.com/albertohdezakkari/festival-checkin-01/blob/main/0-conf.md#5-despliega-y-carga-los-datos-de-ejemplo">Ver el paso de despliegue</a>.</p>
+<div class="lesson-split">
+<div class="lesson-task">
+<p><code>Date.now()</code> da la hora en milisegundos. La guardas como ID en <code>evento_id</code>. <code>--payload</code> pasa ese número y el título al handler.</p>
+<pre><code>evento_id=$(node -p &#x27;Date.now()&#x27;)
+printf &#x27;ID del evento de clase: %s\n&#x27; &quot;$evento_id&quot;
+
+aws lambda invoke \
+  --function-name &quot;festival-check-in-${FCI_EQUIPO}-crearEvento&quot; \
+  --cli-binary-format raw-in-base64-out \
+  --payload &quot;{\&quot;eventId\&quot;:$evento_id,\&quot;title\&quot;:\&quot;Concierto de aula\&quot;}&quot; \
+  respuesta-evento.json &amp;&amp;
+cat respuesta-evento.json</code></pre>
+<p class="checkpoint"><strong>Antes de avanzar.</strong> Comprueba que el JSON devuelve el mismo <code>eventId</code> y el título «Concierto de aula».</p>
+</div>
+<aside class="lesson-visual lesson-note">
+<h4>Del comando al resultado</h4>
+<p><code>--function-name</code> elige la Lambda de tu equipo. <code>--cli-binary-format raw-in-base64-out</code> permite escribir el JSON directamente en AWS CLI v2. El archivo al final del comando recibe la respuesta. <code>cat</code> la muestra. Si AWS CLI muestra <code>FunctionError</code>, lee ese archivo para ver el error de ejecución. <a href="https://docs.aws.amazon.com/cli/latest/reference/lambda/invoke.html">Referencia de AWS CLI</a></p>
+</aside>
+</div>
+</article>
+<article id="invoke-listar-eventos" class="guide-step" data-step="Invoke · Listar eventos">
+<h3>Lista los eventos guardados</h3>
+<p>Desde la raíz de <code>festival-checkin-01</code>, usa la terminal en la que configuraste y desplegaste el clon. <code>AWS_PROFILE</code> y <code>AWS_REGION</code> se leen del entorno. <a href="https://github.com/albertohdezakkari/festival-checkin-01/blob/main/0-conf.md#5-despliega-y-carga-los-datos-de-ejemplo">Ver el paso de despliegue</a>.</p>
+<div class="lesson-split">
+<div class="lesson-task">
+<p><code>{}</code> es un objeto JSON vacío. Para pedir la primera página, el handler puede llamar al service sin recibir ningún ID.</p>
+<pre><code>aws lambda invoke \
+  --function-name &quot;festival-check-in-${FCI_EQUIPO}-listarEventos&quot; \
+  --cli-binary-format raw-in-base64-out \
+  --payload &#x27;{}&#x27; \
+  respuesta-listar.json &amp;&amp;
+cat respuesta-listar.json</code></pre>
+<p class="checkpoint"><strong>Antes de avanzar.</strong> Busca «Concierto de aula» en <code>eventos</code>. Si la primera página contiene otros eventos, sigue con el cursor hasta encontrarlo.</p>
+</div>
+<aside class="lesson-visual lesson-note">
+<h4>Del comando al resultado</h4>
+<p><a href="https://github.com/albertohdezakkari/festival-checkin-01/tree/main/src/eventos/listar-eventos">Abre handler, service y repository</a>. El repository usa <code>ScanCommand</code> de Toolbox para leer hasta 25 eventos por llamada. Si <code>siguienteCursor</code> contiene un valor, vuelve a pulsar Copiar comando y sustituye <code>'{}'</code> por <code>'{"cursor":"3"}'</code> usando el valor que acabas de recibir. <code>null</code> indica que has llegado al final. <a href="https://www.dynamodbtoolbox.com/docs/tables/actions/scan">Scan en DynamoDB Toolbox</a></p>
+</aside>
+</div>
+</article>
+<article id="invoke-crear-usuario" class="guide-step" data-step="Invoke · Crear usuario">
+<h3>Crea el perfil que vas a inscribir</h3>
+<p>Desde la raíz de <code>festival-checkin-01</code>, usa la terminal en la que configuraste y desplegaste el clon. <code>AWS_PROFILE</code> y <code>AWS_REGION</code> se leen del entorno. <a href="https://github.com/albertohdezakkari/festival-checkin-01/blob/main/0-conf.md#5-despliega-y-carga-los-datos-de-ejemplo">Ver el paso de despliegue</a>.</p>
+<div class="lesson-split">
+<div class="lesson-task">
+<p>Reutiliza <code>evento_id</code> para crear un código de usuario de prueba. Conserva <code>usuario_id</code> en la misma terminal.</p>
+<pre><code>usuario_id=&quot;usuario-aula-${evento_id:?Completa el caso 1 y recupera evento_id}&quot;
+printf &#x27;ID del usuario de clase: %s\n&#x27; &quot;$usuario_id&quot;
+
+aws lambda invoke \
+  --function-name &quot;festival-check-in-${FCI_EQUIPO}-crearUsuario&quot; \
+  --cli-binary-format raw-in-base64-out \
+  --payload &quot;{\&quot;userId\&quot;:\&quot;$usuario_id\&quot;,\&quot;firstName\&quot;:\&quot;Leo\&quot;,\&quot;lastName\&quot;:\&quot;Martin\&quot;,\&quot;email\&quot;:\&quot;leo.martin@example.com\&quot;,\&quot;city\&quot;:\&quot;Huesca\&quot;}&quot; \
+  respuesta-usuario.json &amp;&amp;
+cat respuesta-usuario.json</code></pre>
+<p class="checkpoint"><strong>Antes de avanzar.</strong> El JSON contiene el <code>userId</code> que acabas de enviar.</p>
+</div>
+<aside class="lesson-visual lesson-note">
+<h4>Del comando al resultado</h4>
+<p>El payload es el perfil en JSON. El handler lo pasa al service y el repository escribe en <code>FCI_USUARIOS</code>.</p>
+</aside>
+</div>
+</article>
+<article id="invoke-consultar-inscripcion" class="guide-step" data-step="Invoke · Consultar inscripción">
+<h3>Consulta la inscripción del usuario</h3>
+<p>Desde la raíz de <code>festival-checkin-01</code>, usa la terminal en la que configuraste y desplegaste el clon. <code>AWS_PROFILE</code> y <code>AWS_REGION</code> se leen del entorno. <a href="https://github.com/albertohdezakkari/festival-checkin-01/blob/main/0-conf.md#5-despliega-y-carga-los-datos-de-ejemplo">Ver el paso de despliegue</a>.</p>
+<div class="lesson-split">
+<div class="lesson-task">
+<p>Conserva <code>evento_id</code> y <code>usuario_id</code> de las pestañas de creación. Pásalos en <code>pathParameters</code>, como los entregaría API Gateway al handler de GET.</p>
+<pre><code>aws lambda invoke \
+  --function-name &quot;festival-check-in-${FCI_EQUIPO}-consultarInscripcion&quot; \
+  --cli-binary-format raw-in-base64-out \
+  --payload &quot;{\&quot;pathParameters\&quot;:{\&quot;eventId\&quot;:\&quot;$evento_id\&quot;,\&quot;userId\&quot;:\&quot;$usuario_id\&quot;}}&quot; \
+  respuesta-consulta.json &amp;&amp;
+cat respuesta-consulta.json</code></pre>
+<p class="checkpoint"><strong>Antes de avanzar.</strong> Busca <code>statusCode: 200</code> en el archivo. Antes de inscribir, el cuerpo contiene <code>registration: null</code>. Después, contiene la inscripción.</p>
+</div>
+<aside class="lesson-visual lesson-note">
+<h4>Del comando al resultado</h4>
+<p>Aquí el <code>StatusCode</code> que imprime AWS CLI corresponde a la invocación de Lambda. El <code>statusCode</code> del archivo es el que devuelve el handler para la API. <code>body</code> contiene la respuesta de la aplicación en forma de cadena JSON.</p>
+</aside>
+</div>
+</article>
+<article id="invoke-inscribir-usuario" class="guide-step" data-step="Invoke · Inscribir usuario">
+<h3>Inscribe al usuario en el evento</h3>
+<p>Desde la raíz de <code>festival-checkin-01</code>, usa la terminal en la que configuraste y desplegaste el clon. <code>AWS_PROFILE</code> y <code>AWS_REGION</code> se leen del entorno. <a href="https://github.com/albertohdezakkari/festival-checkin-01/blob/main/0-conf.md#5-despliega-y-carga-los-datos-de-ejemplo">Ver el paso de despliegue</a>.</p>
+<div class="lesson-split">
+<div class="lesson-task">
+<p>Usa el mismo par de IDs. Este comando envía <code>pathParameters</code> al handler de POST.</p>
+<pre><code>aws lambda invoke \
+  --function-name &quot;festival-check-in-${FCI_EQUIPO}-inscribirUsuario&quot; \
+  --cli-binary-format raw-in-base64-out \
+  --payload &quot;{\&quot;pathParameters\&quot;:{\&quot;eventId\&quot;:\&quot;$evento_id\&quot;,\&quot;userId\&quot;:\&quot;$usuario_id\&quot;}}&quot; \
+  respuesta-inscripcion.json &amp;&amp;
+cat respuesta-inscripcion.json</code></pre>
+<p class="checkpoint"><strong>Antes de avanzar.</strong> El archivo muestra <code>statusCode: 201</code>. Repite el comando para ver <code>409</code> y vuelve a <a href="#invoke-consultar-inscripcion">Consultar inscripción</a> para leerla.</p>
+</div>
+<aside class="lesson-visual lesson-note">
+<h4>Del comando al resultado</h4>
+<p>El service comprueba que existan el evento y el usuario. El repository escribe una inscripción por cada pareja de IDs. La condición de DynamoDB protege la primera inscripción si repites la invocación.</p>
+</aside>
+</div>
+</article>
+</section>
 <section id="prueba" class="phase" hidden>
 <h2>Demostración cruzada</h2>
 <article id="otro-equipo" class="guide-step" data-step="Recorrido">
