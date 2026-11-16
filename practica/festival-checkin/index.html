@@ -2230,6 +2230,40 @@ cat respuesta-evento.json</code></pre>
 </aside>
 </div>
 </article>
+<article id="invoke-buscar-evento" class="guide-step" data-step="Invoke · Buscar evento">
+<h3>Busca un evento por su ID</h3>
+<p>Despliega la versión actual de <code>festival-checkin-01</code>. Desde su raíz, reutiliza <code>evento_id</code> de <a href="#invoke-crear-evento">Invoke · Crear evento</a>. <a href="https://github.com/albertohdezakkari/festival-checkin-01/blob/main/1-crear-evento.md#busca-el-evento-desde-lambda">Ver el recorrido del caso en GitHub</a></p>
+<div class="lesson-split">
+<div class="lesson-task">
+<h4>Envía el ID a Lambda</h4>
+<pre><code>aws lambda invoke \
+  --function-name &quot;festival-check-in-${FCI_EQUIPO}-buscarEvento&quot; \
+  --profile &quot;$AWS_PROFILE&quot; --region &quot;$AWS_REGION&quot; \
+  --cli-binary-format raw-in-base64-out \
+  --payload &quot;{\&quot;eventId\&quot;:${evento_id:?Ejecuta antes la Lambda crearEvento}}&quot; \
+  respuesta-buscar-evento.json &amp;&amp;
+cat respuesta-buscar-evento.json</code></pre>
+<p class="checkpoint"><strong>Antes de avanzar.</strong> Comprueba que la salida contiene el ID que enviaste y el título «Concierto de aula». Un ID válido que no existe devuelve <code>null</code>.</p>
+</div>
+<aside class="lesson-visual lesson-note">
+<h4>Sigue la llamada hasta DynamoDB</h4>
+<pre><code>buscarEvento:
+    name: ${self:service}-${self:provider.stage}-buscarEvento
+    handler: src/eventos/buscar-evento/handler.buscarEventoHandler</code></pre>
+<pre data-file="src/eventos/buscar-evento/handler.mjs"><code>import { buscarEventoService } from &#x27;./service.mjs&#x27;;
+
+export function buscarEventoHandler(event) {
+  const { eventId } = event ?? {};
+  if (!Number.isSafeInteger(eventId) || eventId &lt; 1) {
+    throw new Error(&#x27;Indica un ID de evento entero positivo&#x27;);
+  }
+
+  return buscarEventoService(eventId);
+}</code></pre>
+<p>El handler recoge <code>eventId</code> del JSON. El service lo entrega al repository, que hace un <code>GetItemCommand</code> con <code>MODELO_EVENTO</code>. El modelo traduce la clave a <code>EVENT_ID</code>.</p>
+</aside>
+</div>
+</article>
 <article id="invoke-listar-eventos" class="guide-step" data-step="Invoke · Listar eventos">
 <h3>Lista los eventos guardados</h3>
 <p>Desde la raíz de <code>festival-checkin-01</code>, usa la terminal en la que configuraste y desplegaste el clon. <code>AWS_PROFILE</code> y <code>AWS_REGION</code> se leen del entorno. <a href="https://github.com/albertohdezakkari/festival-checkin-01/blob/main/0-conf.md#5-despliega-y-carga-los-datos-de-ejemplo">Ver el paso de despliegue</a>.</p>
