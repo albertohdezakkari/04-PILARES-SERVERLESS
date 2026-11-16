@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Crear un evento · Festival Check-in</title>
-<link rel="stylesheet" href="traza.css?v=infografia-integrada">
-<script type="module" src="traza.js?v=modelos-por-dominio"></script>
+<link rel="stylesheet" href="traza.css?v=guia-modelo-evento">
+<script type="module" src="traza.js?v=guia-modelo-evento"></script>
 </head>
 <body>
 <main>
@@ -174,27 +174,44 @@ export async function crearEventoRepository(eventId, title) {
         <a class="fuente" href="https://github.com/albertohdezakkari/festival-checkin-01/blob/main/src/eventos/crear-evento/repository.mjs">Abrir src/eventos/crear-evento/repository.mjs en GitHub</a>
       </section>
       <section id="paso-5" class="paso" hidden>
-        <h2>Traduce los atributos</h2>
-        <p>El repository usa el modelo <code>Evento</code>. <code>savedAs</code> enlaza los nombres de JavaScript con los nombres guardados. La tabla usa <code>EVENT_ID</code> como clave de partición de tipo número.</p>
-        <div class="explicacion-capa">
-<section class="secuencia-cuadro" aria-labelledby="secuencia-5">
-          <h3 id="secuencia-5"><span>05</span> El modelo traduce las etiquetas</h3>
-          <div class="secuencia-cuerpo">
-            <div class="secuencia-codigo"><strong>evento.model.mjs</strong><pre tabindex="0"><code>eventId: number({ big: true }).key().savedAs(&#x27;EVENT_ID&#x27;),
-title: string().savedAs(&#x27;TITLE&#x27;)</code></pre></div>
-            <div class="secuencia-nota"><p><code>.key()</code> marca el ID como clave. <code>savedAs</code> decide el nombre guardado. El número sigue siendo <code>3</code> y el texto sigue siendo <code>Concierto de aula</code>.</p>
-              <a href="#lector" data-abrir-paso="5" data-abrir-linea="20">Ver la línea en su archivo ↓</a>
-            </div>
-          </div>
-        </section>
-        <p class="secuencia-enlace"><span aria-hidden="true">↓</span><span class="secuencia-dato">En la tabla, las dos etiquetas son <code>EVENT_ID</code> y <code>TITLE</code>.</span></p>
+        <h2>Del objeto de JavaScript al ítem de DynamoDB</h2>
+        <p>Sigue el evento 3. En el repository se llama <code>eventId</code>. En DynamoDB se guarda como <code>EVENT_ID</code>. El modelo describe esa traducción.</p>
+
+        <div class="modelo-flujo" aria-label="El mismo evento antes y después del modelo">
+          <div><strong>En JavaScript</strong><code>{ eventId: 3, title: 'Concierto de aula' }</code></div>
+          <span aria-hidden="true">→</span>
+          <div><strong>En DynamoDB</strong><code>{ EVENT_ID: 3, TITLE: 'Concierto de aula' }</code></div>
         </div>
+
+        <ol class="modelo-bloques" aria-label="Bloques de evento.model.mjs">
+          <li>
+            <h3>1. Reúne las herramientas</h3>
+            <p><code>Table</code> y <code>Entity</code> vienen de Toolbox. <code>item()</code> agrupa los campos del esquema. <code>number()</code> y <code>string()</code> declaran tipos. Del proyecto importas <code>db</code>, el cliente que habla con AWS, y <code>TABLA_EVENTOS_FCI</code>, el nombre de la tabla configurado para Lambda.</p>
+            <a href="#lector" data-abrir-paso="5" data-abrir-linea="6">Ir a los imports ↓</a>
+          </li>
+          <li>
+            <h3>2. Indica a qué tabla accedes</h3>
+            <p>Serverless crea la tabla al desplegar. <code>new Table({...})</code> la representa en JavaScript. Dile su nombre con <code>name</code>, cómo conectarte con <code>documentClient: db</code> y cómo se identifica un ítem con <code>partitionKey</code>. En DynamoDB la clave se llama <code>EVENT_ID</code> y es numérica.</p>
+            <a href="#lector" data-abrir-paso="5" data-abrir-linea="11">Ir a la clave de la tabla ↓</a>
+          </li>
+          <li>
+            <h3>3. Describe una ficha de evento</h3>
+            <p><code>new Entity({...})</code> define el modelo llamado <code>Evento</code>. <code>table</code> lo vincula con <code>TABLA_MODELO_EVENTO</code>. <code>schema: item({...})</code> indica qué campos espera Toolbox y cómo guardarlos.</p>
+            <dl class="modelo-cadena">
+              <div><dt><code>number({ big: true })</code></dt><dd>El ID es numérico y el modelo admite <code>BigInt</code>.</dd></div>
+              <div><dt><code>.key()</code></dt><dd>Marca <code>eventId</code> como parte de la clave en el objeto JavaScript.</dd></div>
+              <div><dt><code>.savedAs('EVENT_ID')</code></dt><dd>Une ese campo con la clave declarada en la tabla. El valor sigue siendo <code>3</code>.</dd></div>
+            </dl>
+            <p><code>title</code> es un texto que se guarda como <code>TITLE</code>. La llamada que prepara la escritura está en el repository.</p>
+            <a href="#lector" data-abrir-paso="5" data-abrir-linea="20">Ir a la línea de eventId ↓</a>
+          </li>
+        </ol>
         <dl class="opciones-modelo">
           <div><dt><code>entityAttribute: false</code></dt><dd>Toolbox omite <code>_et: "Evento"</code> al guardar. La etiqueta sirve para distinguir modelos cuando comparten tabla. Aquí <code>FCI_EVENTOS</code> contiene eventos.</dd></div>
           <div><dt><code>timestamps: false</code></dt><dd>Toolbox omite <code>_ct</code> y <code>_md</code>, las fechas automáticas de creación y última modificación. Las fechas que declares expresamente en un modelo, como <code>REGISTERED_AT</code> en las inscripciones, siguen siendo datos de la aplicación.</dd></div>
         </dl>
         <p>Con ambas opciones en <code>false</code>, el evento 3 se guarda con <code>EVENT_ID</code> y <code>TITLE</code>. <a href="https://www.dynamodbtoolbox.com/docs/entities/internal-attributes">Atributos internos de DynamoDB Toolbox</a></p>
-        <p class="pregunta">Busca en el archivo dónde se transforma cada uno de los dos nombres.</p>
+        <p class="pregunta"><strong>Antes de avanzar.</strong> Pulsa la línea 11 y encuentra la clave en DynamoDB. Luego pulsa la línea 20 y localiza el nombre que usa JavaScript y el método que los une.</p>
 
         <div class="code-box">
           <div class="code-header"><strong>src/eventos/models/evento.model.mjs</strong><button type="button" data-copy>Copiar archivo</button></div>
@@ -304,6 +321,7 @@ cat respuesta-evento.json</code></pre></div>
       <h2>Infografía · Crear un evento</h2>
       <a href="infografia-crear-evento.png?v=capas" download="infografia-crear-evento.png">Descargar PNG</a>
       <a href="#lector">Volver al lector ↑</a>
+      <a href="https://github.com/albertohdezakkari/festival-checkin-01/blob/main/1-crear-evento.md">Guía de Crear un evento en GitHub</a>
     </figcaption>
     <img src="infografia-crear-evento.png?v=capas" width="1024" height="1536" loading="lazy" alt="El evento 3 pasa por Serverless, el handler, crearEventoService, crearEventoRepository y el modelo antes de quedar guardado en DynamoDB. Los seis pasos se explican en el lector de código.">
   </figure>

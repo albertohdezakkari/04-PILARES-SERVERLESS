@@ -166,7 +166,8 @@ for (const [bloque, caja] of [...document.querySelectorAll('.code-box')].entries
   nota.textContent = `Línea ${lineas[0].numero} · ${lineas[0].explicacion}`;
 }
 
-activarLinea(lineasPorPaso[0][0]);
+const pasoModelo = new URLSearchParams(location.search).get('paso') === 'modelo';
+mostrarPaso(pasoModelo ? 4 : 0);
 
 for (const boton of document.querySelectorAll('[data-copy]')) {
   boton.addEventListener('click', async () => {

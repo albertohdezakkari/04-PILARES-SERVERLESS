@@ -253,3 +253,32 @@ pre code { color: var(--ink); }
   height: auto;
   border-radius: 1rem;
 }
+
+.modelo-flujo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: .5rem;
+  margin: 1rem 0;
+}
+.modelo-flujo > div, .modelo-bloques > li {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: .7rem;
+  background: #192a2d;
+  padding: .75rem;
+}
+.modelo-flujo strong { display: block; color: var(--mint); margin-bottom: .25rem; }
+.modelo-flujo code { overflow-wrap: anywhere; }
+.modelo-flujo > span { color: var(--amber); font-size: 1.25rem; }
+.modelo-bloques { display: grid; gap: .55rem; list-style: none; margin: 1rem 0; padding: 0; }
+.modelo-bloques h3 { margin: 0 0 .25rem; color: var(--amber); }
+.modelo-bloques p { margin: 0 0 .45rem; }
+.modelo-bloques a { font-size: .88rem; }
+.modelo-cadena { margin: .5rem 0; }
+.modelo-cadena > div { border-inline-start: 2px solid var(--mint); margin: .4rem 0; padding-inline-start: .55rem; }
+.modelo-cadena dd { margin: .12rem 0 0; }
+@media (max-width: 420px) {
+  .modelo-flujo { grid-template-columns: 1fr; }
+  .modelo-flujo > span { justify-self: center; transform: rotate(90deg); }
+}

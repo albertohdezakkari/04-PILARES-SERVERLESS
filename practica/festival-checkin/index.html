@@ -1369,6 +1369,7 @@ evento_secundario_id=2</code></pre>
 </article>
 <article id="capas-eventos" class="guide-step" data-step="Crear por capas">
 <h3>Crear un evento con Handler, Service y Repository</h3>
+<p><a href="traza-evento/#infografia">Ver la infografía de Crear un evento ↓</a></p>
 <div class="lesson-split">
 <div class="lesson-task">
 <p>Acabas de crear dos eventos y de leerlos en DynamoDB. Ahora reorganiza <code>handler.mjs</code> para que puedas localizar por separado la entrada de Lambda, las decisiones del caso de uso y el acceso a la tabla.</p>
@@ -1571,7 +1572,7 @@ await db.send(comando);</code></pre>
 </article>
 <article id="capas-eventos-orm" class="guide-step" data-step="Crear con ORM">
 <h3>Crea un evento por capas con DynamoDB Toolbox</h3>
-<p><a href="traza-evento/#lector">Seguir el código del alta de un evento →</a> · <a href="traza-evento/#infografia">Ver la infografía de las capas</a></p>
+<p><a href="traza-evento/#lector">Seguir el código del alta de un evento →</a> · <a href="traza-evento/?paso=modelo#lector">Entender el modelo Evento</a> · <a href="traza-evento/#infografia">Ver la infografía de Crear un evento</a></p>
 <div class="lesson-split">
 <div class="lesson-task">
 <p>Completa primero <a href="#capas-eventos">Crear por capas</a>. Si conservas eventos antiguos sin título, añade un título de texto antes de consultarlos con Toolbox. En <code>src/eventos/models/</code> vas a añadir el modelo que comparten la escritura y la lectura de eventos. Después cambiarás cómo el repository de <code>crear-evento/</code> guarda un evento en <code>FCI_EVENTOS</code>. DynamoDB Toolbox es un <strong>ODM</strong>, un modelador que traduce los datos de JavaScript a los atributos del ítem de DynamoDB.</p>
