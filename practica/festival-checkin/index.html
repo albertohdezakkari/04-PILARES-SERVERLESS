@@ -890,7 +890,7 @@ ls -l serverless.yml package.json</code></pre>
       <p>En <code>vi</code>, escribe <code>:set paste</code> y pulsa <kbd>Intro</kbd>. Si estás actualizando un archivo anterior de esta práctica, escribe <code>:%d</code> y pulsa <kbd>Intro</kbd> para borrar el contenido. Pulsa <kbd>i</kbd> y pega el archivo completo. Para guardar, pulsa <kbd>Esc</kbd>, escribe <code>:wq</code> y pulsa <kbd>Intro</kbd>.</p>
     </li>
   </ol>
-<p>Sigue las pestañas de izquierda a derecha. Empieza por <strong>DynamoDB · <code>dynamo.mjs</code></strong>, que exporta el cliente y los nombres de las tablas. <code>handler.mjs</code> importa ese módulo. Guarda <code>peticion.mjs</code> antes de preparar los dos handlers del pase. Cada pestaña abre el archivo completo. Puedes usar <strong>Ver por páginas</strong> para leer los archivos largos por partes. Pasa el ratón o toca una línea resaltada para ver su explicación.</p>
+<p>Sigue las pestañas de izquierda a derecha. Empieza por <strong>DynamoDB · <code>dynamo.mjs</code></strong>, que exporta el cliente y los nombres de las tablas. <code>handler.mjs</code> importa ese módulo. Guarda primero <code>errores.mjs</code> y después <code>peticion.mjs</code> para preparar los dos handlers del pase. Cada pestaña abre el archivo completo. Puedes usar <strong>Ver por páginas</strong> para leer los archivos largos por partes. Pasa el ratón o toca una línea resaltada para ver su explicación.</p>
 <template id="index-explanations">
   <div data-prefix="if (typeof title"><strong>Exige un título con texto</strong><p><code>typeof</code> comprueba que el valor sea texto. <code>trim()</code> permite detectar un título formado solo por espacios. Si falla la comprobación, la función termina antes de escribir en DynamoDB.</p></div>
   <div data-prefix="import { DynamoDBClient"><strong>Conexión con DynamoDB</strong><p>Importa el cliente que comunica Lambda con DynamoDB. El paquete se instaló al preparar el proyecto.</p></div>
@@ -903,16 +903,16 @@ ls -l serverless.yml package.json</code></pre>
   <div data-prefix="async function consultarInscripcionService"><strong>Consultar la inscripción</strong><p>El handler llama a esta función al recibir GET. Usará <code>EVENT_ID</code> para buscar el evento y la pareja <code>EVENT_ID</code> + <code>USER_ID</code> para buscar una inscripción.</p></div>
   <div data-prefix="async function inscribirUsuarioService"><strong>Crear una inscripción</strong><p>El handler llama a esta función al recibir POST. Usará la pareja de claves para guardar la inscripción de un usuario en un evento.</p></div>
   <div data-prefix="return json(501"><strong>Operación pendiente</strong><p>El archivo base responde 501 hasta que escribas la operación. Esta respuesta te permite distinguir una ruta conectada de una operación ya implementada.</p></div>
-  <div data-prefix="export async function handleRequest"><strong>Entrada y errores compartidos</strong><p>Los dos handlers usan esta función. Lee los datos de la ruta, llama a la operación elegida y prepara la respuesta si ocurre un error.</p></div>
+  <div data-prefix="export function leerClaveInscripcion"><strong>Prepara la clave de entrada</strong><p>Los dos handlers usan esta función para extraer los valores de la ruta y convertir el ID del evento a BigInt.</p></div>
   <div data-prefix="const { eventId: routeId"><strong>La ruta entrega texto</strong><p>En <code>/events/1/registrations/usuario-02</code>, <code>routeId</code> recibe <code>"1"</code> y <code>userId</code> recibe <code>"usuario-02"</code>.</p></div>
-  <div data-prefix="const eventId = BigInt(routeId)"><strong>Convierte el texto de la ruta en un entero</strong><p>API Gateway entrega <code>"1"</code> como texto. <code>BigInt("1")</code> devuelve <code>1n</code>, el entero que pasas a DynamoDB.</p></div>
+  <div data-prefix="return { eventId: BigInt(routeId)"><strong>Convierte el texto de la ruta en un entero</strong><p>API Gateway entrega <code>"1"</code> como texto. <code>BigInt("1")</code> devuelve <code>1n</code>, el entero que pasas a DynamoDB.</p></div>
   <div data-prefix="TableName: TABLA_EVENTOS_FCI"><strong>Usa la tabla FCI_EVENTOS</strong><p><code>TABLA_EVENTOS_FCI</code> contiene el valor de <code>FCI_TABLA_EVENTOS</code>. En el YAML, <code>Ref: FestivalCheckInEventos</code> obtiene el nombre <code>FCI_EVENTOS</code>.</p></div>
   <div data-prefix="ConditionExpression: &#x27;attribute_not_exists(EVENT_ID)&#x27;"><strong>La clave protege el número al escribir</strong><p>Si el evento <code>8</code> ya existe, DynamoDB rechaza la escritura. Para dar de alta otro evento, elige otro ID.</p></div>
-  <div data-prefix="return await operation("><strong>Ejecutar el caso de uso</strong><p>La operación recibe eventId y userId. Por ejemplo, consultarInscripcionService busca la inscripción con esa pareja. await permite capturar aquí los errores de la operación.</p></div>
   <div data-prefix="if (error.name ==="><strong>Una condición impide escribir</strong><p>Cuando DynamoDB rechaza una condición, el handler devuelve 409. Por ejemplo, al intentar inscribir dos veces al mismo usuario.</p></div>
   <div data-prefix="console.error("><strong>Dónde mirar un fallo</strong><p>El detalle técnico se escribe en el registro de Lambda. La respuesta 500 indica a quien llama que ocurrió un fallo interno.</p></div>
   <div data-prefix="export function handler("><strong>Entrada de la ruta</strong><p>Lambda ejecuta esta función exportada y le entrega la petición. El archivo se elige mediante handler en el YAML.</p></div>
-  <div data-prefix="return handleRequest("><strong>Delegar en el caso de uso</strong><p>El handler pasa la operación de este archivo a handleRequest. Esa función comprueba los datos y llama a la operación.</p></div>
+
+  <div data-prefix="const resultado = await"><strong>Llama al service del caso de uso.</strong><p>El handler entrega la clave y espera los datos de vuelta. Después prepara su respuesta HTTP.</p></div>
   </template>
 <div class="guided-explainer" data-explainer>
     <div class="guided-options" role="group" aria-label="Archivos de Lambda">
@@ -921,6 +921,7 @@ ls -l serverless.yml package.json</code></pre>
     <button type="button" data-explain="modulo-lambda-usuarios" aria-controls="modulo-lambda-usuarios" aria-pressed="false">Usuarios · <code>handler.mjs</code></button>
     <button type="button" data-explain="modulo-lambda-usuarios-service" aria-controls="modulo-lambda-usuarios-service" aria-pressed="false">Usuarios · <code>service.mjs</code></button>
     <button type="button" data-explain="modulo-lambda-usuarios-repository" aria-controls="modulo-lambda-usuarios-repository" aria-pressed="false">Usuarios · <code>repository.mjs</code></button>
+    <button type="button" data-explain="modulo-lambda-errores" aria-controls="modulo-lambda-errores" aria-pressed="false">Inscripciones · <code>errores.mjs</code></button>
     <button type="button" data-explain="modulo-lambda-5" aria-controls="modulo-lambda-5" aria-pressed="false">HTTP · <code>peticion.mjs</code></button>
     <button type="button" data-explain="modulo-lambda-1" aria-controls="modulo-lambda-1" aria-pressed="false">GET · Consultar inscripción</button>
     <button type="button" data-explain="modulo-lambda-2" aria-controls="modulo-lambda-2" aria-pressed="false">POST · Inscribir usuario</button>
@@ -1049,20 +1050,40 @@ export async function crearUsuarioRepository({ userId, firstName, lastName, emai
   }));
 }</code></pre>
   </section>
+  <section id="modulo-lambda-errores" data-explanation hidden>
+    <h5><code>src/inscripciones/errores.mjs</code></h5>
+    <p>Los services lanzan <code>NoEncontradoError</code> si falta un evento o un usuario. El handler traduce ese resultado al código HTTP correspondiente.</p>
+    <pre><code>mkdir -p src/inscripciones &amp;&amp; ls -ld src/inscripciones &amp;&amp;
+touch src/inscripciones/errores.mjs &amp;&amp; vi src/inscripciones/errores.mjs</code></pre>
+    <pre data-file="src/inscripciones/errores.mjs"><code>export class NoEncontradoError extends Error {}</code></pre>
+  </section>
   <section id="modulo-lambda-5" data-explanation hidden>
     <h5><code>src/inscripciones/http/peticion.mjs</code></h5>
-    <p>GET y POST reciben la misma ruta. Cada handler elige su service y los dos reutilizan <code>http/peticion.mjs</code> para preparar la llamada y responder en el formato de API Gateway.</p>
+    <p>GET y POST reciben la misma ruta. Cada handler elige su service y los dos reutilizan <code>http/peticion.mjs</code> para leer la clave y responder en el formato de API Gateway.</p>
     <div class="lesson-note">
       <p><strong>Sigue el GET de ejemplo.</strong> <code>GET /events/1/registrations/usuario-02</code></p>
       <ol>
-        <li><strong>El handler elige la operación.</strong> En <code>handleRequest(event, consultarInscripcionService)</code>, <code>event</code> trae la petición. <code>consultarInscripcionService</code> se pasa como función, sin llamarla todavía. El handler de POST pasa <code>inscribirUsuarioService</code>.</li>
-        <li><strong><code>handleRequest</code> prepara los datos.</strong> En <code>event.pathParameters</code>, el ID llega como texto <code>"1"</code>. Lo convierte a <code>1n</code> con <code>BigInt</code> y ejecuta <code>operation({ eventId, userId })</code> con <code>{ eventId: 1n, userId: 'usuario-02' }</code>. Si la ruta trae datos incorrectos, devuelve <code>400</code>.</li>
-        <li><strong><code>json</code> empaqueta la respuesta.</strong> Si el service llama a <code>json(200, datos)</code>, la función prepara <code>statusCode</code>, la cabecera <code>content-type</code> y el cuerpo en JSON. Si DynamoDB rechaza una inscripción duplicada, <code>handleRequest</code> traduce el error a <code>409</code>.</li>
+        <li><strong>El handler lee la clave.</strong> <code>leerClaveInscripcion(event)</code> extrae <code>"1"</code> y <code>"usuario-02"</code> de <code>pathParameters</code>. Devuelve <code>{ eventId: 1n, userId: 'usuario-02' }</code>.</li>
+        <li><strong>El handler llama al service.</strong> En el GET verás <code>await consultarInscripcionService(clave)</code>. En el POST verás <code>await inscribirUsuarioService(clave)</code>. Cada service devuelve los datos de su operación.</li>
+        <li><strong>El handler prepara la vuelta.</strong> <code>json</code> construye la respuesta de API Gateway. Si algo falla, <code>responderError</code> devuelve el código correspondiente. Un pase duplicado da <code>409</code>.</li>
       </ol>
     </div>
     <pre><code>mkdir -p src/inscripciones/http &amp;&amp; ls -ld src/inscripciones/http &amp;&amp;
 touch src/inscripciones/http/peticion.mjs &amp;&amp; vi src/inscripciones/http/peticion.mjs</code></pre>
-    <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/inscripciones/http/peticion.mjs" data-explanations="index-explanations"><code>export function json(statusCode, body) {
+    <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/inscripciones/http/peticion.mjs" data-explanations="index-explanations"><code>import { NoEncontradoError } from &#x27;../errores.mjs&#x27;;
+
+class ClaveInvalidaError extends Error {}
+
+export function leerClaveInscripcion(event) {
+  const { eventId: routeId, userId } = event?.pathParameters ?? {};
+  if (!/^[1-9]\d{0,18}$/.test(routeId ?? &#x27;&#x27;) || typeof userId !== &#x27;string&#x27; || !userId.trim()) {
+    throw new ClaveInvalidaError(&#x27;Indica un ID numérico positivo y un código de usuario&#x27;);
+  }
+
+  return { eventId: BigInt(routeId), userId };
+}
+
+export function json(statusCode, body) {
   return {
     statusCode,
     headers: { &#x27;content-type&#x27;: &#x27;application/json&#x27; },
@@ -1071,28 +1092,26 @@ touch src/inscripciones/http/peticion.mjs &amp;&amp; vi src/inscripciones/http/p
   };
 }
 
-export async function handleRequest(event, operation) {
-  const { eventId: routeId, userId } = event?.pathParameters ?? {};
-  if (!/^[1-9]\d{0,18}$/.test(routeId ?? &#x27;&#x27;) || !userId?.trim()) {
-    return json(400, { message: &#x27;Indica un ID numérico positivo y un código de usuario&#x27; });
+export function responderError(error) {
+  if (error instanceof ClaveInvalidaError) {
+    return json(400, { message: error.message });
   }
-  try {
-    const eventId = BigInt(routeId);
-    return await operation({ eventId, userId });
-  } catch (error) {
-    if (error.name === &#x27;ConditionalCheckFailedException&#x27;) {
-      return json(409, { message: &#x27;La operación no se puede aplicar a este estado&#x27; });
-    }
-    console.error(error.name, error.message);
-    return json(500, { message: &#x27;Revisa los logs de la función&#x27; });
+  if (error instanceof NoEncontradoError) {
+    return json(404, { message: error.message });
   }
+  if (error.name === &#x27;ConditionalCheckFailedException&#x27;) {
+    return json(409, { message: &#x27;La operación no se puede aplicar a este estado&#x27; });
+  }
+
+  console.error(error.name, error.message);
+  return json(500, { message: &#x27;Revisa los logs de la función&#x27; });
 }</code></pre></div>
   </section>
   <section id="modulo-lambda-1" data-explanation hidden>
     <h5><code>src/inscripciones/consultar-inscripcion/handler.mjs</code></h5>
     <p>Prepara el archivo base de GET. Por ahora responde <code>501</code>. Lo completarás en <a href="#leer-pase">Lambdas → Consultar inscripción · Capas</a>.</p>
     <pre><code>mkdir -p src/inscripciones/consultar-inscripcion &amp;&amp; ls -ld src/inscripciones/consultar-inscripcion &amp;&amp; touch src/inscripciones/consultar-inscripcion/handler.mjs &amp;&amp; vi src/inscripciones/consultar-inscripcion/handler.mjs</code></pre>
-    <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/inscripciones/consultar-inscripcion/handler.mjs"><code>import { handleRequest, json } from &#x27;../http/peticion.mjs&#x27;;
+    <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/inscripciones/consultar-inscripcion/handler.mjs"><code>import { json, leerClaveInscripcion, responderError } from &#x27;../http/peticion.mjs&#x27;;
 
 /**
  * API Gateway llama a este handler con GET /events/{eventId}/registrations/{userId}.
@@ -1104,20 +1123,20 @@ export async function handleRequest(event, operation) {
  *   --aws-profile &quot;$AWS_PROFILE&quot; \
  *   --data &#x27;{&quot;pathParameters&quot;: {&quot;eventId&quot;: &quot;3&quot;, &quot;userId&quot;: &quot;usuario-aula-03&quot;}}&#x27;
  */
-export function handler(event) {
-  return handleRequest(event, consultarInscripcionService);
-}
-
-async function consultarInscripcionService(key) {
-  // Fase Lectura: consulta el evento y la inscripción.
-  return json(501, { message: &#x27;Lectura por construir&#x27; });
+export async function handler(event) {
+  try {
+    leerClaveInscripcion(event);
+    return json(501, { message: &#x27;Lectura por construir&#x27; });
+  } catch (error) {
+    return responderError(error);
+  }
 }</code></pre></div>
   </section>
   <section id="modulo-lambda-2" data-explanation hidden>
     <h5><code>src/inscripciones/inscribir-usuario/handler.mjs</code></h5>
     <p>Prepara el archivo base de POST. Por ahora responde <code>501</code>. Lo completarás en <a href="#construir-post">Lambdas → Inscribir · Capas</a>.</p>
     <pre><code>mkdir -p src/inscripciones/inscribir-usuario &amp;&amp; ls -ld src/inscripciones/inscribir-usuario &amp;&amp; touch src/inscripciones/inscribir-usuario/handler.mjs &amp;&amp; vi src/inscripciones/inscribir-usuario/handler.mjs</code></pre>
-    <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/inscripciones/inscribir-usuario/handler.mjs"><code>import { handleRequest, json } from &#x27;../http/peticion.mjs&#x27;;
+    <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/inscripciones/inscribir-usuario/handler.mjs"><code>import { json, leerClaveInscripcion, responderError } from &#x27;../http/peticion.mjs&#x27;;
 
 /**
  * API Gateway llama a este handler con POST /events/{eventId}/registrations/{userId}.
@@ -1129,13 +1148,13 @@ async function consultarInscripcionService(key) {
  *   --aws-profile &quot;$AWS_PROFILE&quot; \
  *   --data &#x27;{&quot;pathParameters&quot;: {&quot;eventId&quot;: &quot;3&quot;, &quot;userId&quot;: &quot;usuario-aula-03&quot;}}&#x27;
  */
-export function handler(event) {
-  return handleRequest(event, inscribirUsuarioService);
-}
-
-async function inscribirUsuarioService(key) {
-  // Fase Inscripción: crea un registro con una condición.
-  return json(501, { message: &#x27;Inscripción por construir&#x27; });
+export async function handler(event) {
+  try {
+    leerClaveInscripcion(event);
+    return json(501, { message: &#x27;Inscripción por construir&#x27; });
+  } catch (error) {
+    return responderError(error);
+  }
 }</code></pre></div>
   </section>
   </div>
@@ -1751,8 +1770,9 @@ aws dynamodb execute-statement \
 <div class="lesson-task">
 <p>Trabaja desde <code>festival-checkin</code>. Sigue las pestañas en orden y selecciona las líneas resaltadas para ver qué hacen.</p>
 <template id="leer-pase-notas">
-<div data-prefix="return handleRequest("><strong>Entrega la petición al caso de uso.</strong><p>El módulo compartido lee los parámetros y traduce los errores de DynamoDB a HTTP.</p></div>
-  <div data-prefix="async function consultarInscripcionService"><strong>El service dirige la lectura.</strong><p>Busca el evento y después el pase. Devuelve 404 si falta el evento.</p></div>
+
+  <div data-prefix="const resultado = await"><strong>Llama al service del caso de uso.</strong><p>El handler entrega la clave y espera los datos de vuelta. Después prepara su respuesta HTTP.</p></div>
+  <div data-prefix="async function consultarInscripcionService"><strong>El service dirige la lectura.</strong><p>Busca el evento y después el pase. Si falta el evento, el service lanza NoEncontradoError y el handler responde 404.</p></div>
   <div data-prefix="async function inscribirUsuarioService"><strong>El service dirige la inscripción.</strong><p>Comprueba las referencias al evento y al usuario. Después pasa al repository la fecha de inscripción en UTC.</p></div>
   <div data-prefix="Key: { EVENT_ID:"><strong>Busca por clave primaria.</strong><p>EVENTOS usa solo el ID numérico. INSCRIPCIONES usa también el código de usuario.</p></div>
 </template>
@@ -1817,27 +1837,27 @@ export async function consultarInscripcionRepository(eventId, userId) {
   <pre><code>mkdir -p src/inscripciones/consultar-inscripcion &amp;&amp; ls -ld src/inscripciones/consultar-inscripcion &amp;&amp;
 touch src/inscripciones/consultar-inscripcion/service.mjs &amp;&amp; vi src/inscripciones/consultar-inscripcion/service.mjs</code></pre>
   <p>En <code>vi</code>, escribe <code>:set paste</code> y pulsa Intro. Pulsa <kbd>i</kbd> y pega el archivo completo. Guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro.</p>
-  <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/inscripciones/consultar-inscripcion/service.mjs" data-explanations="leer-pase-notas"><code>import { json } from &#x27;../http/peticion.mjs&#x27;;
+  <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/inscripciones/consultar-inscripcion/service.mjs" data-explanations="leer-pase-notas"><code>import { NoEncontradoError } from &#x27;../errores.mjs&#x27;;
 import { buscarEventoService } from &#x27;../../eventos/buscar-evento/service.mjs&#x27;;
 import { consultarInscripcionRepository } from &#x27;./repository.mjs&#x27;;
 
 export async function consultarInscripcionService({ eventId, userId }) {
   const evento = await buscarEventoService(eventId);
-  if (!evento) return json(404, { message: &#x27;Evento no encontrado&#x27; });
+  if (!evento) throw new NoEncontradoError(&#x27;Evento no encontrado&#x27;);
 
   const registration = await consultarInscripcionRepository(eventId, userId);
-  return json(200, {
+  return {
     eventId: evento.eventId,
     title: evento.title,
     registration
-  });
+  };
 }</code></pre></div>
 </section>
 <section id="leer-pase-archivo-3" data-explanation hidden>
   <h4><code>src/inscripciones/consultar-inscripcion/handler.mjs</code></h4>
   <pre><code>vi src/inscripciones/consultar-inscripcion/handler.mjs</code></pre>
   <p>Ejecuta <code>:%d</code> e Intro para sustituir el archivo. En <code>vi</code>, escribe <code>:set paste</code> y pulsa Intro. Pulsa <kbd>i</kbd> y pega el archivo completo. Guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro.</p>
-  <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/inscripciones/consultar-inscripcion/handler.mjs" data-explanations="leer-pase-notas"><code>import { handleRequest } from &#x27;../http/peticion.mjs&#x27;;
+  <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/inscripciones/consultar-inscripcion/handler.mjs" data-explanations="leer-pase-notas"><code>import { json, leerClaveInscripcion, responderError } from &#x27;../http/peticion.mjs&#x27;;
 import { consultarInscripcionService } from &#x27;./service.mjs&#x27;;
 
 /**
@@ -1850,8 +1870,14 @@ import { consultarInscripcionService } from &#x27;./service.mjs&#x27;;
  *   --aws-profile &quot;$AWS_PROFILE&quot; \
  *   --data &#x27;{&quot;pathParameters&quot;: {&quot;eventId&quot;: &quot;3&quot;, &quot;userId&quot;: &quot;usuario-aula-03&quot;}}&#x27;
  */
-export function handler(event) {
-  return handleRequest(event, consultarInscripcionService);
+export async function handler(event) {
+  try {
+    const clave = leerClaveInscripcion(event);
+    const resultado = await consultarInscripcionService(clave);
+    return json(200, resultado);
+  } catch (error) {
+    return responderError(error);
+  }
 }</code></pre></div>
 </section>
 </div>
@@ -1876,8 +1902,9 @@ curl -i &quot;$api_url/events/$evento_id/registrations/$usuario&quot;</code></pr
 <div class="lesson-task">
 <p>Trabaja desde <code>festival-checkin</code>. Completa <a href="#sembrar-usuarios">Usuarios</a> para disponer de los perfiles de prueba. Sigue las pestañas en orden y selecciona las líneas resaltadas para ver qué hacen.</p>
 <template id="construir-post-notas">
-<div data-prefix="return handleRequest("><strong>Entrega la petición al caso de uso.</strong><p>El módulo compartido lee los parámetros y traduce los errores de DynamoDB a HTTP.</p></div>
-  <div data-prefix="async function consultarInscripcionService"><strong>El service dirige la lectura.</strong><p>Busca el evento y después el pase. Devuelve 404 si falta el evento.</p></div>
+
+  <div data-prefix="const resultado = await"><strong>Llama al service del caso de uso.</strong><p>El handler entrega la clave y espera los datos de vuelta. Después prepara su respuesta HTTP.</p></div>
+  <div data-prefix="async function consultarInscripcionService"><strong>El service dirige la lectura.</strong><p>Busca el evento y después el pase. Si falta el evento, el service lanza NoEncontradoError y el handler responde 404.</p></div>
   <div data-prefix="async function inscribirUsuarioService"><strong>El service dirige la inscripción.</strong><p>Comprueba las referencias al evento y al usuario. Después pasa al repository la fecha de inscripción en UTC.</p></div>
   <div data-prefix="const usuario = await buscarUsuarioRepository"><strong>Comprueba la referencia a USUARIOS.</strong><p>Busca <code>USER_ID</code> en la tabla de perfiles. Si falta, el service devuelve <code>404</code> antes de guardar.</p></div>
   <div data-prefix="ConditionExpression:"><strong>Protege el pase.</strong><p>La condición se evalúa sobre la pareja completa. Repetir la misma inscripción devuelve 409.</p></div>
@@ -1920,27 +1947,27 @@ export async function inscribirUsuarioRepository(eventId, userId, registeredAt) 
   <pre><code>mkdir -p src/inscripciones/inscribir-usuario &amp;&amp; ls -ld src/inscripciones/inscribir-usuario &amp;&amp;
 touch src/inscripciones/inscribir-usuario/service.mjs &amp;&amp; vi src/inscripciones/inscribir-usuario/service.mjs</code></pre>
   <p>En <code>vi</code>, escribe <code>:set paste</code> y pulsa Intro. Pulsa <kbd>i</kbd> y pega el archivo completo. Guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro.</p>
-  <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/inscripciones/inscribir-usuario/service.mjs" data-explanations="construir-post-notas"><code>import { json } from &#x27;../http/peticion.mjs&#x27;;
+  <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/inscripciones/inscribir-usuario/service.mjs" data-explanations="construir-post-notas"><code>import { NoEncontradoError } from &#x27;../errores.mjs&#x27;;
 import { buscarEventoService } from &#x27;../../eventos/buscar-evento/service.mjs&#x27;;
 import { buscarUsuarioRepository, inscribirUsuarioRepository } from &#x27;./repository.mjs&#x27;;
 
 export async function inscribirUsuarioService({ eventId, userId }) {
   const evento = await buscarEventoService(eventId);
-  if (!evento) return json(404, { message: &#x27;Evento no encontrado&#x27; });
+  if (!evento) throw new NoEncontradoError(&#x27;Evento no encontrado&#x27;);
 
   const usuario = await buscarUsuarioRepository(userId);
-  if (!usuario) return json(404, { message: &#x27;Usuario no encontrado&#x27; });
+  if (!usuario) throw new NoEncontradoError(&#x27;Usuario no encontrado&#x27;);
 
   const registeredAt = new Date().toISOString();
   await inscribirUsuarioRepository(eventId, userId, registeredAt);
-  return json(201, { message: &#x27;Inscripción creada&#x27; });
+  return { message: &#x27;Inscripción creada&#x27; };
 }</code></pre></div>
 </section>
 <section id="construir-post-archivo-2" data-explanation hidden>
   <h4><code>src/inscripciones/inscribir-usuario/handler.mjs</code></h4>
   <pre><code>vi src/inscripciones/inscribir-usuario/handler.mjs</code></pre>
   <p>Ejecuta <code>:%d</code> e Intro para sustituir el archivo. En <code>vi</code>, escribe <code>:set paste</code> y pulsa Intro. Pulsa <kbd>i</kbd> y pega el archivo completo. Guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro.</p>
-  <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/inscripciones/inscribir-usuario/handler.mjs" data-explanations="construir-post-notas"><code>import { handleRequest } from &#x27;../http/peticion.mjs&#x27;;
+  <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/inscripciones/inscribir-usuario/handler.mjs" data-explanations="construir-post-notas"><code>import { json, leerClaveInscripcion, responderError } from &#x27;../http/peticion.mjs&#x27;;
 import { inscribirUsuarioService } from &#x27;./service.mjs&#x27;;
 
 /**
@@ -1953,8 +1980,14 @@ import { inscribirUsuarioService } from &#x27;./service.mjs&#x27;;
  *   --aws-profile &quot;$AWS_PROFILE&quot; \
  *   --data &#x27;{&quot;pathParameters&quot;: {&quot;eventId&quot;: &quot;3&quot;, &quot;userId&quot;: &quot;usuario-aula-03&quot;}}&#x27;
  */
-export function handler(event) {
-  return handleRequest(event, inscribirUsuarioService);
+export async function handler(event) {
+  try {
+    const clave = leerClaveInscripcion(event);
+    const resultado = await inscribirUsuarioService(clave);
+    return json(201, resultado);
+  } catch (error) {
+    return responderError(error);
+  }
 }</code></pre></div>
 </section>
 </div>
@@ -2179,21 +2212,21 @@ export async function inscribirUsuarioRepository(eventId, userId, registeredAt) 
   <h4><code>src/inscripciones/inscribir-usuario/service.mjs</code></h4>
   <p>El service consulta el evento y el perfil antes de guardar la inscripción. El handler sigue enviándole los parámetros de la ruta.</p>
   <pre><code>vi src/inscripciones/inscribir-usuario/service.mjs</code></pre>
-  <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/inscripciones/inscribir-usuario/service.mjs" data-explanations="inscribir-orm-notas"><code>import { json } from &#x27;../http/peticion.mjs&#x27;;
+  <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/inscripciones/inscribir-usuario/service.mjs" data-explanations="inscribir-orm-notas"><code>import { NoEncontradoError } from &#x27;../errores.mjs&#x27;;
 import { buscarEventoService } from &#x27;../../eventos/buscar-evento/service.mjs&#x27;;
 import { buscarUsuarioRepository } from &#x27;../../usuarios/buscar-usuario/repository.mjs&#x27;;
 import { inscribirUsuarioRepository } from &#x27;./repository.mjs&#x27;;
 
 export async function inscribirUsuarioService({ eventId, userId }) {
   const evento = await buscarEventoService(eventId);
-  if (!evento) return json(404, { message: &#x27;Evento no encontrado&#x27; });
+  if (!evento) throw new NoEncontradoError(&#x27;Evento no encontrado&#x27;);
 
   const usuario = await buscarUsuarioRepository(userId);
-  if (!usuario) return json(404, { message: &#x27;Usuario no encontrado&#x27; });
+  if (!usuario) throw new NoEncontradoError(&#x27;Usuario no encontrado&#x27;);
 
   const registeredAt = new Date().toISOString();
   await inscribirUsuarioRepository(eventId, userId, registeredAt);
-  return json(201, { message: &#x27;Inscripción creada&#x27; });
+  return { message: &#x27;Inscripción creada&#x27; };
 }</code></pre></div>
 </section>
 </div>
@@ -2417,7 +2450,7 @@ export function handler({ userId, firstName, lastName, email, city } = {}) {
 <h4>Del comando al resultado</h4>
 <p>Serverless imprime el objeto que devuelve el handler. <code>statusCode</code> es el código que recibiría API Gateway y <code>body</code> contiene el JSON de la aplicación como texto.</p>
 <h4>Abre el handler y sigue el JSON</h4>
-<pre data-file="src/inscripciones/consultar-inscripcion/handler.mjs"><code>import { handleRequest } from &#x27;../http/peticion.mjs&#x27;;
+<pre data-file="src/inscripciones/consultar-inscripcion/handler.mjs"><code>import { json, leerClaveInscripcion, responderError } from &#x27;../http/peticion.mjs&#x27;;
 import { consultarInscripcionService } from &#x27;./service.mjs&#x27;;
 
 /**
@@ -2430,8 +2463,14 @@ import { consultarInscripcionService } from &#x27;./service.mjs&#x27;;
  *   --aws-profile &quot;$AWS_PROFILE&quot; \
  *   --data &#x27;{&quot;pathParameters&quot;: {&quot;eventId&quot;: &quot;3&quot;, &quot;userId&quot;: &quot;usuario-aula-03&quot;}}&#x27;
  */
-export function handler(event) {
-  return handleRequest(event, consultarInscripcionService);
+export async function handler(event) {
+  try {
+    const clave = leerClaveInscripcion(event);
+    const resultado = await consultarInscripcionService(clave);
+    return json(200, resultado);
+  } catch (error) {
+    return responderError(error);
+  }
 }</code></pre>
 </aside>
 </div>
@@ -2452,7 +2491,7 @@ export function handler(event) {
 <h4>Del comando al resultado</h4>
 <p>El service comprueba que existan el evento y el usuario. El repository escribe una inscripción por cada pareja de IDs. La condición de DynamoDB protege la primera inscripción si repites la invocación.</p>
 <h4>Abre el handler y sigue el JSON</h4>
-<pre data-file="src/inscripciones/inscribir-usuario/handler.mjs"><code>import { handleRequest } from &#x27;../http/peticion.mjs&#x27;;
+<pre data-file="src/inscripciones/inscribir-usuario/handler.mjs"><code>import { json, leerClaveInscripcion, responderError } from &#x27;../http/peticion.mjs&#x27;;
 import { inscribirUsuarioService } from &#x27;./service.mjs&#x27;;
 
 /**
@@ -2465,8 +2504,14 @@ import { inscribirUsuarioService } from &#x27;./service.mjs&#x27;;
  *   --aws-profile &quot;$AWS_PROFILE&quot; \
  *   --data &#x27;{&quot;pathParameters&quot;: {&quot;eventId&quot;: &quot;3&quot;, &quot;userId&quot;: &quot;usuario-aula-03&quot;}}&#x27;
  */
-export function handler(event) {
-  return handleRequest(event, inscribirUsuarioService);
+export async function handler(event) {
+  try {
+    const clave = leerClaveInscripcion(event);
+    const resultado = await inscribirUsuarioService(clave);
+    return json(201, resultado);
+  } catch (error) {
+    return responderError(error);
+  }
 }</code></pre>
 </aside>
 </div>
