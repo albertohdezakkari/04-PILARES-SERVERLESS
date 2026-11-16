@@ -11,7 +11,7 @@ const requestModule = document.querySelector('#request-module');
 const requestLesson = document.querySelector('#request-lesson');
 const readFeedback = document.querySelector('#read-feedback');
 const routes = {
-  GET: { module: 'consultar-pase', lesson: '#leer-pase' },
+  GET: { module: 'consultar-inscripcion', lesson: '#leer-pase' },
   POST: { module: 'inscribir-usuario', lesson: '#construir-post' }
 };
 const passState = document.querySelector('#pass-state');
