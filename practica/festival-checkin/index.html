@@ -23,7 +23,7 @@
   <button type="button" data-phase="diseno" aria-pressed="true"><span class="phase-number">1</span><span><strong>Modelo de datos</strong><small>Diagrama y claves</small></span></button>
   <button type="button" data-phase="infra" aria-pressed="false"><span class="phase-number">2</span><span><strong>Preparación</strong><small>AWS Academy y serverless.yml</small></span></button>
   <button type="button" data-phase="datos" aria-pressed="false"><span class="phase-number">3</span><span><strong>Lambdas</strong><small>Código y despliegue</small></span></button>
-  <button type="button" data-phase="invocaciones" aria-pressed="false"><span class="phase-number">4</span><span><strong>Invocaciones</strong><small>Pruebas con AWS CLI</small></span></button>
+  <button type="button" data-phase="invocaciones" aria-pressed="false"><span class="phase-number">4</span><span><strong>Invocaciones</strong><small>Pruebas con Serverless Invoke</small></span></button>
   <button type="button" data-phase="prueba" aria-pressed="false"><span class="phase-number">5</span><span><strong>Validación</strong><small>API y datos guardados</small></span></button>
 </nav>
 <div id="guide-toolbar">
@@ -332,14 +332,14 @@ aws dynamodb list-tables --profile "$perfil" --region "$region"</code></pre>
       </section>
       <section id="project-line-5" data-explanation hidden>
         <h4>Coloca Serverless en su sitio</h4>
-        <pre class="workbench-command"><code>npm install --save-dev --save-exact serverless@4.45.0</code></pre>
+        <pre class="workbench-command"><code>npm install --save-dev --save-exact serverless@3.40.0</code></pre>
         <fieldset class="workbench-flags">
           <legend>Inspecciona una opción</legend>
           <label><input type="radio" name="serverless-flag" value="dev" checked><code>--save-dev</code></label>
           <label><input type="radio" name="serverless-flag" value="exact"><code>--save-exact</code></label>
         </fieldset>
         <p class="workbench-flag-dev">Serverless queda en <code>devDependencies</code>, donde npm registra las herramientas de desarrollo.</p>
-        <p class="workbench-flag-exact">npm guarda exactamente <code>4.45.0</code> en <code>package.json</code>.</p>
+        <p class="workbench-flag-exact">npm guarda exactamente <code>3.40.0</code> en <code>package.json</code>.</p>
         <p>Al desplegar, Serverless leerá <code>serverless.yml</code>.</p>
       </section>
       <section id="project-line-6" data-explanation hidden>
@@ -354,11 +354,11 @@ aws dynamodb list-tables --profile "$perfil" --region "$region"</code></pre>
       <section id="project-line-7" data-explanation hidden>
         <h4>Verifica Serverless</h4>
         <pre class="workbench-command"><code>npx serverless --version</code></pre>
-        <p><code>npx</code> ejecuta el Serverless del proyecto. <code>--version</code> debe mostrar <code>4.45.0</code>.</p>
+        <p><code>npx</code> ejecuta el Serverless del proyecto. <code>--version</code> debe mostrar <code>3.40.0</code>.</p>
       </section>
     </div>
     <div class="workbench-execution">
-      <p class="checkpoint"><strong>Antes de avanzar</strong> Después del paso 7, comprueba la carpeta y el contenido de <code>package.json</code>. La ruta termina en <code>festival-checkin</code>. En <code>devDependencies</code> aparece Serverless <code>4.45.0</code> y en <code>dependencies</code> los dos paquetes de DynamoDB.</p>
+      <p class="checkpoint"><strong>Antes de avanzar</strong> Después del paso 7, comprueba la carpeta y el contenido de <code>package.json</code>. La ruta termina en <code>festival-checkin</code>. En <code>devDependencies</code> aparece Serverless <code>3.40.0</code> y en <code>dependencies</code> los dos paquetes de DynamoDB.</p>
       <pre><code>pwd
 npm pkg get devDependencies.serverless dependencies</code></pre>
     </div>
@@ -373,7 +373,7 @@ npm pkg get devDependencies.serverless dependencies</code></pre>
           <samp class="workbench-node-command">v22.x.x</samp>
           <code class="workbench-mkdir-command">$ mkdir -p festival-checkin</code>
           <code class="workbench-check-command">$ npx serverless --version</code>
-          <samp class="workbench-check-command">4.45.0</samp>
+          <samp class="workbench-check-command">3.40.0</samp>
           <code class="workbench-directory">…/festival-checkin $</code>
         </div>
       </div>
@@ -386,7 +386,7 @@ npm pkg get devDependencies.serverless dependencies</code></pre>
         <span class="workbench-field"><code>"name":</code> <code>"festival-checkin"</code></span>
         <div class="workbench-dev">
           <code>devDependencies</code>
-          <span class="workbench-version-line"><code>serverless</code> <code class="workbench-version">4.45.0</code></span>
+          <span class="workbench-version-line"><code>serverless</code> <code class="workbench-version">3.40.0</code></span>
         </div>
         <div class="workbench-sdk">
           <code>dependencies</code>
@@ -407,7 +407,7 @@ npm pkg get devDependencies.serverless dependencies</code></pre>
 mkdir -p festival-checkin
 cd festival-checkin
 npm init -y
-npm install --save-dev --save-exact serverless@4.45.0
+npm install --save-dev --save-exact serverless@3.40.0
 npm install @aws-sdk/client-dynamodb @aws-sdk/lib-dynamodb
 npx serverless --version</code></pre>
 </div>
@@ -451,7 +451,7 @@ LAMBDA_ROLE_ARN=$(aws iam get-role --role-name LabRole --profile "$perfil" --reg
 <div class="lesson-note">
   <h4>Si trabajas con el repositorio clonado</h4>
   <p>Abre tu <code>serverless.yml</code> y busca <code>provider.stage</code>. En el proyecto de aula, <code>${env:FCI_EQUIPO}</code> toma el código que exportaste en la terminal. Los nombres de las funciones y de las tablas leen ese valor con <code>${self:provider.stage}</code>. Por ejemplo, <code>equipo01</code> crea el stack <code>festival-check-in-equipo01</code> y la tabla <code>FCI_EVENTOS_equipo01</code>. Así cada equipo tiene sus propias tablas aunque comparta cuenta y región. El YAML guiado de abajo usa <code>dev</code> y nombres fijos para construir un despliegue compartido.</p>
-  <p><code>package.patterns</code> excluye los scripts de aula del paquete de Lambda. Las rutas, las claves y el índice <code>PorUsuario</code> se leen del mismo modo en los dos archivos.</p>
+  <p><code>package.patterns</code> excluye los scripts de aula del paquete de Lambda. Las rutas, las claves y el índice <code>PorUsuario</code> se leen del mismo modo en los dos archivos. En el clon también se declaran <code>buscarEvento</code> y <code>listarEventos</code>, que puedes probar en <a href="#invocaciones">Invocaciones</a>.</p>
   <p><a href="https://github.com/albertohdezakkari/festival-checkin-01/blob/main/serverless.yml">Abre el YAML del repositorio de aula</a>. Después sigue <a href="#capas-eventos-orm">Crear con ORM</a>, <a href="#consultar-orm">Consultar inscripción con ORM</a> e <a href="#inscribir-orm">Inscribir con ORM</a> para reconocer los modelos y repositorios que ya tienes.</p>
 </div>
 <p>Pasa el ratón sobre una etiqueta del árbol o del código para ver su explicación. Pulsa una rama para abrirla. En móvil, toca la etiqueta para consultar su explicación.</p>
@@ -480,7 +480,7 @@ LAMBDA_ROLE_ARN=$(aws iam get-role --role-name LabRole --profile "$perfil" --reg
 <div class="yaml-reader lesson-split">
 <div class="lesson-task">
 <pre data-file="serverless.yml" data-reading><code>service: festival-check-in
-frameworkVersion: ~4.45.0
+frameworkVersion: 3.40.0
 
 provider:
   name: aws
@@ -506,9 +506,6 @@ provider:
       allowedMethods:
         - GET
         - POST
-
-build:
-  esbuild: false
 
 functions:
   crearEvento:
@@ -594,7 +591,7 @@ resources:
   <h4 class="yaml-tree-title" tabindex="-1"><code>serverless.yml</code></h4>
   <ul class="yaml-tree-roots">
     <li><button type="button" data-yaml-block="Servicio" data-yaml-line="service:" aria-pressed="false"><code>service</code></button></li>
-    <li><button type="button" data-yaml-block="Servicio" data-yaml-line="frameworkVersion: ~4.45.0" aria-pressed="false"><code>frameworkVersion</code></button></li>
+    <li><button type="button" data-yaml-block="Servicio" data-yaml-line="frameworkVersion: 3.40.0" aria-pressed="false"><code>frameworkVersion</code></button></li>
     <li><button type="button" data-yaml-block="Servicio" data-yaml-line="provider:" aria-pressed="false"><code>provider</code></button>
       <ul>
         <li><button type="button" data-yaml-block="Servicio" data-yaml-line="iam:" aria-pressed="false"><code>iam</code></button>
@@ -615,11 +612,6 @@ resources:
             <li><button type="button" data-yaml-block="API y CORS" data-yaml-line="cors:" aria-pressed="false"><code>cors</code></button></li>
           </ul>
         </li>
-      </ul>
-    </li>
-    <li><button type="button" data-yaml-block="Rutas" data-yaml-line="build:" aria-pressed="false"><code>build</code></button>
-      <ul>
-        <li><button type="button" data-yaml-block="Rutas" data-yaml-line="esbuild: false" aria-pressed="false"><code>esbuild</code></button></li>
       </ul>
     </li>
     <li><button type="button" data-yaml-block="Rutas" data-yaml-line="functions:" aria-pressed="false"><code>functions</code></button>
@@ -685,7 +677,7 @@ resources:
     <h4>Nombre, versión y destino del despliegue</h4>
     <dl class="yaml-terms">
       <div><dt><code>service:</code></dt><dd>Nombre del servicio en Serverless. Con <code>service: festival-check-in</code> y <code>stage: dev</code>, el stack se llama <code>festival-check-in-dev</code>.</dd></div>
-      <div><dt><code>frameworkVersion: ~4.45.0</code></dt><dd>Versión de Serverless Framework que admite el proyecto. <code>~</code> permite actualizaciones de parche de la serie 4.45, como 4.45.1.</dd></div>
+      <div><dt><code>frameworkVersion: 3.40.0</code></dt><dd>Versión exacta de Serverless Framework que usa el proyecto.</dd></div>
       <div><dt><code>provider:</code></dt><dd>Abre el bloque de configuración de la plataforma. Las líneas <code>name</code>, <code>runtime</code>, <code>region</code>, <code>stage</code> e <code>iam</code> están dentro de ese bloque.</dd></div>
       <div><dt><code>name: aws</code></dt><dd>Selecciona Amazon Web Services como plataforma.</dd></div>
       <div><dt><code>runtime: nodejs22.x</code></dt><dd>Indica con qué entorno ejecutará AWS el código de Lambda. Aquí se usa Node.js 22.</dd></div>
@@ -736,19 +728,17 @@ resources:
     </dl>
     <p>Busca el guion delante de <code>POST</code>. Marca un elemento de la lista <code>allowedMethods</code>.</p>
   </section>
-  <section data-code-start="build:" data-label="Rutas" hidden>
+  <section data-code-start="functions:" data-label="Rutas" hidden>
     <p class="yaml-outcome" hidden>Cada operación tiene su propia Lambda. API Gateway la elige por el método HTTP y la ruta.</p>
     <h4>Cómo una ruta llega a su archivo</h4>
     <dl class="yaml-terms">
-      <div><dt><code>build:</code></dt><dd>Abre los ajustes de preparación del código para el despliegue.</dd></div>
-      <div><dt><code>esbuild: false</code></dt><dd><code>false</code> es un valor booleano. Aquí desactiva la herramienta integrada esbuild porque desplegamos los módulos JavaScript de <code>src/</code>.</dd></div>
       <div><dt><code>functions:</code></dt><dd>Agrupa las funciones Lambda del servicio.</dd></div>
       <div><dt><code>consultarInscripcion:</code></dt><dd>Lambda que consulta la inscripción cuando API Gateway recibe <code>GET</code> en la ruta del pase.</dd></div>
       <div><dt><code>handler: src/inscripciones/consultar-inscripcion/handler.handler</code></dt><dd><code>src/inscripciones/consultar-inscripcion/handler</code> identifica el archivo <code>handler.mjs</code>. Lambda ejecuta su función exportada <code>handler</code>.</dd></div>
       <div><dt><code>inscribirUsuario:</code></dt><dd>Lambda que crea la inscripción cuando API Gateway recibe <code>POST</code> en la ruta del pase.</dd></div>
       <div><dt><code>handler: src/inscripciones/inscribir-usuario/handler.handler</code></dt><dd><code>src/inscripciones/inscribir-usuario/handler</code> identifica el archivo <code>handler.mjs</code>. Lambda ejecuta su función exportada <code>handler</code>.</dd></div>
-      <div><dt data-lines="crearEvento:|handler: src/eventos/crear-evento/handler.handler"><code>crearEvento:</code></dt><dd>Lambda que invocas desde la terminal para guardar un evento con el ID que envías. En <code>handler.handler</code>, el primer <code>handler</code> identifica el archivo <code>handler.mjs</code> y el segundo, la función que exporta. <code>name</code> fija el nombre usado por AWS CLI.</dd></div>
-      <div><dt data-lines="crearUsuario:|handler: src/usuarios/crear-usuario/handler.handler"><code>crearUsuario:</code></dt><dd>Lambda que guarda un perfil en <code>FCI_USUARIOS</code>. La invocas desde AWS CLI con el código, el nombre, los apellidos, el correo y la ciudad.</dd></div>
+      <div><dt data-lines="crearEvento:|handler: src/eventos/crear-evento/handler.handler"><code>crearEvento:</code></dt><dd>Lambda que invocas desde la terminal para guardar un evento con el ID que envías. En <code>handler.handler</code>, el primer <code>handler</code> identifica el archivo <code>handler.mjs</code> y el segundo, la función que exporta. <code>name</code> fija el nombre con el que se despliega en AWS.</dd></div>
+      <div><dt data-lines="crearUsuario:|handler: src/usuarios/crear-usuario/handler.handler"><code>crearUsuario:</code></dt><dd>Lambda que guarda un perfil en <code>FCI_USUARIOS</code>. La invocas desde Serverless con el código, el nombre, los apellidos, el correo y la ciudad.</dd></div>
       <div><dt data-lines="events:|httpApi:"><code>events:</code></dt><dd>Lista lo que puede activar esa Lambda. Cada <code>- httpApi:</code> añade una ruta HTTP.</dd></div>
       <div><dt><code>method:</code></dt><dd>Selecciona el método HTTP de la ruta. Junto con <code>path</code>, identifica la ruta que activa el handler de ese bloque.</dd></div>
       <div><dt><code>path:</code></dt><dd>Define la dirección que se compara con la petición. En <code>/events/1/registrations/usuario-02</code>, las llaves de la plantilla marcan los huecos: <code>{eventId}</code> recibe <code>1</code> y <code>{userId}</code> recibe <code>usuario-02</code>.</dd></div>
@@ -952,7 +942,7 @@ export const TABLA_USUARIOS_FCI = process.env.FCI_TABLA_USUARIOS;</code></pre></
   <section id="modulo-lambda-eventos" data-explanation hidden>
     <h5><code>src/eventos/crear-evento/handler.mjs</code></h5>
     <p>Antes de abrir este archivo, guarda <code>src/datos/dynamo.mjs</code> en la pestaña anterior. <code>handler.mjs</code> importa el cliente y el nombre de la tabla desde ahí. Después de crear y comprobar los primeros eventos, reorganizarás este archivo en <a href="#capas-eventos">Lambdas → Crear por capas</a>.</p>
-    <p>Invoca la función desde AWS CLI con <code>eventId</code> numérico y un <code>title</code> con texto. El handler comprueba el título antes de escribir. <code>EVENT_ID</code> identifica el evento y la condición de escritura protege un ID que ya está ocupado.</p>
+    <p>Invoca la función desde Serverless con <code>eventId</code> numérico y un <code>title</code> con texto. El handler comprueba el título antes de escribir. <code>EVENT_ID</code> identifica el evento y la condición de escritura protege un ID que ya está ocupado.</p>
     <p><code>Ref: FestivalCheckInEventos</code> resuelve <code>FCI_EVENTOS</code>. La variable <code>FCI_TABLA_EVENTOS</code> entrega ese nombre a Lambda y <code>TABLA_EVENTOS_FCI</code> se lo pasa a <code>PutCommand</code>.</p>
     <pre><code>mkdir -p src/eventos/crear-evento &amp;&amp; ls -ld src/eventos/crear-evento &amp;&amp;
 touch src/eventos/crear-evento/handler.mjs &amp;&amp; vi src/eventos/crear-evento/handler.mjs</code></pre>
@@ -1252,24 +1242,12 @@ done</code></pre>
 <div class="lesson-split">
 <div class="lesson-task">
 <p>Desde <code>festival-checkin</code>, usa la terminal del paso <a href="#salidas-stack">Salidas</a>. Cada llamada entrega un perfil ficticio al handler <code>crearUsuario</code>. Ejecuta el bloque una vez con los datos ficticios. Si ya cargaste los perfiles de una versión anterior y quieres repetir el ejercicio, usa códigos libres y reutiliza esos mismos códigos en las pruebas de inscripción.</p>
-<pre><code>crear_usuario() (
-  respuesta=$(mktemp) || exit 1
-  trap &#x27;rm -f &quot;$respuesta&quot;&#x27; EXIT
-  aws lambda invoke \
-    --profile &quot;$perfil&quot; --region &quot;$region&quot; \
-    --function-name &quot;$stack-crearUsuario&quot; \
-    --cli-binary-format raw-in-base64-out \
-    --payload &quot;$1&quot; &quot;$respuesta&quot; &gt;/dev/null || exit 1
-  node -e &#x27;
-    const fs = require("node:fs");
-    const { userId, errorMessage } = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
-    if (!userId) {
-      console.error(errorMessage || "Lambda no devolvió un usuario");
-      process.exit(1);
-    }
-    console.log(userId);
-  &#x27; &quot;$respuesta&quot;
-)
+<pre><code>crear_usuario() {
+  npx --no-install serverless invoke \
+    --function crearUsuario \
+    --aws-profile &quot;$perfil&quot; \
+    --data &quot;$1&quot;
+}
 
 crear_usuario &#x27;{&quot;userId&quot;:&quot;usuario-01&quot;,&quot;firstName&quot;:&quot;Ana&quot;,&quot;lastName&quot;:&quot;Ruiz&quot;,&quot;email&quot;:&quot;ana.ruiz@example.com&quot;,&quot;city&quot;:&quot;Zaragoza&quot;}&#x27;
 crear_usuario &#x27;{&quot;userId&quot;:&quot;usuario-02&quot;,&quot;firstName&quot;:&quot;Leo&quot;,&quot;lastName&quot;:&quot;Martín&quot;,&quot;email&quot;:&quot;leo.martin@example.com&quot;,&quot;city&quot;:&quot;Huesca&quot;}&#x27;
@@ -1288,7 +1266,7 @@ crear_usuario &#x27;{&quot;userId&quot;:&quot;usuario-06&quot;,&quot;firstName&q
 <figure class="lesson-diagram">
 <figcaption>Así llega el perfil a la tabla</figcaption>
 <ol>
-  <li><strong>AWS CLI</strong><span>Invoca crearUsuario con los datos del perfil</span></li>
+  <li><strong>Serverless Invoke</strong><span>Invoca crearUsuario con los datos del perfil</span></li>
   <li><strong>Lambda</strong><span>Guarda nombre, apellidos, correo y ciudad</span></li>
   <li><strong>FCI_USUARIOS</strong><span><code>USER_ID = usuario-02</code> → Leo Martín</span></li>
 </ol>
@@ -1301,30 +1279,19 @@ crear_usuario &#x27;{&quot;userId&quot;:&quot;usuario-06&quot;,&quot;firstName&q
 <div class="lesson-split">
 <div class="lesson-task">
 <p class="lesson-note"><strong>Elige un identificador numérico libre.</strong> En esta práctica asignas tú el número en el JSON de la invocación. DynamoDB usa ese valor para localizar el evento y protege el que ya exista con ese mismo ID.</p>
-<p>Desde <code>festival-checkin</code>, usa la misma terminal en la que recuperaste las <a href="#salidas-stack">Salidas</a>. El bloque invoca la Lambda con AWS CLI y extrae el identificador de su respuesta. Ejecútalo una vez para crear «Festival de otoño» y «Feria de invierno». En una tabla con datos, elige dos números libres antes de ejecutar el bloque.</p>
-<pre><code>crear_evento() (
-  respuesta=$(mktemp) || exit 1
-  trap 'rm -f "$respuesta"' EXIT
-  aws lambda invoke \
-    --profile "$perfil" --region "$region" \
-    --function-name "$stack-crearEvento" \
-    --cli-binary-format raw-in-base64-out \
-    --payload "$1" "$respuesta" &gt;/dev/null || exit 1
-  node -e '
-    const fs = require("node:fs");
-    const { eventId, errorMessage } = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
-    if (!eventId) {
-      console.error(errorMessage || "Lambda no devolvió un ID");
-      process.exit(1);
-    }
-    console.log(eventId);
-  ' "$respuesta"
-)
+<p>Desde <code>festival-checkin</code>, usa la misma terminal en la que recuperaste las <a href="#salidas-stack">Salidas</a>. El bloque envía los dos ID a la Lambda con Serverless e imprime cada respuesta. Ejecútalo una vez para crear «Festival de otoño» y «Feria de invierno». En una tabla con datos, elige dos números libres antes de ejecutar el bloque.</p>
+<pre><code>crear_evento() {
+  npx --no-install serverless invoke \
+    --function crearEvento \
+    --aws-profile &quot;$perfil&quot; \
+    --data &quot;$1&quot;
+}
 
-evento_id=$(crear_evento '{"eventId":1,"title":"Festival de otoño"}') &amp;&amp;
-  evento_secundario_id=$(crear_evento '{"eventId":2,"title":"Feria de invierno"}') &amp;&amp;
-  printf 'Festival de otoño: %s\nFeria de invierno: %s\n' "$evento_id" "$evento_secundario_id"</code></pre>
-<p>Si cierras la terminal, recupera las <a href="#salidas-stack">Salidas</a> y vuelve a asignar los dos números que imprimió la creación. Este ejemplo corresponde al primer despliegue con las tablas vacías.</p>
+evento_id=1
+evento_secundario_id=2
+crear_evento &quot;{\&quot;eventId\&quot;:$evento_id,\&quot;title\&quot;:\&quot;Festival de otoño\&quot;}&quot;
+crear_evento &quot;{\&quot;eventId\&quot;:$evento_secundario_id,\&quot;title\&quot;:\&quot;Feria de invierno\&quot;}&quot;</code></pre>
+<p>Si cierras la terminal, recupera las <a href="#salidas-stack">Salidas</a> y vuelve a asignar los dos ID con los que creaste los eventos. Este ejemplo corresponde al primer despliegue con las tablas vacías.</p>
 <pre><code>evento_id=1
 evento_secundario_id=2</code></pre>
 <p class="checkpoint"><strong>Antes de avanzar</strong> La terminal imprime el identificador que enviaste para cada evento. Usa esos valores en <strong>SELECT</strong>.</p>
@@ -2207,26 +2174,25 @@ curl -i &quot;$pase&quot;</code></pre>
 </template>
 <section id="invocaciones" class="phase" hidden>
 <h2>Invocaciones de Lambda</h2>
+<p>Desde la raíz de <code>festival-checkin-01</code>, usa la misma terminal en la que desplegaste. <code>--function</code> elige una clave de <code>functions</code> en el <code>serverless.yml</code> del clon. <code>--data</code> entrega el JSON al handler.</p>
 <article id="invoke-crear-evento" class="guide-step" data-step="Invoke · Crear evento">
 <h3>Crea el evento desde la terminal</h3>
 <p>Desde la raíz de <code>festival-checkin-01</code>, usa la terminal en la que configuraste y desplegaste el clon. <code>AWS_PROFILE</code> y <code>AWS_REGION</code> se leen del entorno. <a href="https://github.com/albertohdezakkari/festival-checkin-01/blob/main/0-conf.md#5-despliega-y-carga-los-datos-de-ejemplo">Ver el paso de despliegue</a>.</p>
 <div class="lesson-split">
 <div class="lesson-task">
-<p><code>Date.now()</code> da la hora en milisegundos. La guardas como ID en <code>evento_id</code>. <code>--payload</code> pasa ese número y el título al handler.</p>
+<p><code>Date.now()</code> da la hora en milisegundos. La guardas como ID en <code>evento_id</code>. <code>--data</code> pasa ese número y el título al handler.</p>
 <pre><code>evento_id=$(node -p &#x27;Date.now()&#x27;)
 printf &#x27;ID del evento de clase: %s\n&#x27; &quot;$evento_id&quot;
 
-aws lambda invoke \
-  --function-name &quot;festival-check-in-${FCI_EQUIPO}-crearEvento&quot; \
-  --cli-binary-format raw-in-base64-out \
-  --payload &quot;{\&quot;eventId\&quot;:$evento_id,\&quot;title\&quot;:\&quot;Concierto de aula\&quot;}&quot; \
-  respuesta-evento.json &amp;&amp;
-cat respuesta-evento.json</code></pre>
+npx --no-install serverless invoke \
+  --function crearEvento \
+  --aws-profile &quot;$AWS_PROFILE&quot; \
+  --data &quot;{\&quot;eventId\&quot;:$evento_id,\&quot;title\&quot;:\&quot;Concierto de aula\&quot;}&quot;</code></pre>
 <p class="checkpoint"><strong>Antes de avanzar.</strong> Comprueba que el JSON devuelve el mismo <code>eventId</code> y el título «Concierto de aula».</p>
 </div>
 <aside class="lesson-visual lesson-note">
 <h4>Del comando al resultado</h4>
-<p><code>--function-name</code> elige la Lambda de tu equipo. <code>--cli-binary-format raw-in-base64-out</code> permite escribir el JSON directamente en AWS CLI v2. El archivo al final del comando recibe la respuesta. <code>cat</code> la muestra. Si AWS CLI muestra <code>FunctionError</code>, lee ese archivo para ver el error de ejecución. <a href="https://docs.aws.amazon.com/cli/latest/reference/lambda/invoke.html">Referencia de AWS CLI</a></p>
+<p><code>--function crearEvento</code> selecciona la entrada de <code>functions</code> en el YAML. <code>--data</code> lleva el JSON que recibe el handler. Serverless imprime el resultado de Lambda en la terminal. <a href="https://www.serverless.com/framework/docs/providers/aws/cli-reference/invoke">Referencia de Serverless Invoke</a></p>
 </aside>
 </div>
 </article>
@@ -2236,29 +2202,22 @@ cat respuesta-evento.json</code></pre>
 <div class="lesson-split">
 <div class="lesson-task">
 <h4>Envía el ID a Lambda</h4>
-<pre><code>aws lambda invoke \
-  --function-name festival-check-in-equipo01-buscarEvento \
-  --profile default \
-  --region us-east-1 \
-  --cli-binary-format raw-in-base64-out \
-  --payload &#x27;{&quot;eventId&quot;: 1}&#x27; \
-  respuesta-buscar-evento.json &amp;&amp;
-cat respuesta-buscar-evento.json</code></pre>
-<p>El comando usa <code>equipo01</code>, el perfil <code>default</code> y la región <code>us-east-1</code>. Ajusta esos valores a tu despliegue. Para buscar el evento que creaste antes, cambia el <code>1</code> por su ID.</p>
+<pre><code>npx --no-install serverless invoke \
+  --function buscarEvento \
+  --aws-profile &quot;$AWS_PROFILE&quot; \
+  --data &#x27;{&quot;eventId&quot;: 1}&#x27;</code></pre>
+<p>Usa la misma terminal del despliegue. Serverless lee tu equipo y región desde las variables que usa el YAML. Para buscar el evento que creaste antes, cambia el <code>1</code> por su ID.</p>
 <h4>Lee lo que recibe el handler</h4>
 <pre data-file="src/eventos/buscar-evento/handler.mjs"><code>import { buscarEventoService } from &#x27;./service.mjs&#x27;;
 
 /**
- * AWS Lambda entrega el JSON enviado en --payload como un objeto JavaScript.
+ * AWS Lambda entrega el JSON enviado en --data como un objeto JavaScript.
  * @param {{ eventId: number }} event ID numérico enviado en el JSON.
  * @example
- * aws lambda invoke \
- *   --function-name festival-check-in-equipo01-buscarEvento \
- *   --profile default \
- *   --region us-east-1 \
- *   --cli-binary-format raw-in-base64-out \
- *   --payload &#x27;{&quot;eventId&quot;: 1}&#x27; \
- *   respuesta-buscar-evento.json
+ * npx --no-install serverless invoke \
+ *   --function buscarEvento \
+ *   --aws-profile &quot;$AWS_PROFILE&quot; \
+ *   --data &#x27;{&quot;eventId&quot;: 1}&#x27;
  */
 export function buscarEventoHandler(event) {
   const { eventId } = event ?? {};
@@ -2268,7 +2227,7 @@ export function buscarEventoHandler(event) {
 
   return buscarEventoService(eventId);
 }</code></pre>
-<p><code>event</code> es el objeto que Lambda construye con el JSON de <code>--payload</code>. En <code>const { eventId } = event ?? {};</code>, las llaves sacan la propiedad <code>eventId</code>. Si falta el objeto, <code>?? {}</code> permite comprobar el ID ausente.</p>
+<p><code>event</code> es el objeto que Lambda construye con el JSON de <code>--data</code>. En <code>const { eventId } = event ?? {};</code>, las llaves sacan la propiedad <code>eventId</code>. Si falta el objeto, <code>?? {}</code> permite comprobar el ID ausente.</p>
 <p class="checkpoint"><strong>Antes de avanzar.</strong> Comprueba que la salida contiene <code>eventId: 1</code> y el título «Festival de otoño». Un ID válido que no existe devuelve <code>null</code>.</p>
 </div>
 <aside class="lesson-visual lesson-note">
@@ -2279,10 +2238,10 @@ export function buscarEventoHandler(event) {
 <figure class="lesson-diagram">
 <figcaption>Sigue el ID <code>1</code> en la ida y la vuelta</figcaption>
 <ol>
-  <li><strong>1 · Terminal → Handler</strong><span><code>--function-name</code> elige la Lambda. <code>--payload</code> lleva <code>{"eventId": 1}</code>.</span></li>
+  <li><strong>1 · Terminal → Handler</strong><span><code>--function buscarEvento</code> selecciona la entrada del YAML. <code>--data</code> lleva <code>{"eventId": 1}</code>.</span></li>
   <li><strong>2 · Handler → Service → Repository</strong><span>El handler comprueba el entero positivo y llama a <code>buscarEventoService(1)</code>. El service pasa ese número a <code>buscarEventoRepository(1)</code>.</span></li>
   <li><strong>3 · Repository → DynamoDB</strong><span><code>.key({ eventId })</code> crea <code>{ eventId: 1 }</code>. <code>MODELO_EVENTO</code> lo traduce a <code>Key: { EVENT_ID: 1 }</code>. <code>.send()</code> ejecuta <code>GetItem</code> en la tabla del equipo. Solo hace falta el ID porque es la clave primaria de Eventos.</span></li>
-  <li><strong>4 · DynamoDB → Terminal</strong><span>DynamoDB devuelve <code>EVENT_ID</code> y <code>TITLE</code>. Toolbox los entrega como <code>Item: { eventId: 1, title: "Festival de otoño" }</code>. La respuesta pasa por el service y el handler hasta <code>respuesta-buscar-evento.json</code>.</span></li>
+  <li><strong>4 · DynamoDB → Terminal</strong><span>DynamoDB devuelve <code>EVENT_ID</code> y <code>TITLE</code>. Toolbox los entrega como <code>Item: { eventId: 1, title: "Festival de otoño" }</code>. La respuesta pasa por el service y el handler. Serverless la imprime en la terminal.</span></li>
 </ol>
 </figure>
 </aside>
@@ -2294,12 +2253,10 @@ export function buscarEventoHandler(event) {
 <div class="lesson-split">
 <div class="lesson-task">
 <p><code>{}</code> es un objeto JSON vacío. Para pedir la primera página, el handler puede llamar al service sin recibir ningún ID.</p>
-<pre><code>aws lambda invoke \
-  --function-name &quot;festival-check-in-${FCI_EQUIPO}-listarEventos&quot; \
-  --cli-binary-format raw-in-base64-out \
-  --payload &#x27;{}&#x27; \
-  respuesta-listar.json &amp;&amp;
-cat respuesta-listar.json</code></pre>
+<pre><code>npx --no-install serverless invoke \
+  --function listarEventos \
+  --aws-profile &quot;$AWS_PROFILE&quot; \
+  --data &#x27;{}&#x27;</code></pre>
 <p class="checkpoint"><strong>Antes de avanzar.</strong> Busca «Concierto de aula» en <code>eventos</code>. Si la primera página contiene otros eventos, sigue con el cursor hasta encontrarlo.</p>
 </div>
 <aside class="lesson-visual lesson-note">
@@ -2318,17 +2275,15 @@ cat respuesta-listar.json</code></pre>
 <pre><code>usuario_id=&quot;usuario-aula-${evento_id:?Completa el caso 1 y recupera evento_id}&quot;
 printf &#x27;ID del usuario de clase: %s\n&#x27; &quot;$usuario_id&quot;
 
-aws lambda invoke \
-  --function-name &quot;festival-check-in-${FCI_EQUIPO}-crearUsuario&quot; \
-  --cli-binary-format raw-in-base64-out \
-  --payload &quot;{\&quot;userId\&quot;:\&quot;$usuario_id\&quot;,\&quot;firstName\&quot;:\&quot;Leo\&quot;,\&quot;lastName\&quot;:\&quot;Martin\&quot;,\&quot;email\&quot;:\&quot;leo.martin@example.com\&quot;,\&quot;city\&quot;:\&quot;Huesca\&quot;}&quot; \
-  respuesta-usuario.json &amp;&amp;
-cat respuesta-usuario.json</code></pre>
+npx --no-install serverless invoke \
+  --function crearUsuario \
+  --aws-profile &quot;$AWS_PROFILE&quot; \
+  --data &quot;{\&quot;userId\&quot;:\&quot;$usuario_id\&quot;,\&quot;firstName\&quot;:\&quot;Leo\&quot;,\&quot;lastName\&quot;:\&quot;Martin\&quot;,\&quot;email\&quot;:\&quot;leo.martin@example.com\&quot;,\&quot;city\&quot;:\&quot;Huesca\&quot;}&quot;</code></pre>
 <p class="checkpoint"><strong>Antes de avanzar.</strong> El JSON contiene el <code>userId</code> que acabas de enviar.</p>
 </div>
 <aside class="lesson-visual lesson-note">
 <h4>Del comando al resultado</h4>
-<p>El payload es el perfil en JSON. El handler lo pasa al service y el repository escribe en <code>FCI_USUARIOS</code>.</p>
+<p><code>--data</code> lleva el perfil en JSON. El handler lo pasa al service y el repository escribe en <code>FCI_USUARIOS</code>.</p>
 </aside>
 </div>
 </article>
@@ -2338,17 +2293,15 @@ cat respuesta-usuario.json</code></pre>
 <div class="lesson-split">
 <div class="lesson-task">
 <p>Conserva <code>evento_id</code> y <code>usuario_id</code> de las pestañas de creación. Pásalos en <code>pathParameters</code>, como los entregaría API Gateway al handler de GET.</p>
-<pre><code>aws lambda invoke \
-  --function-name &quot;festival-check-in-${FCI_EQUIPO}-consultarInscripcion&quot; \
-  --cli-binary-format raw-in-base64-out \
-  --payload &quot;{\&quot;pathParameters\&quot;:{\&quot;eventId\&quot;:\&quot;$evento_id\&quot;,\&quot;userId\&quot;:\&quot;$usuario_id\&quot;}}&quot; \
-  respuesta-consulta.json &amp;&amp;
-cat respuesta-consulta.json</code></pre>
-<p class="checkpoint"><strong>Antes de avanzar.</strong> Busca <code>statusCode: 200</code> en el archivo. Antes de inscribir, el cuerpo contiene <code>registration: null</code>. Después, contiene la inscripción.</p>
+<pre><code>npx --no-install serverless invoke \
+  --function consultarInscripcion \
+  --aws-profile &quot;$AWS_PROFILE&quot; \
+  --data &quot;{\&quot;pathParameters\&quot;:{\&quot;eventId\&quot;:\&quot;$evento_id\&quot;,\&quot;userId\&quot;:\&quot;$usuario_id\&quot;}}&quot;</code></pre>
+<p class="checkpoint"><strong>Antes de avanzar.</strong> Busca <code>statusCode: 200</code> en la terminal. Antes de inscribir, el cuerpo contiene <code>registration: null</code>. Después, contiene la inscripción.</p>
 </div>
 <aside class="lesson-visual lesson-note">
 <h4>Del comando al resultado</h4>
-<p>Aquí el <code>StatusCode</code> que imprime AWS CLI corresponde a la invocación de Lambda. El <code>statusCode</code> del archivo es el que devuelve el handler para la API. <code>body</code> contiene la respuesta de la aplicación en forma de cadena JSON.</p>
+<p>Serverless imprime el objeto que devuelve el handler. <code>statusCode</code> es el código que recibiría API Gateway y <code>body</code> contiene el JSON de la aplicación como texto.</p>
 </aside>
 </div>
 </article>
@@ -2358,13 +2311,11 @@ cat respuesta-consulta.json</code></pre>
 <div class="lesson-split">
 <div class="lesson-task">
 <p>Usa el mismo par de IDs. Este comando envía <code>pathParameters</code> al handler de POST.</p>
-<pre><code>aws lambda invoke \
-  --function-name &quot;festival-check-in-${FCI_EQUIPO}-inscribirUsuario&quot; \
-  --cli-binary-format raw-in-base64-out \
-  --payload &quot;{\&quot;pathParameters\&quot;:{\&quot;eventId\&quot;:\&quot;$evento_id\&quot;,\&quot;userId\&quot;:\&quot;$usuario_id\&quot;}}&quot; \
-  respuesta-inscripcion.json &amp;&amp;
-cat respuesta-inscripcion.json</code></pre>
-<p class="checkpoint"><strong>Antes de avanzar.</strong> El archivo muestra <code>statusCode: 201</code>. Repite el comando para ver <code>409</code> y vuelve a <a href="#invoke-consultar-inscripcion">Consultar inscripción</a> para leerla.</p>
+<pre><code>npx --no-install serverless invoke \
+  --function inscribirUsuario \
+  --aws-profile &quot;$AWS_PROFILE&quot; \
+  --data &quot;{\&quot;pathParameters\&quot;:{\&quot;eventId\&quot;:\&quot;$evento_id\&quot;,\&quot;userId\&quot;:\&quot;$usuario_id\&quot;}}&quot;</code></pre>
+<p class="checkpoint"><strong>Antes de avanzar.</strong> La respuesta muestra <code>statusCode: 201</code>. Repite el comando para ver <code>409</code> y vuelve a <a href="#invoke-consultar-inscripcion">Consultar inscripción</a> para leerla.</p>
 </div>
 <aside class="lesson-visual lesson-note">
 <h4>Del comando al resultado</h4>
@@ -2473,8 +2424,8 @@ aws dynamodb execute-statement \
     <li><a href="#modelo-titulo">Elige las claves</a><span>EVENTOS · EVENT_ID<br>INSCRIPCIONES · EVENT_ID + USER_ID<br>USUARIOS · USER_ID</span></li>
     <li><a href="#infraestructura">Escribe serverless.yml</a><span>Tres tablas, cuatro funciones y las rutas del pase</span></li>
     <li><a href="#desplegar-stack">Despliega en AWS</a><span>Serverless Framework → CloudFormation → recursos del laboratorio</span></li>
-    <li><a href="#guardar-evento">Carga el primer evento</a><span>AWS CLI → Lambda → evento con el ID enviado</span></li>
-    <li><a href="#sembrar-usuarios">Crea los perfiles</a><span>AWS CLI → Lambda → nombre, apellidos, correo y ciudad</span></li>
+    <li><a href="#guardar-evento">Carga el primer evento</a><span>Serverless → Lambda → evento con el ID enviado</span></li>
+    <li><a href="#sembrar-usuarios">Crea los perfiles</a><span>Serverless → Lambda → nombre, apellidos, correo y ciudad</span></li>
     <li><a href="#entrenar-dynamo">Entrena la lectura</a><span>Clave → ítem → objeto JavaScript → respuesta HTTP</span></li>
     <li><a href="#consultar-indice">Busca en las dos direcciones</a><span>Tabla → inscritos de un evento<br>PorUsuario → eventos de un usuario</span></li>
   </ol>
