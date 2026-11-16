@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Festival Check-in · práctica guiada</title>
 <link rel="stylesheet" href="style.css?v=pestanas-invoke">
-<script type="module" src="app.js?v=consultar-inscripcion"></script>
+<script type="module" src="app.js?v=inscripcion-body"></script>
 <script type="module" src="guia.js?v=pestanas-invoke"></script>
 <script type="module" src="visor-modelo.js?v=cuaderno-5050"></script>
 <script type="module" src="entrenamiento-dynamo.js?v=referencias"></script>
@@ -525,7 +525,7 @@ functions:
     events:
       - httpApi:
           method: POST
-          path: /events/{eventId}/registrations/{userId}
+          path: /events/{eventId}/registrations
 
 resources:
   Resources:
@@ -735,7 +735,7 @@ resources:
       <div><dt><code>functions:</code></dt><dd>Agrupa las funciones Lambda del servicio.</dd></div>
       <div><dt><code>consultarInscripcion:</code></dt><dd>Lambda que consulta la inscripción cuando API Gateway recibe <code>GET</code> en la ruta del pase.</dd></div>
       <div><dt><code>handler: src/inscripciones/consultar-inscripcion/handler.handler</code></dt><dd><code>src/inscripciones/consultar-inscripcion/handler</code> identifica el archivo <code>handler.mjs</code>. Lambda ejecuta su función exportada <code>handler</code>.</dd></div>
-      <div><dt><code>inscribirUsuario:</code></dt><dd>Lambda que crea la inscripción cuando API Gateway recibe <code>POST</code> en la ruta del pase.</dd></div>
+      <div><dt><code>inscribirUsuario:</code></dt><dd>Lambda que crea la inscripción cuando API Gateway recibe <code>POST</code> en <code>/events/{eventId}/registrations</code>. El usuario viaja en el cuerpo JSON.</dd></div>
       <div><dt><code>handler: src/inscripciones/inscribir-usuario/handler.handler</code></dt><dd><code>src/inscripciones/inscribir-usuario/handler</code> identifica el archivo <code>handler.mjs</code>. Lambda ejecuta su función exportada <code>handler</code>.</dd></div>
       <div><dt data-lines="crearEvento:|handler: src/eventos/crear-evento/handler.handler"><code>crearEvento:</code></dt><dd>Lambda que invocas desde la terminal para guardar un evento con el ID que envías. En <code>handler.handler</code>, el primer <code>handler</code> identifica el archivo <code>handler.mjs</code> y el segundo, la función que exporta. <code>name</code> fija el nombre con el que se despliega en AWS.</dd></div>
       <div><dt data-lines="crearUsuario:|handler: src/usuarios/crear-usuario/handler.handler"><code>crearUsuario:</code></dt><dd>Lambda que guarda un perfil en <code>FCI_USUARIOS</code>. La invocas desde Serverless con el código, el nombre, los apellidos, el correo y la ciudad.</dd></div>
@@ -746,7 +746,7 @@ resources:
     <div class="yaml-question">
       <p><strong>¿Qué petición crea una inscripción para usuario-02?</strong></p>
       <div class="actions">
-      <button type="button" data-feedback="Sí. POST crea la inscripción e invoca inscribirUsuario." aria-pressed="false">POST /events/1/registrations/usuario-02</button>
+      <button type="button" data-feedback="Sí. POST crea la inscripción e invoca inscribirUsuario." aria-pressed="false">POST /events/1/registrations con {&quot;userId&quot;:&quot;usuario-02&quot;}</button>
       <button type="button" data-feedback="GET consulta la inscripción. Elige POST para crear la inscripción." aria-pressed="false">GET /events/1/registrations/usuario-02</button>
       </div>
       <p class="yaml-feedback" role="status"></p>
@@ -1059,7 +1059,7 @@ touch src/inscripciones/errores.mjs &amp;&amp; vi src/inscripciones/errores.mjs<
   </section>
   <section id="modulo-lambda-5" data-explanation hidden>
     <h5><code>src/inscripciones/http/peticion.mjs</code></h5>
-    <p>GET y POST reciben la misma ruta. Cada handler elige su service y los dos reutilizan <code>http/peticion.mjs</code> para leer la clave y responder en el formato de API Gateway.</p>
+    <p>GET lee los dos identificadores en la URL. POST lee el del evento en la URL y toma el usuario del cuerpo con <code>JSON.parse(event.body)</code>. Cada handler llama a su service y ambos reutilizan <code>http/peticion.mjs</code> para responder a API Gateway.</p>
     <div class="lesson-note">
       <p><strong>Sigue el GET de ejemplo.</strong> <code>GET /events/1/registrations/usuario-02</code></p>
       <ol>
@@ -1127,21 +1127,20 @@ export async function handler(event) {
     <h5><code>src/inscripciones/inscribir-usuario/handler.mjs</code></h5>
     <p>Prepara el archivo base de POST. Por ahora responde <code>501</code>. Lo completarás en <a href="#construir-post">Lambdas → Inscribir · Capas</a>.</p>
     <pre><code>mkdir -p src/inscripciones/inscribir-usuario &amp;&amp; ls -ld src/inscripciones/inscribir-usuario &amp;&amp; touch src/inscripciones/inscribir-usuario/handler.mjs &amp;&amp; vi src/inscripciones/inscribir-usuario/handler.mjs</code></pre>
-    <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/inscripciones/inscribir-usuario/handler.mjs"><code>import { json, leerClaveInscripcion, responderError } from &#x27;../http/peticion.mjs&#x27;;
+    <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/inscripciones/inscribir-usuario/handler.mjs"><code>import { json, responderError } from &#x27;../http/peticion.mjs&#x27;;
 
 /**
- * API Gateway llama a este handler con POST /events/{eventId}/registrations/{userId}.
- * En la invocación directa, envía los IDs de un evento y un usuario existentes como texto en pathParameters.
- * @param {{ pathParameters: { eventId: string, userId: string } }} event Clave de la inscripción.
+ * API Gateway llama a este handler con POST /events/{eventId}/registrations.
+ * El ID del evento llega en la ruta y el usuario en el JSON de event.body.
+ * @param {{ pathParameters: { eventId: string, userId?: string }, body?: string }} event Petición de inscripción.
  * @example
  * npx --no-install serverless invoke \
  *   --function inscribirUsuario \
  *   --aws-profile &quot;$AWS_PROFILE&quot; \
- *   --data &#x27;{&quot;pathParameters&quot;: {&quot;eventId&quot;: &quot;3&quot;, &quot;userId&quot;: &quot;usuario-aula-03&quot;}}&#x27;
+ *   --data &#x27;{&quot;pathParameters&quot;:{&quot;eventId&quot;:&quot;3&quot;},&quot;body&quot;:&quot;{\&quot;userId\&quot;:\&quot;usuario-aula-03\&quot;}&quot;}&#x27;
  */
 export async function handler(event) {
   try {
-    leerClaveInscripcion(event);
     return json(501, { message: &#x27;Inscripción por construir&#x27; });
   } catch (error) {
     return responderError(error);
@@ -1180,7 +1179,7 @@ node --input-type=module -e '
   <h4 id="lambda-stage-follow"><span>01</span> Localiza qué se ejecuta</h4>
   <ol class="lambda-env-flow">
     <li><strong>API Gateway elige el archivo</strong><code>Método + ruta → handler</code><span>Para GET invoca el <code>handler</code> de <code>consultar-inscripcion/handler.mjs</code>.</span></li>
-    <li><strong>El archivo ejecuta su caso de uso</strong><code>handler(event) → consultarInscripcionService(key)</code><span>Comparte con POST la lectura de los parámetros de la ruta. En esta etapa, la operación devuelve <code>501</code> hasta que completes su lógica.</span></li>
+    <li><strong>El archivo ejecuta su caso de uso</strong><code>handler(event) → consultarInscripcionService(key)</code><span>Para GET, la ruta trae los dos identificadores. Para POST, la ruta trae el evento y el cuerpo trae el usuario. En esta etapa, la operación devuelve <code>501</code> hasta que completes su lógica.</span></li>
     <li><strong>La configuración llega desde el YAML</strong><code>Ref → variable de Lambda → process.env</code><span>Al cargar <code>dynamo.mjs</code>, Lambda prepara el cliente y lee <code>FCI_TABLA_EVENTOS</code>, <code>FCI_TABLA_INSCRIPCIONES</code> y <code>FCI_TABLA_USUARIOS</code>. Cada variable contiene el nombre real de su tabla. Un <code>.env</code> es otra forma de cargar variables en local.</span></li>
   </ol>
 </section>
@@ -1882,7 +1881,7 @@ curl -i &quot;$api_url/events/$evento_id/registrations/$usuario&quot;</code></pr
 </div>
 <div class="lesson-visual">
 <div class="lesson-visual-pin">
-<ol class="route-map"><li><strong>Handler</strong><p>Recibe la petición y llama al service.</p></li><li><strong>Service</strong><p>Decide qué hacer con el evento y el pase.</p></li><li><strong>Repository</strong><p>Traduce las claves y habla con DynamoDB.</p></li></ol>
+<ol class="route-map"><li><strong>Handler</strong><p>Lee el evento de la URL y el usuario del cuerpo JSON. Pasa la pareja al service.</p></li><li><strong>Service</strong><p>Decide qué hacer con el evento y el pase.</p></li><li><strong>Repository</strong><p>Traduce las claves y habla con DynamoDB.</p></li></ol>
 </div>
 </div>
 </div>
@@ -1958,23 +1957,25 @@ export async function inscribirUsuarioService({ eventId, userId }) {
   <h4><code>src/inscripciones/inscribir-usuario/handler.mjs</code></h4>
   <pre><code>vi src/inscripciones/inscribir-usuario/handler.mjs</code></pre>
   <p>Ejecuta <code>:%d</code> e Intro para sustituir el archivo. En <code>vi</code>, escribe <code>:set paste</code> y pulsa Intro. Pulsa <kbd>i</kbd> y pega el archivo completo. Guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro.</p>
-  <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/inscripciones/inscribir-usuario/handler.mjs" data-explanations="construir-post-notas"><code>import { json, leerClaveInscripcion, responderError } from &#x27;../http/peticion.mjs&#x27;;
+  <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/inscripciones/inscribir-usuario/handler.mjs" data-explanations="construir-post-notas"><code>import { json, responderError } from &#x27;../http/peticion.mjs&#x27;;
 import { inscribirUsuarioService } from &#x27;./service.mjs&#x27;;
 
 /**
- * API Gateway llama a este handler con POST /events/{eventId}/registrations/{userId}.
- * En la invocación directa, envía los IDs de un evento y un usuario existentes como texto en pathParameters.
- * @param {{ pathParameters: { eventId: string, userId: string } }} event Clave de la inscripción.
+ * API Gateway llama a este handler con POST /events/{eventId}/registrations.
+ * El ID del evento llega en la ruta y el usuario en el JSON de event.body.
+ * @param {{ pathParameters: { eventId: string, userId?: string }, body?: string }} event Petición de inscripción.
  * @example
  * npx --no-install serverless invoke \
  *   --function inscribirUsuario \
  *   --aws-profile &quot;$AWS_PROFILE&quot; \
- *   --data &#x27;{&quot;pathParameters&quot;: {&quot;eventId&quot;: &quot;3&quot;, &quot;userId&quot;: &quot;usuario-aula-03&quot;}}&#x27;
+ *   --data &#x27;{&quot;pathParameters&quot;:{&quot;eventId&quot;:&quot;3&quot;},&quot;body&quot;:&quot;{\&quot;userId\&quot;:\&quot;usuario-aula-03\&quot;}&quot;}&#x27;
  */
 export async function handler(event) {
   try {
-    const clave = leerClaveInscripcion(event);
-    const resultado = await inscribirUsuarioService(clave);
+    const { eventId, userId: usuarioEnRuta } = event.pathParameters;
+    // La ruta anterior también puede aportar el usuario.
+    const userId = usuarioEnRuta ?? JSON.parse(event.body).userId;
+    const resultado = await inscribirUsuarioService({ eventId: BigInt(eventId), userId });
     return json(201, resultado);
   } catch (error) {
     return responderError(error);
@@ -1989,13 +1990,14 @@ npx serverless deploy --aws-profile "$perfil"</code></pre>
 <p>Usa un perfil del paso <a href="#sembrar-usuarios">Usuarios</a> que todavía no esté inscrito en el evento.</p>
 <pre><code>usuario=usuario-05
 pase=&quot;$api_url/events/$evento_id/registrations/$usuario&quot;
-curl -i -X POST &quot;$pase&quot;
+curl -i -X POST &quot;$api_url/events/$evento_id/registrations&quot; \
+  -H &#x27;Content-Type: application/json&#x27; -d &quot;{\&quot;userId\&quot;:\&quot;$usuario\&quot;}&quot;
 curl -i &quot;$pase&quot;</code></pre>
 <p class="checkpoint"><strong>Antes de avanzar</strong> POST devuelve <code>201</code> y GET muestra <code>registeredAt</code>. Si repites POST, devuelve <code>409</code>.</p>
 </div>
 <div class="lesson-visual">
 <div class="lesson-visual-pin">
-<ol class="route-map"><li><strong>Handler</strong><p>Recibe la petición y llama al service.</p></li><li><strong>Service</strong><p>Decide qué hacer con el evento y el pase.</p></li><li><strong>Repository</strong><p>Traduce las claves y habla con DynamoDB.</p></li></ol>
+<ol class="route-map"><li><strong>Handler</strong><p>Lee el evento de la URL y el usuario del cuerpo JSON. Pasa la pareja al service.</p></li><li><strong>Service</strong><p>Decide qué hacer con el evento y el pase.</p></li><li><strong>Repository</strong><p>Traduce las claves y habla con DynamoDB.</p></li></ol>
 </div>
 </div>
 </div>
@@ -2227,7 +2229,8 @@ export async function inscribirUsuarioService({ eventId, userId }) {
 npx serverless deploy --aws-profile "$perfil"</code></pre>
 <pre><code>usuario=usuario-06
 pase=&quot;$api_url/events/$evento_id/registrations/$usuario&quot;
-curl -i -X POST &quot;$pase&quot;
+curl -i -X POST &quot;$api_url/events/$evento_id/registrations&quot; \
+  -H &#x27;Content-Type: application/json&#x27; -d &quot;{\&quot;userId\&quot;:\&quot;$usuario\&quot;}&quot;
 curl -i &quot;$pase&quot;</code></pre>
 <p class="checkpoint"><strong>Antes de avanzar</strong> POST devuelve <code>201</code> y GET muestra <code>registeredAt</code>. Al repetir POST obtienes <code>409</code>.</p>
 </div>
@@ -2471,34 +2474,38 @@ export async function handler(event) {
 <p>Desde la raíz de <code>festival-checkin-01</code>, usa la terminal en la que configuraste y desplegaste el clon. <code>AWS_PROFILE</code> y <code>AWS_REGION</code> se leen del entorno. <a href="https://github.com/albertohdezakkari/festival-checkin-01/blob/main/0-conf.md#5-despliega-y-carga-los-datos-de-ejemplo">Ver el paso de despliegue</a>.</p>
 <div class="lesson-split">
 <div class="lesson-task">
-<p>Usa el mismo par de IDs. Este comando envía <code>pathParameters</code> al handler de POST.</p>
+<p>Usa el mismo par de IDs. El <code>eventId</code> va en <code>pathParameters</code>. <code>body</code> lleva el JSON del usuario como texto, igual que cuando llama API Gateway.</p>
 <pre><code>npx --no-install serverless invoke \
   --function inscribirUsuario \
   --aws-profile &quot;$AWS_PROFILE&quot; \
-  --data &quot;{\&quot;pathParameters\&quot;:{\&quot;eventId\&quot;:\&quot;$evento_id\&quot;,\&quot;userId\&quot;:\&quot;$usuario_id\&quot;}}&quot;</code></pre>
+  --data &quot;{\&quot;pathParameters\&quot;:{\&quot;eventId\&quot;:\&quot;$evento_id\&quot;},\&quot;body\&quot;:\&quot;{\\\&quot;userId\\\&quot;:\\\&quot;$usuario_id\\\&quot;}\&quot;}&quot;</code></pre>
 <p class="checkpoint"><strong>Antes de avanzar.</strong> La respuesta muestra <code>statusCode: 201</code>. Repite el comando para ver <code>409</code> y vuelve a <a href="#invoke-consultar-inscripcion">Consultar inscripción</a> para leerla.</p>
 </div>
 <aside class="lesson-visual lesson-note">
+<h4>De dónde sale cada parte de la clave</h4>
+<p><strong>Ruta.</strong> <code>pathParameters.eventId</code> elige el evento. <strong>Cuerpo.</strong> <code>JSON.parse(event.body).userId</code> extrae el usuario. El handler reúne ambos datos y llama al service.</p>
 <h4>Del comando al resultado</h4>
 <p>El service comprueba que existan el evento y el usuario. El repository escribe una inscripción por cada pareja de IDs. La condición de DynamoDB protege la primera inscripción si repites la invocación.</p>
 <h4>Abre el handler y sigue el JSON</h4>
-<pre data-file="src/inscripciones/inscribir-usuario/handler.mjs"><code>import { json, leerClaveInscripcion, responderError } from &#x27;../http/peticion.mjs&#x27;;
+<pre data-file="src/inscripciones/inscribir-usuario/handler.mjs"><code>import { json, responderError } from &#x27;../http/peticion.mjs&#x27;;
 import { inscribirUsuarioService } from &#x27;./service.mjs&#x27;;
 
 /**
- * API Gateway llama a este handler con POST /events/{eventId}/registrations/{userId}.
- * En la invocación directa, envía los IDs de un evento y un usuario existentes como texto en pathParameters.
- * @param {{ pathParameters: { eventId: string, userId: string } }} event Clave de la inscripción.
+ * API Gateway llama a este handler con POST /events/{eventId}/registrations.
+ * El ID del evento llega en la ruta y el usuario en el JSON de event.body.
+ * @param {{ pathParameters: { eventId: string, userId?: string }, body?: string }} event Petición de inscripción.
  * @example
  * npx --no-install serverless invoke \
  *   --function inscribirUsuario \
  *   --aws-profile &quot;$AWS_PROFILE&quot; \
- *   --data &#x27;{&quot;pathParameters&quot;: {&quot;eventId&quot;: &quot;3&quot;, &quot;userId&quot;: &quot;usuario-aula-03&quot;}}&#x27;
+ *   --data &#x27;{&quot;pathParameters&quot;:{&quot;eventId&quot;:&quot;3&quot;},&quot;body&quot;:&quot;{\&quot;userId\&quot;:\&quot;usuario-aula-03\&quot;}&quot;}&#x27;
  */
 export async function handler(event) {
   try {
-    const clave = leerClaveInscripcion(event);
-    const resultado = await inscribirUsuarioService(clave);
+    const { eventId, userId: usuarioEnRuta } = event.pathParameters;
+    // La ruta anterior también puede aportar el usuario.
+    const userId = usuarioEnRuta ?? JSON.parse(event.body).userId;
+    const resultado = await inscribirUsuarioService({ eventId: BigInt(eventId), userId });
     return json(201, resultado);
   } catch (error) {
     return responderError(error);
@@ -2519,8 +2526,10 @@ export async function handler(event) {
 <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-command data-explanations="prueba-command-notes"><code>codigo_prueba=usuario-03
 pase_prueba="$api_url/events/$evento_id/registrations/$codigo_prueba"
 curl -i "$pase_prueba"
-curl -i -X POST "$pase_prueba"
-curl -i -X POST "$pase_prueba"
+curl -i -X POST &quot;$api_url/events/$evento_id/registrations&quot; \
+  -H &#x27;Content-Type: application/json&#x27; -d &quot;{\&quot;userId\&quot;:\&quot;$codigo_prueba\&quot;}&quot;
+curl -i -X POST &quot;$api_url/events/$evento_id/registrations&quot; \
+  -H &#x27;Content-Type: application/json&#x27; -d &quot;{\&quot;userId\&quot;:\&quot;$codigo_prueba\&quot;}&quot;
 curl -i "$pase_prueba"</code></pre></div>
 <p class="checkpoint"><strong>Antes de avanzar</strong> Consulta el mismo código. La respuesta conserva el <code>registeredAt</code> de la inscripción.</p>
 </div>
@@ -2567,8 +2576,9 @@ aws dynamodb execute-statement \
 <div class="lesson-task">
 <p>Después de <a href="#otro-equipo">Recorrido</a>, usa el mismo código de usuario que inscribiste en el primer evento. Trabaja desde <code>festival-checkin</code> con el perfil y la región del laboratorio. Si cambiaste de terminal, recupera los nombres en <a href="#salidas-stack">Salidas</a> y vuelve a asignar los dos IDs de evento y el valor de <code>codigo_prueba</code> que usaste en Recorrido. Comprueba en <a href="#estado-tablas">Estado</a> que <code>PorUsuario</code> esté <code>ACTIVE</code>.</p>
 <h4>Inscribe al mismo usuario en el segundo evento</h4>
-<p>Usa el código que elegiste en Recorrido y el <code>evento_secundario_id</code> que obtuviste en <a href="#guardar-evento">Crear eventos</a>. La misma ruta POST inscribe a ese usuario en el segundo evento. Espera <code>201</code> la primera vez y <code>409</code> si repites.</p>
-<div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-command data-explanations="prueba-command-notes"><code>curl -i -X POST "$api_url/events/$evento_secundario_id/registrations/$codigo_prueba"</code></pre></div>
+<p>Usa el código que elegiste en Recorrido y el <code>evento_secundario_id</code> que obtuviste en <a href="#guardar-evento">Crear eventos</a>. Usa la URL del segundo evento y envía el mismo usuario en el cuerpo. Espera <code>201</code> la primera vez y <code>409</code> si repites.</p>
+<div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-command data-explanations="prueba-command-notes"><code>curl -i -X POST &quot;$api_url/events/$evento_secundario_id/registrations&quot; \
+  -H &#x27;Content-Type: application/json&#x27; -d &quot;{\&quot;userId\&quot;:\&quot;$codigo_prueba\&quot;}&quot;</code></pre></div>
 <h4>¿Quién se apuntó al primer evento?</h4>
 <p>Consulta la tabla con <code>EVENT_ID</code>. Verás <code>usuario-03</code> (o el código que elegiste) junto con los demás inscritos en ese evento.</p>
 <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-command data-explanations="prueba-command-notes"><code>aws dynamodb query \
@@ -2695,6 +2705,7 @@ aws dynamodb execute-statement \
       <p>Usa <strong>Ensayo</strong> para practicar los estados. Para probar tu despliegue, elige <strong>AWS</strong> y pega la URL del paso <a href="#salidas-stack">Salidas</a>.</p>
       <dl id="request-trace" class="request-trace" hidden>
         <div><dt>Petición</dt><dd><code id="request-path"></code></dd></div>
+        <div id="request-body-row" hidden><dt>Cuerpo JSON</dt><dd><code id="request-body"></code></dd></div>
         <div><dt>Módulo que atiende esta ruta en AWS</dt><dd><code id="request-module"></code> · <a id="request-lesson" href="#leer-pase">Ver el recorrido y el código</a></dd></div>
       </dl>
       <pre id="response">Pulsa Consultar para empezar.</pre>

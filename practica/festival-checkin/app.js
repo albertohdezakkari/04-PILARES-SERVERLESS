@@ -7,6 +7,8 @@ const response = document.querySelector('#response');
 const feedback = document.querySelector('#feedback');
 const requestTrace = document.querySelector('#request-trace');
 const requestPath = document.querySelector('#request-path');
+const requestBody = document.querySelector('#request-body');
+const requestBodyRow = document.querySelector('#request-body-row');
 const requestModule = document.querySelector('#request-module');
 const requestLesson = document.querySelector('#request-lesson');
 const readFeedback = document.querySelector('#read-feedback');
@@ -65,12 +67,19 @@ function apiBase() {
   return value;
 }
 
-function passPath(eventId, userId) {
-  return '/events/' + eventId + '/registrations/' + encodeURIComponent(userId);
+function passPath(method, eventId, userId) {
+  const registrations = '/events/' + eventId + '/registrations';
+  return method === 'POST' ? registrations : registrations + '/' + encodeURIComponent(userId);
 }
 
-async function awsRequest(base, method, path) {
-  const result = await fetch(base + path, { method, signal: AbortSignal.timeout(12000) });
+async function awsRequest(base, method, eventId, userId) {
+  const options = { method, signal: AbortSignal.timeout(12000) };
+  if (method === 'POST') {
+    options.headers = { 'Content-Type': 'application/json' };
+    options.body = JSON.stringify({ userId });
+  }
+
+  const result = await fetch(base + passPath(method, eventId, userId), options);
   const body = await result.json().catch(() => ({ message: 'La API no devolvió JSON' }));
   return { status: result.status, body };
 }
@@ -101,9 +110,11 @@ async function run(method) {
 
   const controls = [...methodButtons, mode, user, endpoint, eventInput];
   for (const control of controls) control.disabled = true;
-  const path = passPath(eventId, userId);
+  const path = passPath(method, eventId, userId);
   readFeedback.hidden = true;
   requestPath.textContent = method + ' ' + path;
+  requestBodyRow.hidden = method !== 'POST';
+  requestBody.textContent = method === 'POST' ? JSON.stringify({ userId }) : '';
   requestModule.textContent = 'src/inscripciones/' + routes[method].module + '/handler.mjs';
   requestLesson.href = routes[method].lesson;
   requestTrace.hidden = false;
@@ -112,7 +123,7 @@ async function run(method) {
   let result;
   try {
     const base = demo ? '' : apiBase();
-    const request = verb => demo ? demoRequest(verb, userId) : awsRequest(base, verb, path);
+    const request = verb => demo ? demoRequest(verb, userId) : awsRequest(base, verb, eventId, userId);
     result = await request(method);
     response.textContent = JSON.stringify(result.body, null, 2);
     feedback.textContent = label + ' · ' + method + ' → ' + result.status
