@@ -7,6 +7,15 @@ export const explicaciones = [
   ],
   [
     'Importa crearEventoService del archivo service.mjs, que está en la misma carpeta. Así el punto de entrada puede delegar el trabajo.',
+    'Abre el comentario que reúne el contrato del handler y un ejemplo de llamada.',
+    'Ejecuta el ejemplo desde el proyecto desplegado. Usa un ID disponible para que el alta pueda escribir.',
+    'El objeto de entrada lleva un número en eventId y un texto en title.',
+    'Empieza el ejemplo de invocación que puedes ejecutar desde la terminal.',
+    'Ejecuta la copia instalada de Serverless e invoca la Lambda desplegada.',
+    'Serverless selecciona la entrada crearEvento dentro de functions en el YAML.',
+    'Usa el perfil de AWS guardado en AWS_PROFILE en la terminal del despliegue.',
+    'El JSON se convierte en el objeto de entrada. eventId vale 3 y title vale «Concierto de aula».',
+    'Cierra el comentario. La función exportada empieza en la línea siguiente.',
     'export expone la función a Lambda. Las llaves extraen eventId y title del objeto de entrada. = {} permite entrar aunque se invoque sin argumento.',
     'Pasa los dos valores al service y devuelve su resultado. Con el ejemplo, llama a crearEventoService(3, "Concierto de aula").',
     'Cierra el cuerpo del handler. La llamada de la línea anterior determina la respuesta.'

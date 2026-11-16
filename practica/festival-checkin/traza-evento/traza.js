@@ -1,4 +1,4 @@
-import { explicaciones } from './lineas.js?v=invoke-lector';
+import { explicaciones } from './lineas.js?v=ejemplos-handler';
 
 const capas = [...document.querySelectorAll('.capas button')];
 const anterior = document.querySelector('#anterior');

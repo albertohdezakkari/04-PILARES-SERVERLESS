@@ -946,18 +946,27 @@ export const TABLA_USUARIOS_FCI = process.env.FCI_TABLA_USUARIOS;</code></pre></
     <p><code>Ref: FestivalCheckInEventos</code> resuelve <code>FCI_EVENTOS</code>. La variable <code>FCI_TABLA_EVENTOS</code> entrega ese nombre a Lambda y <code>TABLA_EVENTOS_FCI</code> se lo pasa a <code>PutCommand</code>.</p>
     <pre><code>mkdir -p src/eventos/crear-evento &amp;&amp; ls -ld src/eventos/crear-evento &amp;&amp;
 touch src/eventos/crear-evento/handler.mjs &amp;&amp; vi src/eventos/crear-evento/handler.mjs</code></pre>
-    <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/eventos/crear-evento/handler.mjs"><code>import { PutCommand } from '@aws-sdk/lib-dynamodb';
-import { db, TABLA_EVENTOS_FCI } from '../../datos/dynamo.mjs';
+    <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/eventos/crear-evento/handler.mjs"><code>import { PutCommand } from &#x27;@aws-sdk/lib-dynamodb&#x27;;
+import { db, TABLA_EVENTOS_FCI } from &#x27;../../datos/dynamo.mjs&#x27;;
 
+/**
+ * Invoca desde la terminal tras desplegar. Usa un ID de evento libre.
+ * @param {{ eventId: number, title: string }} event ID entero positivo y título con texto.
+ * @example
+ * npx --no-install serverless invoke \
+ *   --function crearEvento \
+ *   --aws-profile &quot;$AWS_PROFILE&quot; \
+ *   --data &#x27;{&quot;eventId&quot;: 3, &quot;title&quot;: &quot;Concierto de aula&quot;}&#x27;
+ */
 export async function handler({ eventId, title } = {}) {
-  if (typeof title !== 'string' || title.trim() === '') {
-    throw new Error('Escribe un título para el evento');
+  if (typeof title !== &#x27;string&#x27; || title.trim() === &#x27;&#x27;) {
+    throw new Error(&#x27;Escribe un título para el evento&#x27;);
   }
 
   const comando = new PutCommand({
     TableName: TABLA_EVENTOS_FCI,
     Item: { EVENT_ID: eventId, TITLE: title },
-    ConditionExpression: 'attribute_not_exists(EVENT_ID)'
+    ConditionExpression: &#x27;attribute_not_exists(EVENT_ID)&#x27;
   });
 
   await db.send(comando);
@@ -971,6 +980,16 @@ export async function handler({ eventId, title } = {}) {
 touch src/usuarios/crear-usuario/handler.mjs &amp;&amp; vi src/usuarios/crear-usuario/handler.mjs</code></pre>
     <pre data-file="src/usuarios/crear-usuario/handler.mjs"><code>import { crearUsuarioService } from &#x27;./service.mjs&#x27;;
 
+/**
+ * Invoca desde la terminal con un código de usuario libre.
+ * @param {{ userId: string, firstName: string, lastName: string, email: string, city?: string }} event
+ * Perfil con código, nombre, apellidos, correo y ciudad opcional.
+ * @example
+ * npx --no-install serverless invoke \
+ *   --function crearUsuario \
+ *   --aws-profile &quot;$AWS_PROFILE&quot; \
+ *   --data &#x27;{&quot;userId&quot;: &quot;usuario-aula-03&quot;, &quot;firstName&quot;: &quot;Leo&quot;, &quot;lastName&quot;: &quot;Martin&quot;, &quot;email&quot;: &quot;leo.martin@example.com&quot;, &quot;city&quot;: &quot;Huesca&quot;}&#x27;
+ */
 export function handler({ userId, firstName, lastName, email, city } = {}) {
   return crearUsuarioService({ userId, firstName, lastName, email, city });
 }</code></pre>
@@ -1073,30 +1092,50 @@ export async function handleRequest(event, operation) {
     <h5><code>src/inscripciones/consultar-inscripcion/handler.mjs</code></h5>
     <p>Prepara el archivo base de GET. Por ahora responde <code>501</code>. Lo completarás en <a href="#leer-pase">Lambdas → Consultar inscripción · Capas</a>.</p>
     <pre><code>mkdir -p src/inscripciones/consultar-inscripcion &amp;&amp; ls -ld src/inscripciones/consultar-inscripcion &amp;&amp; touch src/inscripciones/consultar-inscripcion/handler.mjs &amp;&amp; vi src/inscripciones/consultar-inscripcion/handler.mjs</code></pre>
-    <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/inscripciones/consultar-inscripcion/handler.mjs"><code>import { handleRequest, json } from '../http/peticion.mjs';
+    <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/inscripciones/consultar-inscripcion/handler.mjs"><code>import { handleRequest, json } from &#x27;../http/peticion.mjs&#x27;;
 
+/**
+ * API Gateway llama a este handler con GET /events/{eventId}/registrations/{userId}.
+ * En la invocación directa, envía los dos valores de la ruta como texto dentro de pathParameters.
+ * @param {{ pathParameters: { eventId: string, userId: string } }} event Clave de la inscripción.
+ * @example
+ * npx --no-install serverless invoke \
+ *   --function consultarInscripcion \
+ *   --aws-profile &quot;$AWS_PROFILE&quot; \
+ *   --data &#x27;{&quot;pathParameters&quot;: {&quot;eventId&quot;: &quot;3&quot;, &quot;userId&quot;: &quot;usuario-aula-03&quot;}}&#x27;
+ */
 export function handler(event) {
   return handleRequest(event, consultarInscripcionService);
 }
 
 async function consultarInscripcionService(key) {
   // Fase Lectura: consulta el evento y la inscripción.
-  return json(501, { message: 'Lectura por construir' });
+  return json(501, { message: &#x27;Lectura por construir&#x27; });
 }</code></pre></div>
   </section>
   <section id="modulo-lambda-2" data-explanation hidden>
     <h5><code>src/inscripciones/inscribir-usuario/handler.mjs</code></h5>
     <p>Prepara el archivo base de POST. Por ahora responde <code>501</code>. Lo completarás en <a href="#construir-post">Lambdas → Inscribir · Capas</a>.</p>
     <pre><code>mkdir -p src/inscripciones/inscribir-usuario &amp;&amp; ls -ld src/inscripciones/inscribir-usuario &amp;&amp; touch src/inscripciones/inscribir-usuario/handler.mjs &amp;&amp; vi src/inscripciones/inscribir-usuario/handler.mjs</code></pre>
-    <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/inscripciones/inscribir-usuario/handler.mjs"><code>import { handleRequest, json } from '../http/peticion.mjs';
+    <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/inscripciones/inscribir-usuario/handler.mjs"><code>import { handleRequest, json } from &#x27;../http/peticion.mjs&#x27;;
 
+/**
+ * API Gateway llama a este handler con POST /events/{eventId}/registrations/{userId}.
+ * En la invocación directa, envía los IDs de un evento y un usuario existentes como texto en pathParameters.
+ * @param {{ pathParameters: { eventId: string, userId: string } }} event Clave de la inscripción.
+ * @example
+ * npx --no-install serverless invoke \
+ *   --function inscribirUsuario \
+ *   --aws-profile &quot;$AWS_PROFILE&quot; \
+ *   --data &#x27;{&quot;pathParameters&quot;: {&quot;eventId&quot;: &quot;3&quot;, &quot;userId&quot;: &quot;usuario-aula-03&quot;}}&#x27;
+ */
 export function handler(event) {
   return handleRequest(event, inscribirUsuarioService);
 }
 
 async function inscribirUsuarioService(key) {
   // Fase Inscripción: crea un registro con una condición.
-  return json(501, { message: 'Inscripción por construir' });
+  return json(501, { message: &#x27;Inscripción por construir&#x27; });
 }</code></pre></div>
   </section>
   </div>
@@ -1410,8 +1449,17 @@ export async function crearEventoService(eventId, title) {
     <h4><code>src/eventos/crear-evento/handler.mjs</code></h4>
     <p>Abre el archivo existente. Escribe <code>:%d</code> y pulsa Intro para sustituir su contenido. Ahora el archivo recibe el ID y el título y llama al service.</p>
     <pre><code>vi src/eventos/crear-evento/handler.mjs</code></pre>
-    <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/eventos/crear-evento/handler.mjs" data-explanations="capas-eventos-notas"><code>import { crearEventoService } from './service.mjs';
+    <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/eventos/crear-evento/handler.mjs" data-explanations="capas-eventos-notas"><code>import { crearEventoService } from &#x27;./service.mjs&#x27;;
 
+/**
+ * Invoca desde la terminal tras desplegar. Usa un ID de evento libre.
+ * @param {{ eventId: number, title: string }} event ID entero positivo y título con texto.
+ * @example
+ * npx --no-install serverless invoke \
+ *   --function crearEvento \
+ *   --aws-profile &quot;$AWS_PROFILE&quot; \
+ *   --data &#x27;{&quot;eventId&quot;: 3, &quot;title&quot;: &quot;Concierto de aula&quot;}&#x27;
+ */
 export function handler({ eventId, title } = {}) {
   return crearEventoService(eventId, title);
 }</code></pre></div>
@@ -1792,6 +1840,16 @@ export async function consultarInscripcionService({ eventId, userId }) {
   <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/inscripciones/consultar-inscripcion/handler.mjs" data-explanations="leer-pase-notas"><code>import { handleRequest } from &#x27;../http/peticion.mjs&#x27;;
 import { consultarInscripcionService } from &#x27;./service.mjs&#x27;;
 
+/**
+ * API Gateway llama a este handler con GET /events/{eventId}/registrations/{userId}.
+ * En la invocación directa, envía los dos valores de la ruta como texto dentro de pathParameters.
+ * @param {{ pathParameters: { eventId: string, userId: string } }} event Clave de la inscripción.
+ * @example
+ * npx --no-install serverless invoke \
+ *   --function consultarInscripcion \
+ *   --aws-profile &quot;$AWS_PROFILE&quot; \
+ *   --data &#x27;{&quot;pathParameters&quot;: {&quot;eventId&quot;: &quot;3&quot;, &quot;userId&quot;: &quot;usuario-aula-03&quot;}}&#x27;
+ */
 export function handler(event) {
   return handleRequest(event, consultarInscripcionService);
 }</code></pre></div>
@@ -1885,6 +1943,16 @@ export async function inscribirUsuarioService({ eventId, userId }) {
   <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/inscripciones/inscribir-usuario/handler.mjs" data-explanations="construir-post-notas"><code>import { handleRequest } from &#x27;../http/peticion.mjs&#x27;;
 import { inscribirUsuarioService } from &#x27;./service.mjs&#x27;;
 
+/**
+ * API Gateway llama a este handler con POST /events/{eventId}/registrations/{userId}.
+ * En la invocación directa, envía los IDs de un evento y un usuario existentes como texto en pathParameters.
+ * @param {{ pathParameters: { eventId: string, userId: string } }} event Clave de la inscripción.
+ * @example
+ * npx --no-install serverless invoke \
+ *   --function inscribirUsuario \
+ *   --aws-profile &quot;$AWS_PROFILE&quot; \
+ *   --data &#x27;{&quot;pathParameters&quot;: {&quot;eventId&quot;: &quot;3&quot;, &quot;userId&quot;: &quot;usuario-aula-03&quot;}}&#x27;
+ */
 export function handler(event) {
   return handleRequest(event, inscribirUsuarioService);
 }</code></pre></div>
@@ -2193,6 +2261,21 @@ npx --no-install serverless invoke \
 <aside class="lesson-visual lesson-note">
 <h4>Del comando al resultado</h4>
 <p><code>--function crearEvento</code> selecciona la entrada de <code>functions</code> en el YAML. <code>--data</code> lleva el JSON que recibe el handler. Serverless imprime el resultado de Lambda en la terminal. <a href="https://www.serverless.com/framework/docs/providers/aws/cli-reference/invoke">Referencia de Serverless Invoke</a></p>
+<h4>Abre el handler y sigue el JSON</h4>
+<pre data-file="src/eventos/crear-evento/handler.mjs"><code>import { crearEventoService } from &#x27;./service.mjs&#x27;;
+
+/**
+ * Invoca desde la terminal tras desplegar. Usa un ID de evento libre.
+ * @param {{ eventId: number, title: string }} event ID entero positivo y título con texto.
+ * @example
+ * npx --no-install serverless invoke \
+ *   --function crearEvento \
+ *   --aws-profile &quot;$AWS_PROFILE&quot; \
+ *   --data &#x27;{&quot;eventId&quot;: 3, &quot;title&quot;: &quot;Concierto de aula&quot;}&#x27;
+ */
+export function handler({ eventId, title } = {}) {
+  return crearEventoService(eventId, title);
+}</code></pre>
 </aside>
 </div>
 </article>
@@ -2211,8 +2294,8 @@ npx --no-install serverless invoke \
 <pre data-file="src/eventos/buscar-evento/handler.mjs"><code>import { buscarEventoService } from &#x27;./service.mjs&#x27;;
 
 /**
- * AWS Lambda entrega el JSON enviado en --data como un objeto JavaScript.
- * @param {{ eventId: number }} event ID numérico enviado en el JSON.
+ * Lambda entrega el JSON de --data como objeto. El ejemplo usa el evento de npm run aula.
+ * @param {{ eventId: number }} event ID entero positivo del evento que quieres leer.
  * @example
  * npx --no-install serverless invoke \
  *   --function buscarEvento \
@@ -2263,6 +2346,21 @@ export function buscarEventoHandler(event) {
 <h4>Del comando al resultado</h4>
 <p>En <code>serverless.yml</code>, lee <code>src/eventos/listar-eventos/handler.listarEventosHandler</code> en dos partes. <code>handler</code> es el archivo <code>handler.mjs</code>. Después del punto, <code>listarEventosHandler</code> es la función que se exporta y que Lambda ejecuta.</p>
 <p><a href="https://github.com/albertohdezakkari/festival-checkin-01/tree/main/src/eventos/listar-eventos">Abre handler, service y repository</a>. El repository usa <code>ScanCommand</code> de Toolbox para leer hasta 25 eventos por llamada. Si <code>siguienteCursor</code> contiene un valor, vuelve a pulsar Copiar comando y sustituye <code>'{}'</code> por <code>'{"cursor":"3"}'</code> usando el valor que acabas de recibir. <code>null</code> indica que has llegado al final. <a href="https://www.dynamodbtoolbox.com/docs/tables/actions/scan">Scan en DynamoDB Toolbox</a></p>
+<h4>Abre el handler y sigue el JSON</h4>
+<pre data-file="src/eventos/listar-eventos/handler.mjs"><code>import { listarEventosService } from &#x27;./service.mjs&#x27;;
+
+/**
+ * Envía {} para pedir la primera página. Para avanzar, envía el valor de siguienteCursor como cursor.
+ * @param {{ cursor?: string }} event El cursor se envía como texto, por ejemplo {&quot;cursor&quot;:&quot;3&quot;}.
+ * @example
+ * npx --no-install serverless invoke \
+ *   --function listarEventos \
+ *   --aws-profile &quot;$AWS_PROFILE&quot; \
+ *   --data &#x27;{}&#x27;
+ */
+export function listarEventosHandler({ cursor } = {}) {
+  return listarEventosService(cursor);
+}</code></pre>
 </aside>
 </div>
 </article>
@@ -2284,6 +2382,22 @@ npx --no-install serverless invoke \
 <aside class="lesson-visual lesson-note">
 <h4>Del comando al resultado</h4>
 <p><code>--data</code> lleva el perfil en JSON. El handler lo pasa al service y el repository escribe en <code>FCI_USUARIOS</code>.</p>
+<h4>Abre el handler y sigue el JSON</h4>
+<pre data-file="src/usuarios/crear-usuario/handler.mjs"><code>import { crearUsuarioService } from &#x27;./service.mjs&#x27;;
+
+/**
+ * Invoca desde la terminal con un código de usuario libre.
+ * @param {{ userId: string, firstName: string, lastName: string, email: string, city?: string }} event
+ * Perfil con código, nombre, apellidos, correo y ciudad opcional.
+ * @example
+ * npx --no-install serverless invoke \
+ *   --function crearUsuario \
+ *   --aws-profile &quot;$AWS_PROFILE&quot; \
+ *   --data &#x27;{&quot;userId&quot;: &quot;usuario-aula-03&quot;, &quot;firstName&quot;: &quot;Leo&quot;, &quot;lastName&quot;: &quot;Martin&quot;, &quot;email&quot;: &quot;leo.martin@example.com&quot;, &quot;city&quot;: &quot;Huesca&quot;}&#x27;
+ */
+export function handler({ userId, firstName, lastName, email, city } = {}) {
+  return crearUsuarioService({ userId, firstName, lastName, email, city });
+}</code></pre>
 </aside>
 </div>
 </article>
@@ -2302,6 +2416,23 @@ npx --no-install serverless invoke \
 <aside class="lesson-visual lesson-note">
 <h4>Del comando al resultado</h4>
 <p>Serverless imprime el objeto que devuelve el handler. <code>statusCode</code> es el código que recibiría API Gateway y <code>body</code> contiene el JSON de la aplicación como texto.</p>
+<h4>Abre el handler y sigue el JSON</h4>
+<pre data-file="src/inscripciones/consultar-inscripcion/handler.mjs"><code>import { handleRequest } from &#x27;../http/peticion.mjs&#x27;;
+import { consultarInscripcionService } from &#x27;./service.mjs&#x27;;
+
+/**
+ * API Gateway llama a este handler con GET /events/{eventId}/registrations/{userId}.
+ * En la invocación directa, envía los dos valores de la ruta como texto dentro de pathParameters.
+ * @param {{ pathParameters: { eventId: string, userId: string } }} event Clave de la inscripción.
+ * @example
+ * npx --no-install serverless invoke \
+ *   --function consultarInscripcion \
+ *   --aws-profile &quot;$AWS_PROFILE&quot; \
+ *   --data &#x27;{&quot;pathParameters&quot;: {&quot;eventId&quot;: &quot;3&quot;, &quot;userId&quot;: &quot;usuario-aula-03&quot;}}&#x27;
+ */
+export function handler(event) {
+  return handleRequest(event, consultarInscripcionService);
+}</code></pre>
 </aside>
 </div>
 </article>
@@ -2320,6 +2451,23 @@ npx --no-install serverless invoke \
 <aside class="lesson-visual lesson-note">
 <h4>Del comando al resultado</h4>
 <p>El service comprueba que existan el evento y el usuario. El repository escribe una inscripción por cada pareja de IDs. La condición de DynamoDB protege la primera inscripción si repites la invocación.</p>
+<h4>Abre el handler y sigue el JSON</h4>
+<pre data-file="src/inscripciones/inscribir-usuario/handler.mjs"><code>import { handleRequest } from &#x27;../http/peticion.mjs&#x27;;
+import { inscribirUsuarioService } from &#x27;./service.mjs&#x27;;
+
+/**
+ * API Gateway llama a este handler con POST /events/{eventId}/registrations/{userId}.
+ * En la invocación directa, envía los IDs de un evento y un usuario existentes como texto en pathParameters.
+ * @param {{ pathParameters: { eventId: string, userId: string } }} event Clave de la inscripción.
+ * @example
+ * npx --no-install serverless invoke \
+ *   --function inscribirUsuario \
+ *   --aws-profile &quot;$AWS_PROFILE&quot; \
+ *   --data &#x27;{&quot;pathParameters&quot;: {&quot;eventId&quot;: &quot;3&quot;, &quot;userId&quot;: &quot;usuario-aula-03&quot;}}&#x27;
+ */
+export function handler(event) {
+  return handleRequest(event, inscribirUsuarioService);
+}</code></pre>
 </aside>
 </div>
 </article>

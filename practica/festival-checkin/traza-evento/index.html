@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Crear un evento · Festival Check-in</title>
 <link rel="stylesheet" href="traza.css?v=buscar-evento">
-<script type="module" src="traza.js?v=invoke-lector"></script>
+<script type="module" src="traza.js?v=ejemplos-handler"></script>
 <script type="module" src="invocaciones.js?v=invoke-lector"></script>
 </head>
 <body>
@@ -73,7 +73,7 @@ name: ${self:service}-${self:provider.stage}-crearEvento</code></pre></div>
   return crearEventoService(eventId, title);
 }</code></pre></div>
             <div class="secuencia-nota"><p>Las llaves extraen dos propiedades del objeto recibido. Al llamar a <code>crearEventoService</code>, el handler entrega esos valores al service.</p>
-              <a href="#lector" data-abrir-paso="2" data-abrir-linea="4">Ver la línea en su archivo ↓</a>
+              <a href="#lector" data-abrir-paso="2" data-abrir-linea="13">Ver la línea en su archivo ↓</a>
             </div>
           </div>
         </section>
@@ -85,6 +85,15 @@ name: ${self:service}-${self:provider.stage}-crearEvento</code></pre></div>
           <div class="code-header"><strong>src/eventos/crear-evento/handler.mjs</strong><button type="button" data-copy>Copiar archivo</button></div>
           <pre tabindex="0"><code>import { crearEventoService } from &#x27;./service.mjs&#x27;;
 
+/**
+ * Invoca desde la terminal tras desplegar. Usa un ID de evento libre.
+ * @param {{ eventId: number, title: string }} event ID entero positivo y título con texto.
+ * @example
+ * npx --no-install serverless invoke \
+ *   --function crearEvento \
+ *   --aws-profile &quot;$AWS_PROFILE&quot; \
+ *   --data &#x27;{&quot;eventId&quot;: 3, &quot;title&quot;: &quot;Concierto de aula&quot;}&#x27;
+ */
 export function handler({ eventId, title } = {}) {
   return crearEventoService(eventId, title);
 }</code></pre>
