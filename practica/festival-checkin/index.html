@@ -200,6 +200,7 @@
 <h2>Preparar AWS Academy y Serverless</h2>
 <article id="iniciar-lab" class="guide-step" data-step="Laboratorio">
 <h3>Abre el laboratorio</h3>
+<p class="lesson-note"><strong>Si ya clonaste Festival Check-in.</strong> Conserva los archivos del repositorio. Usa este paso y los siguientes para preparar tu sesión de AWS Academy. Después sigue los comandos del <a href="https://github.com/albertohdezakkari/festival-checkin-01#3-despliega-y-prueba">proyecto de aula para desplegar y probar</a>. Puedes abrir <a href="#infraestructura">Leer el YAML</a> para entender cómo se conectan las rutas, las funciones y las tablas.</p>
 <div class="lesson-split">
 <div class="lesson-task">
 <p class="lesson-note"><strong>Para qué sirve este paso.</strong> AWS Academy abre una sesión temporal. AWS CLI utilizará sus credenciales para identificarte cuando compruebes o despliegues recursos.</p>
@@ -446,6 +447,12 @@ LAMBDA_ROLE_ARN=$(aws iam get-role --role-name LabRole --profile "$perfil" --reg
 </article>
 <article id="infraestructura" class="guide-step" data-step="Leer el YAML">
 <h3>Lee serverless.yml línea a línea</h3>
+<div class="lesson-note">
+  <h4>Si trabajas con el repositorio clonado</h4>
+  <p>Abre tu <code>serverless.yml</code> y busca <code>provider.stage</code>. En el proyecto de aula, <code>${env:FCI_EQUIPO}</code> toma el código que exportaste en la terminal. Por ejemplo, <code>equipo01</code> crea el stack <code>festival-check-in-equipo01</code> y la tabla <code>FCI_EVENTOS_equipo01</code>. Así cada equipo tiene sus propias tablas aunque comparta cuenta y región. El YAML guiado de abajo usa <code>dev</code> y nombres fijos para construir un despliegue compartido.</p>
+  <p><code>package.patterns</code> excluye las pruebas y los scripts de aula del paquete de Lambda. Las rutas, las claves y el índice <code>PorUsuario</code> se leen del mismo modo en los dos archivos.</p>
+  <p><a href="https://github.com/albertohdezakkari/festival-checkin-01/blob/main/serverless.yml">Abre el YAML del repositorio de aula</a>. Después sigue <a href="#capas-eventos-orm">Crear con ORM</a>, <a href="#consultar-orm">Consultar con ORM</a> e <a href="#inscribir-orm">Inscribir con ORM</a> para reconocer los modelos y repositorios que ya tienes.</p>
+</div>
 <p>Pasa el ratón sobre una etiqueta del árbol o del código para ver su explicación. Pulsa una rama para abrirla. En móvil, toca la etiqueta para consultar su explicación.</p>
 <p><strong>Cómo leer YAML.</strong> En <code>name: aws</code>, <code>name</code> es la clave y <code>aws</code> su valor. Si después de <code>provider:</code> hay líneas más a la derecha, esas líneas forman su bloque. Usa espacios para la sangría y alinea las claves del mismo nivel. Un guion al principio de una línea, como <code>- GET</code>, introduce un elemento de una lista.</p>
 <aside class="yaml-variables" aria-labelledby="yaml-variables-title">
