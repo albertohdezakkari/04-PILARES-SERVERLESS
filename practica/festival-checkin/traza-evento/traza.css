@@ -172,13 +172,11 @@ pre code { color: var(--ink); }
   .capas small { font-size: .72rem; }
 }
 
-.secuencia { --flecha: #a4dbc9; margin: 1.5rem 0 0; }
-.secuencia > h3, .lector-intro h2 { font-size: clamp(1.5rem, 3vw, 2.25rem); line-height: 1.1; margin: 0 0 .9rem; letter-spacing: -.035em; }
-.secuencia-lista { list-style: none; padding: 0; margin: 0; }
-.secuencia-paso { margin: 0; }
+.explicacion-capa { --flecha: #a4dbc9; margin: 1.15rem 0; }
+.lector-intro h2 { font-size: clamp(1.5rem, 3vw, 2.25rem); line-height: 1.1; margin: 0 0 .9rem; letter-spacing: -.035em; }
 .secuencia-cuadro { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: #192a2d; }
-.secuencia-cuadro h4 { margin: 0; padding: .6rem clamp(.65rem, 2vw, 1.1rem); color: var(--ink); font-size: clamp(1rem, 2.2vw, 1.24rem); border-bottom: 1px solid var(--line); }
-.secuencia-cuadro h4 span { margin-right: .55rem; color: var(--amber); font: 600 .84rem ui-monospace, monospace; }
+.secuencia-cuadro h3 { margin: 0; padding: .6rem clamp(.65rem, 2vw, 1.1rem); color: var(--ink); font-size: clamp(1rem, 2.2vw, 1.24rem); border-bottom: 1px solid var(--line); }
+.secuencia-cuadro h3 span { margin-right: .55rem; color: var(--amber); font: 600 .84rem ui-monospace, monospace; }
 .secuencia-cuerpo { display: grid; grid-template-columns: minmax(0, 1fr); }
 .secuencia-codigo, .secuencia-nota { min-width: 0; padding: .6rem clamp(.65rem, 2vw, 1.1rem); }
 .secuencia-codigo { background: #111d22; border-bottom: 1px solid var(--line); }
@@ -202,4 +200,29 @@ pre code { color: var(--ink); }
   .secuencia-enlace { margin-left: .55rem; }
 }
 
-.regreso-secuencia:has(a[hidden]) { display: none; }
+.punto-taller {
+  position: absolute;
+  top: var(--punto-y);
+  left: var(--punto-x);
+  width: var(--punto-ancho);
+  height: var(--punto-alto);
+  display: grid;
+  place-content: start center;
+  padding: 0;
+  color: var(--mint);
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+}
+.punto-taller span {
+  padding: .15em .42em;
+  border: 1px solid currentColor;
+  border-radius: 6px;
+  background: #122628;
+  font: 700 clamp(.66rem, 1vw, .86rem)/1.35 ui-monospace, monospace;
+}
+.punto-taller:hover, .punto-taller[aria-pressed="true"] { color: var(--amber); }
+.punto-terminal { --punto-x: 1%; --punto-y: 22%; --punto-ancho: 24%; --punto-alto: 51%; }
+.punto-control { --punto-x: 26%; --punto-y: 26%; --punto-ancho: 23%; --punto-alto: 52%; }
+.punto-prensa { --punto-x: 50%; --punto-y: 15%; --punto-ancho: 25%; --punto-alto: 60%; }
+.punto-archivo { --punto-x: 77%; --punto-y: 23%; --punto-ancho: 22%; --punto-alto: 56%; }

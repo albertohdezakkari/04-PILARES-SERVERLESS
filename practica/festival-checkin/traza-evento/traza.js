@@ -5,7 +5,7 @@ const anterior = document.querySelector('#anterior');
 const siguiente = document.querySelector('#siguiente');
 const avance = document.querySelector('#paso-actual');
 const copia = document.querySelector('#estado-copia');
-const volverSecuencia = document.querySelector('#volver-secuencia');
+const puntos = [...document.querySelectorAll('[data-paso-ilustrado]')];
 let actual = 0;
 
 function mostrarPaso(indice) {
@@ -17,20 +17,25 @@ function mostrarPaso(indice) {
   });
   avance.textContent = `Paso ${actual + 1} de ${capas.length}`;
   anterior.disabled = actual === 0;
-  volverSecuencia.hidden = actual === 0;
+  for (const punto of puntos) punto.setAttribute('aria-pressed', String(Number(punto.dataset.pasoIlustrado) === actual));
   siguiente.disabled = actual === capas.length - 1;
   copia.textContent = '';
   activarLinea(lineasPorPaso[actual][0]);
 }
 
+function seleccionarCapa(indice) {
+  mostrarPaso(indice);
+  if (matchMedia('(max-width: 740px)').matches) {
+    document.querySelector('.avance').scrollIntoView({ block: 'start' });
+  }
+}
+
 capas.forEach((boton, indice) => {
-  boton.addEventListener('click', () => {
-    mostrarPaso(indice);
-    if (matchMedia('(max-width: 740px)').matches) {
-      document.querySelector('.avance').scrollIntoView({ block: 'start' });
-    }
-  });
+  boton.addEventListener('click', () => seleccionarCapa(indice));
 });
+for (const punto of puntos) {
+  punto.addEventListener('click', () => seleccionarCapa(Number(punto.dataset.pasoIlustrado)));
+}
 anterior.addEventListener('click', () => mostrarPaso(actual - 1));
 siguiente.addEventListener('click', () => mostrarPaso(actual + 1));
 
@@ -189,9 +194,3 @@ for (const enlace of document.querySelectorAll('[data-abrir-paso]')) {
     }
   });
 }
-
-volverSecuencia.addEventListener('click', event => {
-  event.preventDefault();
-  mostrarPaso(0);
-  document.querySelector('#secuencia-titulo').focus();
-});

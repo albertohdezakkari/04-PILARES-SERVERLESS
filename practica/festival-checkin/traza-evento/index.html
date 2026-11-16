@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Crear un evento · Festival Check-in</title>
-<link rel="stylesheet" href="traza.css?v=secuencia-en-conexion">
-<script type="module" src="traza.js?v=secuencia-en-conexion"></script>
+<link rel="stylesheet" href="traza.css?v=cuadros-por-capa">
+<script type="module" src="traza.js?v=cuadros-por-capa"></script>
 </head>
 <body>
 <main>
@@ -22,7 +22,7 @@
   </header>
   <header class="lector-intro" id="lector" tabindex="-1">
     <h2>Explora el código línea por línea</h2>
-    <p>Elige una capa en el dibujo y pulsa una línea del código. También puedes recorrer las líneas con Tab y las flechas ↑ y ↓.</p>
+    <p>Pulsa una pieza del dibujo o elige una capa en la lista. Lee el fragmento anotado y luego explora el código completo. También puedes recorrer las líneas con Tab y las flechas ↑ y ↓.</p>
   </header>
   <div class="lienzo">
     <section class="lectura" aria-label="Código del paso seleccionado">
@@ -30,21 +30,9 @@
       <section id="paso-1" class="paso">
         <h2>Conecta la función</h2>
         <p>Busca <code>functions → crearEvento</code>. En <code>handler.handler</code>, el primer nombre identifica el archivo y el segundo la función exportada. En este caso la terminal invoca Lambda directamente.</p>
-        <p class="pregunta">Con <code>FCI_EQUIPO=equipo01</code>, ¿cómo se llama la función en AWS?</p>
-
-        <div class="code-box">
-          <div class="code-header"><strong>serverless.yml · fragmento de functions</strong><button type="button" data-copy>Copiar fragmento</button></div>
-          <pre tabindex="0"><code>  crearEvento:
-    name: ${self:service}-${sls:stage}-crearEvento
-    handler: src/eventos/crear-evento/handler.handler</code></pre>
-        </div>
-        <a class="fuente" href="https://github.com/albertohdezakkari/festival-checkin-01/blob/main/serverless.yml">Abrir serverless.yml en GitHub</a>
-  <section class="secuencia" id="secuencia" aria-labelledby="secuencia-titulo">
-    <h3 id="secuencia-titulo" tabindex="-1">Del YAML al dato guardado</h3>
-    <ol class="secuencia-lista">
-      <li class="secuencia-paso">
-        <section class="secuencia-cuadro" aria-labelledby="secuencia-1">
-          <h4 id="secuencia-1"><span>01</span> Serverless identifica la función</h4>
+        <div class="explicacion-capa">
+<section class="secuencia-cuadro" id="secuencia" aria-labelledby="secuencia-1">
+          <h3 id="secuencia-1"><span>01</span> Serverless identifica la función</h3>
           <div class="secuencia-cuerpo">
             <div class="secuencia-codigo"><strong>serverless.yml</strong><pre tabindex="0"><code>service: festival-check-in
 provider:
@@ -61,10 +49,23 @@ name: ${self:service}-${sls:stage}-crearEvento</code></pre></div>
           </div>
         </section>
         <p class="secuencia-enlace"><span aria-hidden="true">↓</span><span class="secuencia-dato">La terminal invoca <code>festival-check-in-equipo01-crearEvento</code> con <code>{"eventId": 3, "title": "Concierto de aula"}</code>.</span></p>
-      </li>
-      <li class="secuencia-paso">
-        <section class="secuencia-cuadro" aria-labelledby="secuencia-2">
-          <h4 id="secuencia-2"><span>02</span> El handler recoge los datos</h4>
+        </div>
+        <p class="pregunta">Con <code>FCI_EQUIPO=equipo01</code>, ¿cómo se llama la función en AWS?</p>
+
+        <div class="code-box">
+          <div class="code-header"><strong>serverless.yml · fragmento de functions</strong><button type="button" data-copy>Copiar fragmento</button></div>
+          <pre tabindex="0"><code>  crearEvento:
+    name: ${self:service}-${sls:stage}-crearEvento
+    handler: src/eventos/crear-evento/handler.handler</code></pre>
+        </div>
+        <a class="fuente" href="https://github.com/albertohdezakkari/festival-checkin-01/blob/main/serverless.yml">Abrir serverless.yml en GitHub</a>
+      </section>
+      <section id="paso-2" class="paso" hidden>
+        <h2>Recibe el evento</h2>
+        <p>El handler desestructura el objeto recibido. Pasa el número y el título al service mediante <code>crearEvento(eventId, title)</code>.</p>
+        <div class="explicacion-capa">
+<section class="secuencia-cuadro" aria-labelledby="secuencia-2">
+          <h3 id="secuencia-2"><span>02</span> El handler recoge los datos</h3>
           <div class="secuencia-cuerpo">
             <div class="secuencia-codigo"><strong>handler.mjs</strong><pre tabindex="0"><code>export function handler({ eventId, title } = {}) {
   return crearEvento(eventId, title);
@@ -75,75 +76,7 @@ name: ${self:service}-${sls:stage}-crearEvento</code></pre></div>
           </div>
         </section>
         <p class="secuencia-enlace"><span aria-hidden="true">↓</span><span class="secuencia-dato">El service recibe dos argumentos. <code>3</code> y <code>"Concierto de aula"</code>.</span></p>
-      </li>
-      <li class="secuencia-paso">
-        <section class="secuencia-cuadro" aria-labelledby="secuencia-3">
-          <h4 id="secuencia-3"><span>03</span> El service comprueba antes de guardar</h4>
-          <div class="secuencia-cuerpo">
-            <div class="secuencia-codigo"><strong>service.mjs</strong><pre tabindex="0"><code>if (typeof title !== &#x27;string&#x27; || title.trim() === &#x27;&#x27;) {
-  throw new Error(&#x27;Escribe un título para el evento&#x27;);
-}
-
-await guardarEvento(eventId, title);</code></pre></div>
-            <div class="secuencia-nota"><p>El <code>||</code> se lee «o». Si el título tiene otro tipo o al quitar los espacios queda vacío, <code>throw</code> detiene el alta. Con datos válidos, <code>await</code> espera a que termine la escritura.</p>
-              <a href="#lector" data-abrir-paso="3" data-abrir-linea="7">Ver la línea en su archivo ↓</a>
-            </div>
-          </div>
-        </section>
-        <p class="secuencia-enlace"><span aria-hidden="true">↓</span><span class="secuencia-dato">El repository recibe el mismo ID y el mismo título.</span></p>
-      </li>
-      <li class="secuencia-paso">
-        <section class="secuencia-cuadro" aria-labelledby="secuencia-4">
-          <h4 id="secuencia-4"><span>04</span> El repository prepara la escritura</h4>
-          <div class="secuencia-cuerpo">
-            <div class="secuencia-codigo"><strong>repository.mjs</strong><pre tabindex="0"><code>const comando = MODELO_EVENTO.build(PutItemCommand)
-  .item(evento)
-  .options({
-    condition: { attr: &#x27;eventId&#x27;, exists: false }
-  });
-
-await comando.send();</code></pre></div>
-            <div class="secuencia-nota"><p><code>.item(evento)</code> adjunta la ficha. La condición pide que la clave esté libre. <code>send()</code> envía la operación a DynamoDB, donde se comprueba la condición.</p>
-              <a href="#lector" data-abrir-paso="4" data-abrir-linea="13">Ver la línea en su archivo ↓</a>
-            </div>
-          </div>
-        </section>
-        <p class="secuencia-enlace"><span aria-hidden="true">↓</span><span class="secuencia-dato">Toolbox usa el modelo para traducir los campos de la ficha antes de enviarla.</span></p>
-      </li>
-      <li class="secuencia-paso">
-        <section class="secuencia-cuadro" aria-labelledby="secuencia-5">
-          <h4 id="secuencia-5"><span>05</span> El modelo traduce las etiquetas</h4>
-          <div class="secuencia-cuerpo">
-            <div class="secuencia-codigo"><strong>evento.model.mjs</strong><pre tabindex="0"><code>eventId: number({ big: true }).key().savedAs(&#x27;EVENT_ID&#x27;),
-title: string().savedAs(&#x27;TITLE&#x27;)</code></pre></div>
-            <div class="secuencia-nota"><p><code>.key()</code> marca el ID como clave. <code>savedAs</code> decide el nombre guardado. El número sigue siendo <code>3</code> y el texto sigue siendo <code>Concierto de aula</code>.</p>
-              <a href="#lector" data-abrir-paso="5" data-abrir-linea="20">Ver la línea en su archivo ↓</a>
-            </div>
-          </div>
-        </section>
-        <p class="secuencia-enlace"><span aria-hidden="true">↓</span><span class="secuencia-dato">En la tabla, las dos etiquetas son <code>EVENT_ID</code> y <code>TITLE</code>.</span></p>
-      </li>
-      <li class="secuencia-paso">
-        <section class="secuencia-cuadro" aria-labelledby="secuencia-6">
-          <h4 id="secuencia-6"><span>06</span> Lees lo que quedó en DynamoDB</h4>
-          <div class="secuencia-cuerpo">
-            <div class="secuencia-codigo"><strong>Ítem de ejemplo · salida de get-item</strong><pre tabindex="0"><code>{
-  &quot;EVENT_ID&quot;: { &quot;N&quot;: &quot;3&quot; },
-  &quot;TITLE&quot;: { &quot;S&quot;: &quot;Concierto de aula&quot; }
-}</code></pre></div>
-            <div class="secuencia-nota"><p><code>get-item</code> localiza el ítem por su clave. En la salida de AWS CLI, <code>N</code> identifica un número y <code>S</code> un texto. Si vuelves a enviar el mismo ID, la condición de escritura conserva el registro anterior.</p>
-              <a href="#lector" data-abrir-paso="6" data-abrir-linea="4">Abrir los comandos de la prueba ↓</a>
-            </div>
-          </div>
-        </section>
-
-      </li>
-    </ol>
-  </section>
-      </section>
-      <section id="paso-2" class="paso" hidden>
-        <h2>Recibe el evento</h2>
-        <p>El handler desestructura el objeto recibido. Pasa el número y el título al service mediante <code>crearEvento(eventId, title)</code>.</p>
+        </div>
         <p class="pregunta">Localiza el import que conecta el handler con el service.</p>
 
         <div class="code-box">
@@ -158,7 +91,23 @@ export function handler({ eventId, title } = {}) {
       </section>
       <section id="paso-3" class="paso" hidden>
         <h2>Aplica las reglas</h2>
-        <p>El service exige un entero positivo y un título con texto. Si pasan las dos condiciones llama a <code>guardarEvento</code>. Cuando termina la escritura devuelve el ID y el título.</p>
+        <p>El service comprueba que el ID sea un entero positivo y que el título tenga texto. Cuando termina la escritura, devuelve ambos valores.</p>
+        <div class="explicacion-capa">
+<section class="secuencia-cuadro" aria-labelledby="secuencia-3">
+          <h3 id="secuencia-3"><span>03</span> El service comprueba antes de guardar</h3>
+          <div class="secuencia-cuerpo">
+            <div class="secuencia-codigo"><strong>service.mjs</strong><pre tabindex="0"><code>if (typeof title !== &#x27;string&#x27; || title.trim() === &#x27;&#x27;) {
+  throw new Error(&#x27;Escribe un título para el evento&#x27;);
+}
+
+await guardarEvento(eventId, title);</code></pre></div>
+            <div class="secuencia-nota"><p>El <code>||</code> se lee «o». Si el título tiene otro tipo o al quitar los espacios queda vacío, <code>throw</code> detiene el alta. Con datos válidos, <code>await</code> espera a que termine la escritura.</p>
+              <a href="#lector" data-abrir-paso="3" data-abrir-linea="7">Ver la línea en su archivo ↓</a>
+            </div>
+          </div>
+        </section>
+        <p class="secuencia-enlace"><span aria-hidden="true">↓</span><span class="secuencia-dato">El repository recibe el mismo ID y el mismo título.</span></p>
+        </div>
         <p class="pregunta">Prueba «Sin título» en el dibujo. ¿Hasta qué capa llega el evento?</p>
 
         <div class="code-box">
@@ -182,6 +131,24 @@ export async function crearEvento(eventId, title) {
       <section id="paso-4" class="paso" hidden>
         <h2>Prepara la escritura</h2>
         <p>El repository prepara <code>PutItemCommand</code> con DynamoDB Toolbox. Solicita a DynamoDB que escriba solo si no existe un ítem con esa clave.</p>
+        <div class="explicacion-capa">
+<section class="secuencia-cuadro" aria-labelledby="secuencia-4">
+          <h3 id="secuencia-4"><span>04</span> El repository prepara la escritura</h3>
+          <div class="secuencia-cuerpo">
+            <div class="secuencia-codigo"><strong>repository.mjs</strong><pre tabindex="0"><code>const comando = MODELO_EVENTO.build(PutItemCommand)
+  .item(evento)
+  .options({
+    condition: { attr: &#x27;eventId&#x27;, exists: false }
+  });
+
+await comando.send();</code></pre></div>
+            <div class="secuencia-nota"><p><code>.item(evento)</code> adjunta la ficha. La condición pide que la clave esté libre. <code>send()</code> envía la operación a DynamoDB, donde se comprueba la condición.</p>
+              <a href="#lector" data-abrir-paso="4" data-abrir-linea="13">Ver la línea en su archivo ↓</a>
+            </div>
+          </div>
+        </section>
+        <p class="secuencia-enlace"><span aria-hidden="true">↓</span><span class="secuencia-dato">Toolbox usa el modelo para traducir los campos de la ficha antes de enviarla.</span></p>
+        </div>
         <p class="pregunta">Localiza la condición que protege un evento existente.</p>
 
         <div class="code-box">
@@ -209,6 +176,19 @@ export async function guardarEvento(eventId, title) {
       <section id="paso-5" class="paso" hidden>
         <h2>Traduce los atributos</h2>
         <p>El repository usa el modelo <code>Evento</code>. <code>savedAs</code> enlaza los nombres de JavaScript con los nombres guardados. La tabla usa <code>EVENT_ID</code> como clave de partición de tipo número.</p>
+        <div class="explicacion-capa">
+<section class="secuencia-cuadro" aria-labelledby="secuencia-5">
+          <h3 id="secuencia-5"><span>05</span> El modelo traduce las etiquetas</h3>
+          <div class="secuencia-cuerpo">
+            <div class="secuencia-codigo"><strong>evento.model.mjs</strong><pre tabindex="0"><code>eventId: number({ big: true }).key().savedAs(&#x27;EVENT_ID&#x27;),
+title: string().savedAs(&#x27;TITLE&#x27;)</code></pre></div>
+            <div class="secuencia-nota"><p><code>.key()</code> marca el ID como clave. <code>savedAs</code> decide el nombre guardado. El número sigue siendo <code>3</code> y el texto sigue siendo <code>Concierto de aula</code>.</p>
+              <a href="#lector" data-abrir-paso="5" data-abrir-linea="20">Ver la línea en su archivo ↓</a>
+            </div>
+          </div>
+        </section>
+        <p class="secuencia-enlace"><span aria-hidden="true">↓</span><span class="secuencia-dato">En la tabla, las dos etiquetas son <code>EVENT_ID</code> y <code>TITLE</code>.</span></p>
+        </div>
         <p class="pregunta">Busca en el archivo dónde se transforma cada uno de los dos nombres.</p>
 
         <div class="code-box">
@@ -242,6 +222,20 @@ export const MODELO_EVENTO = new Entity({
       <section id="paso-6" class="paso" hidden>
         <h2>Comprueba lo guardado</h2>
         <p>Invoca el handler desde la terminal y luego lee por clave. Compara <code>eventId</code> en la respuesta de Lambda con <code>EVENT_ID</code> en el ítem. En el dibujo, <code>3</code> es el ID de ejemplo. Los comandos generan un ID para tu prueba.</p>
+        <div class="explicacion-capa">
+<section class="secuencia-cuadro" aria-labelledby="secuencia-6">
+          <h3 id="secuencia-6"><span>06</span> Lees lo que quedó en DynamoDB</h3>
+          <div class="secuencia-cuerpo">
+            <div class="secuencia-codigo"><strong>Ítem de ejemplo · salida de get-item</strong><pre tabindex="0"><code>{
+  &quot;EVENT_ID&quot;: { &quot;N&quot;: &quot;3&quot; },
+  &quot;TITLE&quot;: { &quot;S&quot;: &quot;Concierto de aula&quot; }
+}</code></pre></div>
+            <div class="secuencia-nota"><p><code>get-item</code> localiza el ítem por su clave. En la salida de AWS CLI, <code>N</code> identifica un número y <code>S</code> un texto. Si vuelves a enviar el mismo ID, la condición de escritura conserva el registro anterior.</p>
+              <a href="#lector" data-abrir-paso="6" data-abrir-linea="4">Abrir los comandos de la prueba ↓</a>
+            </div>
+          </div>
+        </section>
+        </div>
         <p class="pregunta">Antes de terminar, verifica que el ítem contiene el ID de tu prueba y el título Concierto de aula.</p>
         <h3>Invoca desde la raíz del clon</h3><div class="code-box"><button type="button" data-copy>Copiar invocación</button><pre tabindex="0"><code>evento_id=$(node -p &#x27;Date.now()&#x27;)
 printf &#x27;ID del evento de clase: %s\n&#x27; &quot;$evento_id&quot;
@@ -263,7 +257,6 @@ cat respuesta-evento.json</code></pre></div>
         </div>
         <a class="fuente" href="https://github.com/albertohdezakkari/festival-checkin-01/blob/main/1-crear-evento.md">Abrir la guía de comandos en GitHub</a>
       </section>
-      <p class="regreso-secuencia"><a href="#secuencia" id="volver-secuencia" hidden>← Volver a «Del YAML al dato guardado»</a></p>
       <p class="estado-copia" role="status" id="estado-copia"></p>
     </section>
     <section class="dibujo" aria-labelledby="dibujo-titulo">
@@ -280,6 +273,10 @@ cat respuesta-evento.json</code></pre></div>
           <div class="taller-imagen">
             <img src="taller-evento.jpg" width="1536" height="1024" alt="Una ficha de evento pasa de la terminal por un control y una prensa hasta un archivador.">
             <span class="foco-taller" aria-hidden="true"></span>
+            <button class="punto-taller punto-terminal" type="button" data-paso-ilustrado="0" aria-controls="paso-1" aria-pressed="true" aria-label="Abrir Serverless desde la terminal"><span>01</span></button>
+            <button class="punto-taller punto-control" type="button" data-paso-ilustrado="2" aria-controls="paso-3" aria-pressed="false" aria-label="Abrir Service desde el control"><span>03</span></button>
+            <button class="punto-taller punto-prensa" type="button" data-paso-ilustrado="3" aria-controls="paso-4" aria-pressed="false" aria-label="Abrir Repository desde la prensa"><span>04</span></button>
+            <button class="punto-taller punto-archivo" type="button" data-paso-ilustrado="5" aria-controls="paso-6" aria-pressed="false" aria-label="Abrir DynamoDB desde el archivador"><span>06</span></button>
           </div>
           <figcaption id="taller-leyenda">La terminal entrega la ficha al punto de entrada de Lambda.</figcaption>
         </figure>
