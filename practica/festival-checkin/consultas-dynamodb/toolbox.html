@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Seis operaciones de DynamoDB Toolbox · Festival Check-in</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="toolbox.css">
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+<main>
+  <nav class="course-nav" aria-label="Material de la práctica">
+    <a href="./">← Consultas desde AWS CLI</a>
+    <div class="course-tools"><a href="toolbox-infografia.png">Ver infografía</a><a href="toolbox-infografia.pdf">Infografía en PDF A4</a></div>
+  </nav>
+  <header class="intro">
+    <h1>Seis operaciones con DynamoDB Toolbox</h1>
+    <p>Sigue la clave, la ficha y la respuesta en cada repositorio de Festival Check-in.</p>
+  </header>
+  <div class="pathways">
+    <div><h2>Una ficha</h2><code>MODELO.build(…)</code><p>GetItem · PutItem · UpdateItem · DeleteItem</p></div>
+    <div><h2>Un grupo o una tabla</h2><code>MODELO.table.build(…).entities(MODELO)</code><p>Query · Scan</p></div>
+  </div>
+  <p class="toolbox-context">Trabaja con registros de ejemplo en tus tablas de equipo. Los casos de listar inscritos, registrar entrada y cancelar muestran repositorios de práctica sin ruta HTTP propia.</p>
+  <div class="tabs" role="tablist" data-deep-link aria-label="Casos de uso y modelos">
+    <button id="tab-get-evento" role="tab" aria-controls="get-evento" aria-selected="false" tabindex="-1" type="button">01 Leer un evento</button>
+<button id="tab-get-usuario" role="tab" aria-controls="get-usuario" aria-selected="false" tabindex="-1" type="button">02 Comprobar un usuario</button>
+<button id="tab-get-inscripcion" role="tab" aria-controls="get-inscripcion" aria-selected="false" tabindex="-1" type="button">03 Consultar una inscripción</button>
+<button id="tab-put-evento" role="tab" aria-controls="put-evento" aria-selected="false" tabindex="-1" type="button">04 Crear un evento</button>
+<button id="tab-query-inscritos" role="tab" aria-controls="query-inscritos" aria-selected="false" tabindex="-1" type="button">05 Listar los inscritos de un evento</button>
+<button id="tab-scan-eventos" role="tab" aria-controls="scan-eventos" aria-selected="false" tabindex="-1" type="button">06 Listar el catálogo de eventos</button>
+<button id="tab-update-entrada" role="tab" aria-controls="update-entrada" aria-selected="false" tabindex="-1" type="button">07 Registrar la entrada</button>
+<button id="tab-delete-inscripcion" role="tab" aria-controls="delete-inscripcion" aria-selected="false" tabindex="-1" type="button">08 Cancelar una inscripción</button>
+<button id="tab-modelos" role="tab" aria-controls="modelos" aria-selected="false" tabindex="-1" type="button">09 Modelos</button>
+  </div>
+  <p class="status" role="status"></p>
+  <section id="get-evento" role="tabpanel" aria-labelledby="tab-get-evento" tabindex="0" class="toolbox-panel">
+      <header class="case-heading"><code>GetItemCommand</code><h2>Leer un evento</h2><p>Evento con ID 1</p></header>
+      <div class="workbench">
+        <div>
+          <h3><code>src/eventos/buscar-evento/repository.mjs</code></h3>
+
+          <div class="command"><button type="button" class="copy">Copiar archivo</button><pre tabindex="0"><code>import { GetItemCommand } from &#x27;dynamodb-toolbox/entity/actions/get&#x27;;
+import { MODELO_EVENTO } from &#x27;../models/evento.model.mjs&#x27;;
+
+export async function buscarEventoRepository(eventId) {
+  const { Item } = await MODELO_EVENTO.build(GetItemCommand)
+    .key({ eventId })
+    .options({ consistent: true })
+    .send();
+
+  return Item ?? null;
+}</code></pre></div>
+          <div class="case-file"><a href="https://github.com/albertohdezakkari/festival-checkin-01/blob/64fe613/src/eventos/buscar-evento/repository.mjs">Abrir este archivo en el repositorio del proyecto</a></div>
+        </div>
+        <div class="explain">
+          <ol class="data-route">
+            <li><span>JavaScript</span><code>eventId = 1</code></li>
+            <li><span>DynamoDB</span><code>EVENT_ID = 1</code></li>
+            <li><span>Resultado</span><strong>Item → título del evento</strong></li>
+          </ol>
+          <dl class="annotations"><div><dt><code>build(GetItemCommand)</code></dt><dd>Prepara una lectura de una ficha según el modelo Evento.</dd></div><div><dt><code>.key({ eventId })</code></dt><dd>Entrega la clave completa. El modelo traduce eventId a EVENT_ID.</dd></div><div><dt><code>consistent: true</code></dt><dd>Pide una lectura fuerte de la tabla.</dd></div><div><dt><code>await … .send()</code></dt><dd>Envía la petición y espera. Con { Item } extraes la ficha y con ?? null representas su ausencia.</dd></div></dl>
+        </div>
+      </div>
+    </section>
+<section id="get-usuario" role="tabpanel" aria-labelledby="tab-get-usuario" tabindex="0" class="toolbox-panel">
+      <header class="case-heading"><code>GetItemCommand</code><h2>Comprobar un usuario</h2><p>Existe usuario-02</p></header>
+      <div class="workbench">
+        <div>
+          <h3><code>src/usuarios/buscar-usuario/repository.mjs</code></h3>
+
+          <div class="command"><button type="button" class="copy">Copiar archivo</button><pre tabindex="0"><code>import { GetItemCommand } from &#x27;dynamodb-toolbox/entity/actions/get&#x27;;
+import { MODELO_USUARIO } from &#x27;../models/usuario.model.mjs&#x27;;
+
+export async function buscarUsuarioRepository(userId) {
+  const { Item } = await MODELO_USUARIO.build(GetItemCommand)
+    .key({ userId })
+    .options({ consistent: true, attributes: [&#x27;userId&#x27;] })
+    .send();
+
+  return Item ?? null;
+}</code></pre></div>
+          <div class="case-file"><a href="https://github.com/albertohdezakkari/festival-checkin-01/blob/64fe613/src/usuarios/buscar-usuario/repository.mjs">Abrir este archivo en el repositorio del proyecto</a></div>
+        </div>
+        <div class="explain">
+          <ol class="data-route">
+            <li><span>JavaScript</span><code>userId = usuario-02</code></li>
+            <li><span>DynamoDB</span><code>USER_ID = usuario-02</code></li>
+            <li><span>Resultado</span><strong>Item → solo el identificador</strong></li>
+          </ol>
+          <dl class="annotations"><div><dt><code>MODELO_USUARIO</code></dt><dd>Selecciona la tabla de usuarios y su esquema.</dd></div><div><dt><code>.key({ userId })</code></dt><dd>En esta tabla, USER_ID basta para localizar el perfil.</dd></div><div><dt><code>attributes: [&#x27;userId&#x27;]</code></dt><dd>Pide solo el identificador. Este repositorio verifica la existencia del usuario al inscribirlo.</dd></div></dl>
+        </div>
+      </div>
+    </section>
+<section id="get-inscripcion" role="tabpanel" aria-labelledby="tab-get-inscripcion" tabindex="0" class="toolbox-panel">
+      <header class="case-heading"><code>GetItemCommand</code><h2>Consultar una inscripción</h2><p>Pase de usuario-02 para el evento 1</p></header>
+      <div class="workbench">
+        <div>
+          <h3><code>src/inscripciones/consultar-inscripcion/repository.mjs</code></h3>
+
+          <div class="command"><button type="button" class="copy">Copiar archivo</button><pre tabindex="0"><code>import { GetItemCommand } from &#x27;dynamodb-toolbox/entity/actions/get&#x27;;
+import { MODELO_INSCRIPCION } from &#x27;../models/inscripcion.model.mjs&#x27;;
+
+export async function consultarInscripcionRepository(eventId, userId) {
+  const { Item } = await MODELO_INSCRIPCION.build(GetItemCommand)
+    .key({ eventId, userId })
+    .options({ consistent: true })
+    .send();
+
+  return Item ?? null;
+}</code></pre></div>
+          <div class="case-file"><a href="https://github.com/albertohdezakkari/festival-checkin-01/blob/64fe613/src/inscripciones/consultar-inscripcion/repository.mjs">Abrir este archivo en el repositorio del proyecto</a></div>
+        </div>
+        <div class="explain">
+          <ol class="data-route">
+            <li><span>JavaScript</span><code>eventId + userId</code></li>
+            <li><span>DynamoDB</span><code>EVENT_ID + USER_ID</code></li>
+            <li><span>Resultado</span><strong>Item → un solo pase</strong></li>
+          </ol>
+          <dl class="annotations"><div><dt><code>.key({ eventId, userId })</code></dt><dd>EVENT_ID es la clave de partición. USER_ID es la clave de ordenación. Juntas seleccionan un único pase.</dd></div><div><dt><code>return Item ?? null</code></dt><dd>Si ese usuario carece de inscripción en ese evento, la función devuelve null.</dd></div></dl>
+        </div>
+      </div>
+    </section>
+<section id="put-evento" role="tabpanel" aria-labelledby="tab-put-evento" tabindex="0" class="toolbox-panel">
+      <header class="case-heading"><code>PutItemCommand</code><h2>Crear un evento</h2><p>Añadir el concierto del aula</p></header>
+      <div class="workbench">
+        <div>
+          <h3><code>src/eventos/crear-evento/repository.mjs</code></h3>
+
+          <div class="command"><button type="button" class="copy">Copiar archivo</button><pre tabindex="0"><code>import { PutItemCommand } from &#x27;dynamodb-toolbox/entity/actions/put&#x27;;
+import { MODELO_EVENTO } from &#x27;../models/evento.model.mjs&#x27;;
+
+export async function crearEventoRepository(eventId, title) {
+  const evento = {
+    eventId,
+    title
+  };
+
+  const comando = MODELO_EVENTO.build(PutItemCommand)
+    .item(evento)
+    .options({
+      condition: { attr: &#x27;eventId&#x27;, exists: false }
+    });
+
+  await comando.send();
+}</code></pre></div>
+          <div class="case-file"><a href="https://github.com/albertohdezakkari/festival-checkin-01/blob/64fe613/src/eventos/crear-evento/repository.mjs">Abrir este archivo en el repositorio del proyecto</a></div>
+        </div>
+        <div class="explain">
+          <ol class="data-route">
+            <li><span>JavaScript</span><code>eventId + title</code></li>
+            <li><span>DynamoDB</span><code>EVENT_ID + TITLE</code></li>
+            <li><span>Resultado</span><strong>Se guarda el evento</strong></li>
+          </ol>
+          <dl class="annotations"><div><dt><code>.item(evento)</code></dt><dd>Entrega la ficha completa. El modelo cambia los nombres de JavaScript a los de DynamoDB.</dd></div><div><dt><code>exists: false</code></dt><dd>El ID debe estar libre. DynamoDB evalúa esta condición al escribir y conserva el evento anterior si el ID ya existe.</dd></div><div><dt><code>.send()</code></dt><dd>Ejecuta la escritura. Si la condición falla, la promesa se rechaza.</dd></div></dl>
+        </div>
+      </div>
+    </section>
+<section id="query-inscritos" role="tabpanel" aria-labelledby="tab-query-inscritos" tabindex="0" class="toolbox-panel">
+      <header class="case-heading"><code>QueryCommand</code><h2>Listar los inscritos de un evento</h2><p>Personas inscritas en el evento 1</p></header>
+      <div class="workbench">
+        <div>
+          <h3><code>src/inscripciones/listar-inscritos/repository.mjs</code></h3>
+          <div class="case-file"><p>Practica en una carpeta nueva desde la raíz de <code>festival-checkin-01</code>, con la sesión y las tablas de tu equipo. Crea y abre el archivo antes de copiar el contenido.</p><div class="command"><button type="button" class="copy">Copiar comandos</button><pre tabindex="0"><code>mkdir -p src/inscripciones/listar-inscritos
+ls -d src/inscripciones/listar-inscritos
+vi src/inscripciones/listar-inscritos/repository.mjs</code></pre></div></div>
+          <div class="command"><button type="button" class="copy">Copiar archivo</button><pre tabindex="0"><code>import { QueryCommand } from &#x27;dynamodb-toolbox/table/actions/query&#x27;;
+import { MODELO_INSCRIPCION } from &#x27;../models/inscripcion.model.mjs&#x27;;
+
+const INSCRIPCIONES_POR_PAGINA = 25;
+
+export async function listarInscritosRepository(eventId, cursor) {
+  const { Items = [], LastEvaluatedKey } = await MODELO_INSCRIPCION.table
+    .build(QueryCommand)
+    .entities(MODELO_INSCRIPCION)
+    .query({ partition: eventId })
+    .options({
+      limit: INSCRIPCIONES_POR_PAGINA,
+      exclusiveStartKey: cursor
+    })
+    .send();
+
+  return { inscripciones: Items, siguienteCursor: LastEvaluatedKey ?? null };
+}</code></pre></div>
+
+        </div>
+        <div class="explain">
+          <ol class="data-route">
+            <li><span>JavaScript</span><code>partition: eventId</code></li>
+            <li><span>DynamoDB</span><code>EVENT_ID = 1</code></li>
+            <li><span>Resultado</span><strong>Items → pases del evento</strong></li>
+          </ol>
+          <dl class="annotations"><div><dt><code>MODELO_INSCRIPCION.table.build</code></dt><dd>Construye la consulta desde la tabla.</dd></div><div><dt><code>.entities(MODELO_INSCRIPCION)</code></dt><dd>Usa el modelo para traducir las fichas obtenidas a eventId, userId, registeredAt y checkedInAt cuando exista.</dd></div><div><dt><code>.query({ partition: eventId })</code></dt><dd>Elige el grupo EVENT_ID. Dentro de ese grupo los ítems salen ordenados por USER_ID.</dd></div><div><dt><code>LastEvaluatedKey</code></dt><dd>Pasa ese objeto completo como cursor si quieres continuar desde la última clave evaluada.</dd></div></dl>
+        </div>
+      </div>
+    </section>
+<section id="scan-eventos" role="tabpanel" aria-labelledby="tab-scan-eventos" tabindex="0" class="toolbox-panel">
+      <header class="case-heading"><code>ScanCommand</code><h2>Listar el catálogo de eventos</h2><p>Recorrer una página del catálogo</p></header>
+      <div class="workbench">
+        <div>
+          <h3><code>src/eventos/listar-eventos/repository.mjs</code></h3>
+
+          <div class="command"><button type="button" class="copy">Copiar archivo</button><pre tabindex="0"><code>import { ScanCommand } from &#x27;dynamodb-toolbox/table/actions/scan&#x27;;
+import { MODELO_EVENTO } from &#x27;../models/evento.model.mjs&#x27;;
+
+const EVENTOS_POR_PAGINA = 25;
+
+export async function listarEventosRepository(cursor) {
+  const inicio = cursor == null ? undefined : { EVENT_ID: BigInt(cursor) };
+
+  const { Items = [], LastEvaluatedKey } = await MODELO_EVENTO.table.build(ScanCommand)
+    .entities(MODELO_EVENTO)
+    .options({
+      consistent: true,
+      limit: EVENTOS_POR_PAGINA,
+      exclusiveStartKey: inicio
+    })
+    .send();
+
+  return {
+    eventos: Items.map(({ eventId, title }) =&gt; ({ eventId: String(eventId), title })),
+    siguienteCursor: LastEvaluatedKey ? String(LastEvaluatedKey.EVENT_ID) : null
+  };
+}</code></pre></div>
+          <div class="case-file"><a href="https://github.com/albertohdezakkari/festival-checkin-01/blob/64fe613/src/eventos/listar-eventos/repository.mjs">Abrir este archivo en el repositorio del proyecto</a></div>
+        </div>
+        <div class="explain">
+          <ol class="data-route">
+            <li><span>JavaScript</span><code>cursor opcional</code></li>
+            <li><span>DynamoDB</span><code>Hasta 25 ítems evaluados</code></li>
+            <li><span>Resultado</span><strong>Items → una página del catálogo</strong></li>
+          </ol>
+          <dl class="annotations"><div><dt><code>.table.build(ScanCommand)</code></dt><dd>Inicia un recorrido de la tabla.</dd></div><div><dt><code>.entities(MODELO_EVENTO)</code></dt><dd>Da formato a cada ítem del catálogo según Evento.</dd></div><div><dt><code>exclusiveStartKey</code></dt><dd>Recibe la clave desde la que continuar. En esta tabla se puede reconstruir con solo EVENT_ID, que es su clave completa.</dd></div><div><dt><code>String(eventId)</code></dt><dd>Convierte el ID a cadena para devolverlo en JSON. El cursor es null si DynamoDB omite LastEvaluatedKey.</dd></div></dl>
+        </div>
+      </div>
+    </section>
+<section id="update-entrada" role="tabpanel" aria-labelledby="tab-update-entrada" tabindex="0" class="toolbox-panel">
+      <header class="case-heading"><code>UpdateItemCommand</code><h2>Registrar la entrada</h2><p>Marcar la llegada de un inscrito</p></header>
+      <div class="workbench">
+        <div>
+          <h3><code>src/inscripciones/registrar-entrada/repository.mjs</code></h3>
+          <div class="case-file"><p>Practica en una carpeta nueva desde la raíz de <code>festival-checkin-01</code>, con la sesión y las tablas de tu equipo. Crea y abre el archivo antes de copiar el contenido.</p><div class="command"><button type="button" class="copy">Copiar comandos</button><pre tabindex="0"><code>mkdir -p src/inscripciones/registrar-entrada
+ls -d src/inscripciones/registrar-entrada
+vi src/inscripciones/registrar-entrada/repository.mjs</code></pre></div></div>
+          <div class="command"><button type="button" class="copy">Copiar archivo</button><pre tabindex="0"><code>import { UpdateItemCommand } from &#x27;dynamodb-toolbox/entity/actions/update&#x27;;
+import { MODELO_INSCRIPCION } from &#x27;../models/inscripcion.model.mjs&#x27;;
+
+export async function registrarEntradaRepository(eventId, userId, checkedInAt) {
+  const { Attributes } = await MODELO_INSCRIPCION.build(UpdateItemCommand)
+    .item({ eventId, userId, checkedInAt })
+    .options({
+      condition: { attr: &#x27;eventId&#x27;, exists: true },
+      returnValues: &#x27;ALL_NEW&#x27;
+    })
+    .send();
+
+  return Attributes;
+}</code></pre></div>
+
+        </div>
+        <div class="explain">
+          <ol class="data-route">
+            <li><span>JavaScript</span><code>eventId + userId + checkedInAt</code></li>
+            <li><span>DynamoDB</span><code>Claves del pase + CHECKED_IN_AT</code></li>
+            <li><span>Resultado</span><strong>Attributes → pase actualizado</strong></li>
+          </ol>
+          <dl class="annotations"><div><dt><code>.item({ eventId, userId, checkedInAt })</code></dt><dd>Los dos IDs localizan el pase. checkedInAt es el único atributo que cambias. Pasa una fecha ISO, por ejemplo 2026-11-12T09:12:00Z.</dd></div><div><dt><code>exists: true</code></dt><dd>Exige un pase existente para evitar que DynamoDB cree un ítem incompleto al actualizar.</dd></div><div><dt><code>returnValues: &#x27;ALL_NEW&#x27;</code></dt><dd>Pide el ítem completo tras el cambio. Toolbox lo entrega en Attributes con los nombres del modelo.</dd></div></dl>
+        </div>
+      </div>
+    </section>
+<section id="delete-inscripcion" role="tabpanel" aria-labelledby="tab-delete-inscripcion" tabindex="0" class="toolbox-panel">
+      <header class="case-heading"><code>DeleteItemCommand</code><h2>Cancelar una inscripción</h2><p>Retirar el pase de usuario-02 al evento 1</p></header>
+      <div class="workbench">
+        <div>
+          <h3><code>src/inscripciones/cancelar-inscripcion/repository.mjs</code></h3>
+          <div class="case-file"><p>Practica en una carpeta nueva desde la raíz de <code>festival-checkin-01</code>, con la sesión y las tablas de tu equipo. Crea y abre el archivo antes de copiar el contenido.</p><div class="command"><button type="button" class="copy">Copiar comandos</button><pre tabindex="0"><code>mkdir -p src/inscripciones/cancelar-inscripcion
+ls -d src/inscripciones/cancelar-inscripcion
+vi src/inscripciones/cancelar-inscripcion/repository.mjs</code></pre></div></div>
+          <div class="command"><button type="button" class="copy">Copiar archivo</button><pre tabindex="0"><code>import { DeleteItemCommand } from &#x27;dynamodb-toolbox/entity/actions/delete&#x27;;
+import { MODELO_INSCRIPCION } from &#x27;../models/inscripcion.model.mjs&#x27;;
+
+export async function cancelarInscripcionRepository(eventId, userId) {
+  const { Attributes } = await MODELO_INSCRIPCION.build(DeleteItemCommand)
+    .key({ eventId, userId })
+    .options({ returnValues: &#x27;ALL_OLD&#x27; })
+    .send();
+
+  return Attributes ?? null;
+}</code></pre></div>
+
+        </div>
+        <div class="explain">
+          <ol class="data-route">
+            <li><span>JavaScript</span><code>eventId + userId</code></li>
+            <li><span>DynamoDB</span><code>EVENT_ID + USER_ID</code></li>
+            <li><span>Resultado</span><strong>Attributes → pase retirado</strong></li>
+          </ol>
+          <dl class="annotations"><div><dt><code>.key({ eventId, userId })</code></dt><dd>Elimina el pase identificado por la pareja. El usuario y el evento siguen en sus propias tablas.</dd></div><div><dt><code>returnValues: &#x27;ALL_OLD&#x27;</code></dt><dd>Pide la ficha que había antes del borrado. Si el pase ya estaba ausente, la función devuelve null.</dd></div></dl>
+        </div>
+      </div>
+    </section>
+<section id="modelos" role="tabpanel" aria-labelledby="tab-modelos" tabindex="0" class="toolbox-panel">
+<header class="case-heading"><h2>De JavaScript a DynamoDB</h2>
+<p><code>new Table</code> fija el nombre, el cliente y las claves físicas. <code>new Entity</code> describe la ficha. <code>.key()</code> identifica sus claves y <code>.savedAs()</code> traduce cada nombre. <code>entityAttribute: false</code> y <code>timestamps: false</code> evitan añadir los metadatos automáticos de Toolbox.</p></header>
+<div class="model-grid"><article class="model-card">
+    <h3>Evento</h3><p><code>eventId → EVENT_ID · title → TITLE</code></p><p>La clave es numérica. La opción big permite usar BigInt.</p>
+    <p><a href="https://github.com/albertohdezakkari/festival-checkin-01/blob/64fe613/src/eventos/models/evento.model.mjs"><code>src/eventos/models/evento.model.mjs</code></a></p><div class="command"><button type="button" class="copy">Copiar modelo</button><pre tabindex="0"><code>import { Entity } from &#x27;dynamodb-toolbox/entity&#x27;;
+import { Table } from &#x27;dynamodb-toolbox/table&#x27;;
+import { item } from &#x27;dynamodb-toolbox/schema/item&#x27;;
+import { string } from &#x27;dynamodb-toolbox/schema/string&#x27;;
+import { number } from &#x27;dynamodb-toolbox/schema/number&#x27;;
+import { db, TABLA_EVENTOS_FCI } from &#x27;../../datos/dynamo.mjs&#x27;;
+
+const TABLA_MODELO_EVENTO = new Table({
+  name: TABLA_EVENTOS_FCI,
+  documentClient: db,
+  partitionKey: { name: &#x27;EVENT_ID&#x27;, type: &#x27;number&#x27; }
+});
+
+export const MODELO_EVENTO = new Entity({
+  name: &#x27;Evento&#x27;,
+  table: TABLA_MODELO_EVENTO,
+  entityAttribute: false,
+  timestamps: false,
+  schema: item({
+    eventId: number({ big: true }).key().savedAs(&#x27;EVENT_ID&#x27;),
+    title: string().savedAs(&#x27;TITLE&#x27;)
+  })
+});</code></pre></div>
+    </article><article class="model-card">
+    <h3>Usuario</h3><p><code>userId → USER_ID</code></p><p>El identificador es de texto. El modelo también traduce nombre, apellidos, correo y ciudad.</p>
+    <p><a href="https://github.com/albertohdezakkari/festival-checkin-01/blob/64fe613/src/usuarios/models/usuario.model.mjs"><code>src/usuarios/models/usuario.model.mjs</code></a></p><div class="command"><button type="button" class="copy">Copiar modelo</button><pre tabindex="0"><code>import { Entity } from &#x27;dynamodb-toolbox/entity&#x27;;
+import { Table } from &#x27;dynamodb-toolbox/table&#x27;;
+import { item } from &#x27;dynamodb-toolbox/schema/item&#x27;;
+import { string } from &#x27;dynamodb-toolbox/schema/string&#x27;;
+import { any } from &#x27;dynamodb-toolbox/schema/any&#x27;;
+import { db, TABLA_USUARIOS_FCI } from &#x27;../../datos/dynamo.mjs&#x27;;
+
+const TABLA_MODELO_USUARIO = new Table({
+  name: TABLA_USUARIOS_FCI,
+  documentClient: db,
+  partitionKey: { name: &#x27;USER_ID&#x27;, type: &#x27;string&#x27; }
+});
+
+export const MODELO_USUARIO = new Entity({
+  name: &#x27;Usuario&#x27;,
+  table: TABLA_MODELO_USUARIO,
+  entityAttribute: false,
+  timestamps: false,
+  schema: item({
+    userId: string().key().savedAs(&#x27;USER_ID&#x27;),
+    firstName: string().savedAs(&#x27;FIRST_NAME&#x27;),
+    lastName: string().savedAs(&#x27;LAST_NAME&#x27;),
+    email: string().savedAs(&#x27;EMAIL&#x27;),
+    city: any().optional().savedAs(&#x27;CITY&#x27;)
+  })
+});</code></pre></div>
+    </article><article class="model-card">
+    <h3>Inscripción</h3><p><code>eventId → EVENT_ID · userId → USER_ID</code></p><p>La tabla usa los dos identificadores. El modelo también traduce las fechas de inscripción y entrada.</p>
+    <p><a href="https://github.com/albertohdezakkari/festival-checkin-01/blob/64fe613/src/inscripciones/models/inscripcion.model.mjs"><code>src/inscripciones/models/inscripcion.model.mjs</code></a></p><div class="command"><button type="button" class="copy">Copiar modelo</button><pre tabindex="0"><code>import { Entity } from &#x27;dynamodb-toolbox/entity&#x27;;
+import { Table } from &#x27;dynamodb-toolbox/table&#x27;;
+import { item } from &#x27;dynamodb-toolbox/schema/item&#x27;;
+import { number } from &#x27;dynamodb-toolbox/schema/number&#x27;;
+import { string } from &#x27;dynamodb-toolbox/schema/string&#x27;;
+import { db, TABLA_INSCRIPCIONES_FCI } from &#x27;../../datos/dynamo.mjs&#x27;;
+
+const tablaInscripciones = new Table({
+  name: TABLA_INSCRIPCIONES_FCI,
+  documentClient: db,
+  partitionKey: { name: &#x27;EVENT_ID&#x27;, type: &#x27;number&#x27; },
+  sortKey: { name: &#x27;USER_ID&#x27;, type: &#x27;string&#x27; }
+});
+
+export const MODELO_INSCRIPCION = new Entity({
+  name: &#x27;Inscripcion&#x27;,
+  table: tablaInscripciones,
+  entityAttribute: false,
+  timestamps: false,
+  schema: item({
+    eventId: number({ big: true }).key().savedAs(&#x27;EVENT_ID&#x27;),
+    userId: string().key().savedAs(&#x27;USER_ID&#x27;),
+    registeredAt: string().savedAs(&#x27;REGISTERED_AT&#x27;),
+    checkedInAt: string().optional().savedAs(&#x27;CHECKED_IN_AT&#x27;)
+  })
+});</code></pre></div>
+    </article></div></section>
+  <footer class="toolbox-context"><a href="https://www.dynamodbtoolbox.com/docs/entities/usage">Entidades de DynamoDB Toolbox v2</a> · <a href="https://www.dynamodbtoolbox.com/docs/getting-started/examples/scans-and-queries">Query y Scan con entidades</a></footer>
+</main>
+</body>
+</html>

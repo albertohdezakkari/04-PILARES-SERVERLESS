@@ -1,5 +1,10 @@
 const tabs = [...document.querySelectorAll('[role="tab"]')];
 const status = document.querySelector('.status');
+const deepLinks = document.querySelector('[data-deep-link]');
+
+function tabFromHash() {
+  return tabs.find(tab => '#' + tab.getAttribute('aria-controls') === location.hash);
+}
 
 function showPanel(selected) {
   for (const tab of tabs) {
@@ -10,8 +15,21 @@ function showPanel(selected) {
   }
 }
 
+function selectTab(tab) {
+  showPanel(tab);
+  if (deepLinks) history.replaceState(null, '', '#' + tab.getAttribute('aria-controls'));
+}
+
+if (deepLinks) {
+  showPanel(tabFromHash() ?? tabs[0]);
+  window.addEventListener('hashchange', () => {
+    const tab = tabFromHash();
+    if (tab) showPanel(tab);
+  });
+}
+
 for (const [index, tab] of tabs.entries()) {
-  tab.addEventListener('click', () => showPanel(tab));
+  tab.addEventListener('click', () => selectTab(tab));
   tab.addEventListener('keydown', event => {
     const next = {
       ArrowRight: (index + 1) % tabs.length,
@@ -22,7 +40,7 @@ for (const [index, tab] of tabs.entries()) {
     if (next === undefined) return;
     event.preventDefault();
     tabs[next].focus();
-    showPanel(tabs[next]);
+    selectTab(tabs[next]);
   });
 }
 
@@ -32,12 +50,12 @@ for (const button of document.querySelectorAll('.copy')) {
     try {
       await navigator.clipboard.writeText(code.textContent);
       button.textContent = 'Copiado';
-      status.textContent = 'Comando copiado.';
+      status.textContent = 'Contenido copiado.';
     } catch {
       code.closest('pre').focus();
-      status.textContent = 'Selecciona el comando y cópialo con el teclado.';
+      status.textContent = 'Selecciona el contenido y cópialo con el teclado.';
     }
   });
 }
 
-document.getElementById('print').addEventListener('click', () => window.print());
+document.getElementById('print')?.addEventListener('click', () => window.print());
