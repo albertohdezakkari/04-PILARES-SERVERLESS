@@ -37,21 +37,23 @@ async function cargarInvocaciones() {
 
     action.setAttribute('role', 'tabpanel');
     action.setAttribute('aria-labelledby', tab.id);
-    const pre = action.querySelector('pre');
-    pre.tabIndex = 0;
-    const copy = document.createElement('button');
-    copy.type = 'button';
-    copy.className = 'invoke-copy';
-    copy.textContent = 'Copiar comando';
-    copy.addEventListener('click', async () => {
-      try {
-        await navigator.clipboard.writeText(pre.querySelector('code').textContent);
-        status.textContent = 'Comando copiado.';
-      } catch {
-        status.textContent = 'Selecciona el comando y cópialo con el teclado.';
-      }
-    });
-    pre.before(copy);
+    for (const pre of action.querySelectorAll('.lesson-task pre:not([data-file])')) {
+      pre.tabIndex = 0;
+      const copy = document.createElement('button');
+      copy.type = 'button';
+      copy.className = 'invoke-copy';
+      const code = pre.querySelector('code');
+      copy.textContent = code.textContent.trimStart().startsWith('curl ') ? 'Copiar curl' : 'Copiar Invoke';
+      copy.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(code.textContent);
+          status.textContent = 'Comando copiado.';
+        } catch {
+          status.textContent = 'Selecciona el comando y cópialo con el teclado.';
+        }
+      });
+      pre.before(copy);
+    }
     panels.append(action);
   }
 

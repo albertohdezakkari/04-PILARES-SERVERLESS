@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Crear un evento · Festival Check-in</title>
 <link rel="stylesheet" href="traza.css?v=buscar-evento">
-<script type="module" src="traza.js?v=ejemplos-handler"></script>
-<script type="module" src="invocaciones.js?v=invoke-lector"></script>
+<script type="module" src="traza.js?v=handler-http"></script>
+<script type="module" src="invocaciones.js?v=handler-http"></script>
 </head>
 <body>
 <main>
@@ -69,11 +69,10 @@ name: ${self:service}-${self:provider.stage}-crearEvento</code></pre></div>
 <section class="secuencia-cuadro" aria-labelledby="secuencia-2">
           <h3 id="secuencia-2"><span>02</span> El handler recoge los datos</h3>
           <div class="secuencia-cuerpo">
-            <div class="secuencia-codigo"><strong>handler.mjs</strong><pre tabindex="0"><code>export function handler({ eventId, title } = {}) {
-  return crearEventoService(eventId, title);
-}</code></pre></div>
-            <div class="secuencia-nota"><p>Las llaves extraen dos propiedades del objeto recibido. Al llamar a <code>crearEventoService</code>, el handler entrega esos valores al service.</p>
-              <a href="#lector" data-abrir-paso="2" data-abrir-linea="13">Ver la línea en su archivo ↓</a>
+            <div class="secuencia-codigo"><strong>handler.mjs</strong><pre tabindex="0"><code>const { eventId, title } = esHttp ? JSON.parse(event.body) : (event ?? {});
+const resultado = await crearEventoService(eventId, title);</code></pre></div>
+            <div class="secuencia-nota"><p>En HTTP, <code>JSON.parse(event.body)</code> recupera el objeto enviado por la API. En una invocación directa, el objeto ya llega en <code>event</code>. El handler pasa los dos valores al service.</p>
+              <a href="#lector" data-abrir-paso="2" data-abrir-linea="23">Ver la línea en su archivo ↓</a>
             </div>
           </div>
         </section>
@@ -83,19 +82,34 @@ name: ${self:service}-${self:provider.stage}-crearEvento</code></pre></div>
 
         <div class="code-box">
           <div class="code-header"><strong>src/eventos/crear-evento/handler.mjs</strong><button type="button" data-copy>Copiar archivo</button></div>
-          <pre tabindex="0"><code>import { crearEventoService } from &#x27;./service.mjs&#x27;;
+          <pre tabindex="0"><code>import { json, responderErrorHttp } from &#x27;../../http/respuesta.mjs&#x27;;
+import { crearEventoService } from &#x27;./service.mjs&#x27;;
 
 /**
  * Invoca desde la terminal tras desplegar. Usa un ID de evento libre.
+ * API Gateway entrega el JSON de POST /events en event.body.
  * @param {{ eventId: number, title: string }} event ID entero positivo y título con texto.
  * @example
  * npx --no-install serverless invoke \
  *   --function crearEvento \
  *   --aws-profile &quot;$AWS_PROFILE&quot; \
  *   --data &#x27;{&quot;eventId&quot;: 3, &quot;title&quot;: &quot;Concierto de aula&quot;}&#x27;
+ *
+ * @example HTTP desde la terminal con la URL del despliegue en api_url.
+ * curl -i -X POST &quot;$api_url/events&quot; \
+ *   -H &#x27;Content-Type: application/json&#x27; \
+ *   -d &#x27;{&quot;eventId&quot;: 3, &quot;title&quot;: &quot;Concierto de aula&quot;}&#x27;
  */
-export function handler({ eventId, title } = {}) {
-  return crearEventoService(eventId, title);
+export async function handler(event) {
+  const esHttp = Boolean(event?.requestContext?.http);
+  try {
+    const { eventId, title } = esHttp ? JSON.parse(event.body) : (event ?? {});
+    const resultado = await crearEventoService(eventId, title);
+    return esHttp ? json(201, resultado) : resultado;
+  } catch (error) {
+    if (esHttp) return responderErrorHttp(error);
+    throw error;
+  }
 }</code></pre>
         </div>
         <a class="fuente" href="https://github.com/albertohdezakkari/festival-checkin-01/blob/main/src/eventos/crear-evento/handler.mjs">Abrir src/eventos/crear-evento/handler.mjs en GitHub</a>

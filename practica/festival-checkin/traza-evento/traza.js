@@ -1,4 +1,4 @@
-import { explicaciones } from './lineas.js?v=ejemplos-handler';
+import { explicaciones } from './lineas.js?v=handler-http';
 
 const capas = [...document.querySelectorAll('.capas button')];
 const anterior = document.querySelector('#anterior');

@@ -511,9 +511,17 @@ functions:
   crearEvento:
     name: ${self:service}-${self:provider.stage}-crearEvento
     handler: src/eventos/crear-evento/handler.handler
+    events:
+      - httpApi:
+          method: POST
+          path: /events
   crearUsuario:
     name: ${self:service}-${self:provider.stage}-crearUsuario
     handler: src/usuarios/crear-usuario/handler.handler
+    events:
+      - httpApi:
+          method: POST
+          path: /users
   consultarInscripcion:
     handler: src/inscripciones/consultar-inscripcion/handler.handler
     events:
@@ -724,7 +732,7 @@ resources:
       <div><dt><code>cors:</code></dt><dd>Agrupa las reglas que consulta el navegador cuando la web y la API están en orígenes distintos.</dd></div>
       <div><dt data-lines="allowedOrigins:|https://albertohdezakkari.github.io"><code>allowedOrigins:</code></dt><dd>Lista los orígenes web permitidos. El guion introduce <code>https://albertohdezakkari.github.io</code> como elemento de la lista.</dd></div>
       <div><dt data-lines="allowedHeaders:|Content-Type"><code>allowedHeaders:</code></dt><dd>Lista las cabeceras admitidas desde el navegador. <code>Content-Type</code> indica el tipo de contenido enviado.</dd></div>
-      <div><dt data-lines="allowedMethods:|GET|POST"><code>allowedMethods:</code></dt><dd>Lista los métodos que puede usar la web: <code>GET</code> para consultar la inscripción y <code>POST</code> para inscribirse. Cada guion añade un método.</dd></div>
+      <div><dt data-lines="allowedMethods:|GET|POST"><code>allowedMethods:</code></dt><dd>Lista los métodos que puede usar la web. <code>GET</code> lee datos y <code>POST</code> crea eventos, usuarios o inscripciones según la ruta. Cada guion añade un método.</dd></div>
     </dl>
     <p>Busca el guion delante de <code>POST</code>. Marca un elemento de la lista <code>allowedMethods</code>.</p>
   </section>
@@ -890,7 +898,7 @@ ls -l serverless.yml package.json</code></pre>
       <p>En <code>vi</code>, escribe <code>:set paste</code> y pulsa <kbd>Intro</kbd>. Si estás actualizando un archivo anterior de esta práctica, escribe <code>:%d</code> y pulsa <kbd>Intro</kbd> para borrar el contenido. Pulsa <kbd>i</kbd> y pega el archivo completo. Para guardar, pulsa <kbd>Esc</kbd>, escribe <code>:wq</code> y pulsa <kbd>Intro</kbd>.</p>
     </li>
   </ol>
-<p>Sigue las pestañas de izquierda a derecha. Empieza por <strong>DynamoDB · <code>dynamo.mjs</code></strong>, que exporta el cliente y los nombres de las tablas. <code>handler.mjs</code> importa ese módulo. Guarda primero <code>errores.mjs</code> y después <code>peticion.mjs</code> para preparar los dos handlers del pase. Cada pestaña abre el archivo completo. Puedes usar <strong>Ver por páginas</strong> para leer los archivos largos por partes. Pasa el ratón o toca una línea resaltada para ver su explicación.</p>
+<p>Sigue las pestañas de izquierda a derecha. Empieza por <strong>DynamoDB · <code>dynamo.mjs</code></strong>, que exporta el cliente y los nombres de las tablas. <code>handler.mjs</code> importa ese módulo. Guarda <code>respuesta.mjs</code> antes de los handlers. Para el pase, guarda primero <code>errores.mjs</code> y después <code>peticion.mjs</code> para preparar los dos handlers del pase. Cada pestaña abre el archivo completo. Puedes usar <strong>Ver por páginas</strong> para leer los archivos largos por partes. Pasa el ratón o toca una línea resaltada para ver su explicación.</p>
 <template id="index-explanations">
   <div data-prefix="if (typeof title"><strong>Exige un título con texto</strong><p><code>typeof</code> comprueba que el valor sea texto. <code>trim()</code> permite detectar un título formado solo por espacios. Si falla la comprobación, la función termina antes de escribir en DynamoDB.</p></div>
   <div data-prefix="import { DynamoDBClient"><strong>Conexión con DynamoDB</strong><p>Importa el cliente que comunica Lambda con DynamoDB. El paquete se instaló al preparar el proyecto.</p></div>
@@ -917,6 +925,7 @@ ls -l serverless.yml package.json</code></pre>
 <div class="guided-explainer" data-explainer>
     <div class="guided-options" role="group" aria-label="Archivos de Lambda">
     <button type="button" data-explain="modulo-lambda-4" aria-controls="modulo-lambda-4" aria-pressed="true">DynamoDB · <code>dynamo.mjs</code></button>
+    <button type="button" data-explain="modulo-lambda-respuesta" aria-controls="modulo-lambda-respuesta" aria-pressed="false">HTTP · <code>respuesta.mjs</code></button>
     <button type="button" data-explain="modulo-lambda-eventos" aria-controls="modulo-lambda-eventos" aria-pressed="false">Eventos · <code>handler.mjs</code></button>
     <button type="button" data-explain="modulo-lambda-usuarios" aria-controls="modulo-lambda-usuarios" aria-pressed="false">Usuarios · <code>handler.mjs</code></button>
     <button type="button" data-explain="modulo-lambda-usuarios-service" aria-controls="modulo-lambda-usuarios-service" aria-pressed="false">Usuarios · <code>service.mjs</code></button>
@@ -940,6 +949,29 @@ export const TABLA_EVENTOS_FCI = process.env.FCI_TABLA_EVENTOS;
 export const TABLA_INSCRIPCIONES_FCI = process.env.FCI_TABLA_INSCRIPCIONES;
 export const TABLA_USUARIOS_FCI = process.env.FCI_TABLA_USUARIOS;</code></pre></div>
   </section>
+  <section id="modulo-lambda-respuesta" data-explanation hidden>
+    <h5><code>src/http/respuesta.mjs</code></h5>
+    <p><code>json</code> prepara la respuesta que devuelven los handlers a API Gateway. <code>responderErrorHttp</code> asigna el código de respuesta si una escritura es rechazada o se produce un fallo inesperado.</p>
+    <pre><code>mkdir -p src/http &amp;&amp; ls -ld src/http &amp;&amp;
+touch src/http/respuesta.mjs &amp;&amp; vi src/http/respuesta.mjs</code></pre>
+    <pre data-file="src/http/respuesta.mjs"><code>export function json(statusCode, body) {
+  return {
+    statusCode,
+    headers: { &#x27;content-type&#x27;: &#x27;application/json&#x27; },
+    body: JSON.stringify(body, (_name, value) =&gt;
+      typeof value === &#x27;bigint&#x27; ? value.toString() : value)
+  };
+}
+
+export function responderErrorHttp(error) {
+  if (error.name === &#x27;ConditionalCheckFailedException&#x27;) {
+    return json(409, { message: &#x27;La operación no se puede aplicar a este estado&#x27; });
+  }
+
+  console.error(error.name, error.message);
+  return json(500, { message: &#x27;Revisa los logs de la función&#x27; });
+}</code></pre>
+  </section>
   <section id="modulo-lambda-eventos" data-explanation hidden>
     <h5><code>src/eventos/crear-evento/handler.mjs</code></h5>
     <p>Antes de abrir este archivo, guarda <code>src/datos/dynamo.mjs</code> en la pestaña anterior. <code>handler.mjs</code> importa el cliente y el nombre de la tabla desde ahí. Después de crear y comprobar los primeros eventos, reorganizarás este archivo en <a href="#capas-eventos">Lambdas → Crear por capas</a>.</p>
@@ -947,31 +979,46 @@ export const TABLA_USUARIOS_FCI = process.env.FCI_TABLA_USUARIOS;</code></pre></
     <p><code>Ref: FestivalCheckInEventos</code> resuelve <code>FCI_EVENTOS</code>. La variable <code>FCI_TABLA_EVENTOS</code> entrega ese nombre a Lambda y <code>TABLA_EVENTOS_FCI</code> se lo pasa a <code>PutCommand</code>.</p>
     <pre><code>mkdir -p src/eventos/crear-evento &amp;&amp; ls -ld src/eventos/crear-evento &amp;&amp;
 touch src/eventos/crear-evento/handler.mjs &amp;&amp; vi src/eventos/crear-evento/handler.mjs</code></pre>
-    <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/eventos/crear-evento/handler.mjs"><code>import { PutCommand } from &#x27;@aws-sdk/lib-dynamodb&#x27;;
+    <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/eventos/crear-evento/handler.mjs"><code>import { json, responderErrorHttp } from &#x27;../../http/respuesta.mjs&#x27;;
+import { PutCommand } from &#x27;@aws-sdk/lib-dynamodb&#x27;;
 import { db, TABLA_EVENTOS_FCI } from &#x27;../../datos/dynamo.mjs&#x27;;
 
 /**
  * Invoca desde la terminal tras desplegar. Usa un ID de evento libre.
+ * API Gateway entrega el JSON de POST /events en event.body.
  * @param {{ eventId: number, title: string }} event ID entero positivo y título con texto.
  * @example
  * npx --no-install serverless invoke \
  *   --function crearEvento \
  *   --aws-profile &quot;$AWS_PROFILE&quot; \
  *   --data &#x27;{&quot;eventId&quot;: 3, &quot;title&quot;: &quot;Concierto de aula&quot;}&#x27;
+ *
+ * @example HTTP desde la terminal con la URL del despliegue en api_url.
+ * curl -i -X POST &quot;$api_url/events&quot; \
+ *   -H &#x27;Content-Type: application/json&#x27; \
+ *   -d &#x27;{&quot;eventId&quot;: 3, &quot;title&quot;: &quot;Concierto de aula&quot;}&#x27;
  */
-export async function handler({ eventId, title } = {}) {
-  if (typeof title !== &#x27;string&#x27; || title.trim() === &#x27;&#x27;) {
-    throw new Error(&#x27;Escribe un título para el evento&#x27;);
+export async function handler(event) {
+  const esHttp = Boolean(event?.requestContext?.http);
+  try {
+    const { eventId, title } = esHttp ? JSON.parse(event.body) : (event ?? {});
+    if (typeof title !== &#x27;string&#x27; || title.trim() === &#x27;&#x27;) {
+      throw new Error(&#x27;Escribe un título para el evento&#x27;);
+    }
+
+    const comando = new PutCommand({
+      TableName: TABLA_EVENTOS_FCI,
+      Item: { EVENT_ID: eventId, TITLE: title },
+      ConditionExpression: &#x27;attribute_not_exists(EVENT_ID)&#x27;
+    });
+
+    await db.send(comando);
+    const resultado = { eventId, title };
+    return esHttp ? json(201, resultado) : resultado;
+  } catch (error) {
+    if (esHttp) return responderErrorHttp(error);
+    throw error;
   }
-
-  const comando = new PutCommand({
-    TableName: TABLA_EVENTOS_FCI,
-    Item: { EVENT_ID: eventId, TITLE: title },
-    ConditionExpression: &#x27;attribute_not_exists(EVENT_ID)&#x27;
-  });
-
-  await db.send(comando);
-  return { eventId, title };
 }</code></pre></div>
   </section>
   <section id="modulo-lambda-usuarios" data-explanation hidden>
@@ -979,10 +1026,12 @@ export async function handler({ eventId, title } = {}) {
     <p>El handler entrega los datos del perfil a <code>crearUsuarioService</code>.</p>
     <pre><code>mkdir -p src/usuarios/crear-usuario &amp;&amp; ls -ld src/usuarios/crear-usuario &amp;&amp;
 touch src/usuarios/crear-usuario/handler.mjs &amp;&amp; vi src/usuarios/crear-usuario/handler.mjs</code></pre>
-    <pre data-file="src/usuarios/crear-usuario/handler.mjs"><code>import { crearUsuarioService } from &#x27;./service.mjs&#x27;;
+    <pre data-file="src/usuarios/crear-usuario/handler.mjs"><code>import { json, responderErrorHttp } from &#x27;../../http/respuesta.mjs&#x27;;
+import { crearUsuarioService } from &#x27;./service.mjs&#x27;;
 
 /**
  * Invoca desde la terminal con un código de usuario libre.
+ * API Gateway entrega el JSON de POST /users en event.body.
  * @param {{ userId: string, firstName: string, lastName: string, email: string, city?: string }} event
  * Perfil con código, nombre, apellidos, correo y ciudad opcional.
  * @example
@@ -990,9 +1039,22 @@ touch src/usuarios/crear-usuario/handler.mjs &amp;&amp; vi src/usuarios/crear-us
  *   --function crearUsuario \
  *   --aws-profile &quot;$AWS_PROFILE&quot; \
  *   --data &#x27;{&quot;userId&quot;: &quot;usuario-aula-03&quot;, &quot;firstName&quot;: &quot;Leo&quot;, &quot;lastName&quot;: &quot;Martin&quot;, &quot;email&quot;: &quot;leo.martin@example.com&quot;, &quot;city&quot;: &quot;Huesca&quot;}&#x27;
+ *
+ * @example HTTP desde la terminal con la URL del despliegue en api_url.
+ * curl -i -X POST &quot;$api_url/users&quot; \
+ *   -H &#x27;Content-Type: application/json&#x27; \
+ *   -d &#x27;{&quot;userId&quot;:&quot;usuario-aula-03&quot;,&quot;firstName&quot;:&quot;Leo&quot;,&quot;lastName&quot;:&quot;Martin&quot;,&quot;email&quot;:&quot;leo.martin@example.com&quot;,&quot;city&quot;:&quot;Huesca&quot;}&#x27;
  */
-export function handler({ userId, firstName, lastName, email, city } = {}) {
-  return crearUsuarioService({ userId, firstName, lastName, email, city });
+export async function handler(event) {
+  const esHttp = Boolean(event?.requestContext?.http);
+  try {
+    const { userId, firstName, lastName, email, city } = esHttp ? JSON.parse(event.body) : (event ?? {});
+    const resultado = await crearUsuarioService({ userId, firstName, lastName, email, city });
+    return esHttp ? json(201, resultado) : resultado;
+  } catch (error) {
+    if (esHttp) return responderErrorHttp(error);
+    throw error;
+  }
 }</code></pre>
   </section>
   <section id="modulo-lambda-usuarios-service" data-explanation hidden>
@@ -1059,7 +1121,7 @@ touch src/inscripciones/errores.mjs &amp;&amp; vi src/inscripciones/errores.mjs<
   </section>
   <section id="modulo-lambda-5" data-explanation hidden>
     <h5><code>src/inscripciones/http/peticion.mjs</code></h5>
-    <p>GET lee los dos identificadores en la URL. POST lee el del evento en la URL y toma el usuario del cuerpo con <code>JSON.parse(event.body)</code>. Cada handler llama a su service y ambos reutilizan <code>http/peticion.mjs</code> para responder a API Gateway.</p>
+    <p>GET lee los dos identificadores en la URL. POST lee el del evento en la URL y toma el usuario del cuerpo con <code>JSON.parse(event.body)</code>. Cada handler llama a su service y ambos reutilizan <code>http/peticion.mjs</code> para responder a API Gateway. El formato JSON común está en <code>src/http/respuesta.mjs</code>.</p>
     <div class="lesson-note">
       <p><strong>Sigue el GET de ejemplo.</strong> <code>GET /events/1/registrations/usuario-02</code></p>
       <ol>
@@ -1071,31 +1133,21 @@ touch src/inscripciones/errores.mjs &amp;&amp; vi src/inscripciones/errores.mjs<
     <pre><code>mkdir -p src/inscripciones/http &amp;&amp; ls -ld src/inscripciones/http &amp;&amp;
 touch src/inscripciones/http/peticion.mjs &amp;&amp; vi src/inscripciones/http/peticion.mjs</code></pre>
     <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/inscripciones/http/peticion.mjs" data-explanations="index-explanations"><code>import { NoEncontradoError } from &#x27;../errores.mjs&#x27;;
+import { json, responderErrorHttp } from &#x27;../../http/respuesta.mjs&#x27;;
+
+export { json } from &#x27;../../http/respuesta.mjs&#x27;;
 
 export function leerClaveInscripcion(event) {
   const { eventId, userId } = event.pathParameters;
   return { eventId: BigInt(eventId), userId };
 }
 
-export function json(statusCode, body) {
-  return {
-    statusCode,
-    headers: { &#x27;content-type&#x27;: &#x27;application/json&#x27; },
-    body: JSON.stringify(body, (_name, value) =&gt;
-      typeof value === &#x27;bigint&#x27; ? value.toString() : value)
-  };
-}
-
 export function responderError(error) {
   if (error instanceof NoEncontradoError) {
     return json(404, { message: error.message });
   }
-  if (error.name === &#x27;ConditionalCheckFailedException&#x27;) {
-    return json(409, { message: &#x27;La operación no se puede aplicar a este estado&#x27; });
-  }
 
-  console.error(error.name, error.message);
-  return json(500, { message: &#x27;Revisa los logs de la función&#x27; });
+  return responderErrorHttp(error);
 }</code></pre></div>
   </section>
   <section id="modulo-lambda-1" data-explanation hidden>
@@ -1113,6 +1165,9 @@ export function responderError(error) {
  *   --function consultarInscripcion \
  *   --aws-profile &quot;$AWS_PROFILE&quot; \
  *   --data &#x27;{&quot;pathParameters&quot;: {&quot;eventId&quot;: &quot;3&quot;, &quot;userId&quot;: &quot;usuario-aula-03&quot;}}&#x27;
+ *
+ * @example HTTP desde la terminal con la URL del despliegue en api_url.
+ * curl -i &quot;$api_url/events/3/registrations/usuario-aula-03&quot;
  */
 export async function handler(event) {
   try {
@@ -1138,6 +1193,11 @@ export async function handler(event) {
  *   --function inscribirUsuario \
  *   --aws-profile &quot;$AWS_PROFILE&quot; \
  *   --data &#x27;{&quot;pathParameters&quot;:{&quot;eventId&quot;:&quot;3&quot;},&quot;body&quot;:&quot;{\&quot;userId\&quot;:\&quot;usuario-aula-03\&quot;}&quot;}&#x27;
+ *
+ * @example HTTP desde la terminal con la URL del despliegue en api_url.
+ * curl -i -X POST &quot;$api_url/events/3/registrations&quot; \
+ *   -H &#x27;Content-Type: application/json&#x27; \
+ *   -d &#x27;{&quot;userId&quot;:&quot;usuario-aula-03&quot;}&#x27;
  */
 export async function handler(event) {
   try {
@@ -1458,19 +1518,34 @@ export async function crearEventoService(eventId, title) {
     <h4><code>src/eventos/crear-evento/handler.mjs</code></h4>
     <p>Abre el archivo existente. Escribe <code>:%d</code> y pulsa Intro para sustituir su contenido. Ahora el archivo recibe el ID y el título y llama al service.</p>
     <pre><code>vi src/eventos/crear-evento/handler.mjs</code></pre>
-    <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/eventos/crear-evento/handler.mjs" data-explanations="capas-eventos-notas"><code>import { crearEventoService } from &#x27;./service.mjs&#x27;;
+    <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/eventos/crear-evento/handler.mjs" data-explanations="capas-eventos-notas"><code>import { json, responderErrorHttp } from &#x27;../../http/respuesta.mjs&#x27;;
+import { crearEventoService } from &#x27;./service.mjs&#x27;;
 
 /**
  * Invoca desde la terminal tras desplegar. Usa un ID de evento libre.
+ * API Gateway entrega el JSON de POST /events en event.body.
  * @param {{ eventId: number, title: string }} event ID entero positivo y título con texto.
  * @example
  * npx --no-install serverless invoke \
  *   --function crearEvento \
  *   --aws-profile &quot;$AWS_PROFILE&quot; \
  *   --data &#x27;{&quot;eventId&quot;: 3, &quot;title&quot;: &quot;Concierto de aula&quot;}&#x27;
+ *
+ * @example HTTP desde la terminal con la URL del despliegue en api_url.
+ * curl -i -X POST &quot;$api_url/events&quot; \
+ *   -H &#x27;Content-Type: application/json&#x27; \
+ *   -d &#x27;{&quot;eventId&quot;: 3, &quot;title&quot;: &quot;Concierto de aula&quot;}&#x27;
  */
-export function handler({ eventId, title } = {}) {
-  return crearEventoService(eventId, title);
+export async function handler(event) {
+  const esHttp = Boolean(event?.requestContext?.http);
+  try {
+    const { eventId, title } = esHttp ? JSON.parse(event.body) : (event ?? {});
+    const resultado = await crearEventoService(eventId, title);
+    return esHttp ? json(201, resultado) : resultado;
+  } catch (error) {
+    if (esHttp) return responderErrorHttp(error);
+    throw error;
+  }
 }</code></pre></div>
   </section>
 </div>
@@ -1859,6 +1934,9 @@ import { consultarInscripcionService } from &#x27;./service.mjs&#x27;;
  *   --function consultarInscripcion \
  *   --aws-profile &quot;$AWS_PROFILE&quot; \
  *   --data &#x27;{&quot;pathParameters&quot;: {&quot;eventId&quot;: &quot;3&quot;, &quot;userId&quot;: &quot;usuario-aula-03&quot;}}&#x27;
+ *
+ * @example HTTP desde la terminal con la URL del despliegue en api_url.
+ * curl -i &quot;$api_url/events/3/registrations/usuario-aula-03&quot;
  */
 export async function handler(event) {
   try {
@@ -1969,6 +2047,11 @@ import { inscribirUsuarioService } from &#x27;./service.mjs&#x27;;
  *   --function inscribirUsuario \
  *   --aws-profile &quot;$AWS_PROFILE&quot; \
  *   --data &#x27;{&quot;pathParameters&quot;:{&quot;eventId&quot;:&quot;3&quot;},&quot;body&quot;:&quot;{\&quot;userId\&quot;:\&quot;usuario-aula-03\&quot;}&quot;}&#x27;
+ *
+ * @example HTTP desde la terminal con la URL del despliegue en api_url.
+ * curl -i -X POST &quot;$api_url/events/3/registrations&quot; \
+ *   -H &#x27;Content-Type: application/json&#x27; \
+ *   -d &#x27;{&quot;userId&quot;:&quot;usuario-aula-03&quot;}&#x27;
  */
 export async function handler(event) {
   try {
@@ -2269,6 +2352,7 @@ curl -i &quot;$pase&quot;</code></pre>
 </template>
 <section id="invocaciones" class="phase" hidden>
 <h2>Invocaciones de Lambda</h2>
+<p>Para probar por HTTP, usa la URL base que mostró el despliegue y guárdala en <code>api_url</code>. Sigue <a href="https://github.com/albertohdezakkari/festival-checkin-01#prueba-la-api-con-curl">el comando que recupera la URL del stack</a>.</p>
 <p>Desde la raíz de <code>festival-checkin-01</code>, usa la misma terminal en la que desplegaste. <code>--function</code> elige una clave de <code>functions</code> en el <code>serverless.yml</code> del clon. <code>--data</code> entrega el JSON al handler.</p>
 <article id="invoke-crear-evento" class="guide-step" data-step="Invoke · Crear evento">
 <h3>Crea el evento desde la terminal</h3>
@@ -2283,25 +2367,45 @@ npx --no-install serverless invoke \
   --function crearEvento \
   --aws-profile &quot;$AWS_PROFILE&quot; \
   --data &quot;{\&quot;eventId\&quot;:$evento_id,\&quot;title\&quot;:\&quot;Concierto de aula\&quot;}&quot;</code></pre>
+<h4>Prueba la ruta HTTP con curl</h4>
+<p>Usa los datos del ejemplo o sustitúyelos por los de tu recorrido. En las altas, elige un identificador disponible.</p>
+<pre><code>curl -i -X POST &quot;$api_url/events&quot; \
+  -H &#x27;Content-Type: application/json&#x27; \
+  -d &#x27;{&quot;eventId&quot;: 3, &quot;title&quot;: &quot;Concierto de aula&quot;}&#x27;</code></pre>
 <p class="checkpoint"><strong>Antes de avanzar.</strong> Comprueba que el JSON devuelve el mismo <code>eventId</code> y el título «Concierto de aula».</p>
 </div>
 <aside class="lesson-visual lesson-note">
 <h4>Del comando al resultado</h4>
 <p><code>--function crearEvento</code> selecciona la entrada de <code>functions</code> en el YAML. <code>--data</code> lleva el JSON que recibe el handler. Serverless imprime el resultado de Lambda en la terminal. <a href="https://www.serverless.com/framework/docs/providers/aws/cli-reference/invoke">Referencia de Serverless Invoke</a></p>
 <h4>Abre el handler y sigue el JSON</h4>
-<pre data-file="src/eventos/crear-evento/handler.mjs"><code>import { crearEventoService } from &#x27;./service.mjs&#x27;;
+<pre data-file="src/eventos/crear-evento/handler.mjs"><code>import { json, responderErrorHttp } from &#x27;../../http/respuesta.mjs&#x27;;
+import { crearEventoService } from &#x27;./service.mjs&#x27;;
 
 /**
  * Invoca desde la terminal tras desplegar. Usa un ID de evento libre.
+ * API Gateway entrega el JSON de POST /events en event.body.
  * @param {{ eventId: number, title: string }} event ID entero positivo y título con texto.
  * @example
  * npx --no-install serverless invoke \
  *   --function crearEvento \
  *   --aws-profile &quot;$AWS_PROFILE&quot; \
  *   --data &#x27;{&quot;eventId&quot;: 3, &quot;title&quot;: &quot;Concierto de aula&quot;}&#x27;
+ *
+ * @example HTTP desde la terminal con la URL del despliegue en api_url.
+ * curl -i -X POST &quot;$api_url/events&quot; \
+ *   -H &#x27;Content-Type: application/json&#x27; \
+ *   -d &#x27;{&quot;eventId&quot;: 3, &quot;title&quot;: &quot;Concierto de aula&quot;}&#x27;
  */
-export function handler({ eventId, title } = {}) {
-  return crearEventoService(eventId, title);
+export async function handler(event) {
+  const esHttp = Boolean(event?.requestContext?.http);
+  try {
+    const { eventId, title } = esHttp ? JSON.parse(event.body) : (event ?? {});
+    const resultado = await crearEventoService(eventId, title);
+    return esHttp ? json(201, resultado) : resultado;
+  } catch (error) {
+    if (esHttp) return responderErrorHttp(error);
+    throw error;
+  }
 }</code></pre>
 </aside>
 </div>
@@ -2318,26 +2422,42 @@ export function handler({ eventId, title } = {}) {
   --data &#x27;{&quot;eventId&quot;: 1}&#x27;</code></pre>
 <p>Usa la misma terminal del despliegue. Serverless lee tu equipo y región desde las variables que usa el YAML. Para buscar el evento que creaste antes, cambia el <code>1</code> por su ID.</p>
 <h4>Lee lo que recibe el handler</h4>
-<pre data-file="src/eventos/buscar-evento/handler.mjs"><code>import { buscarEventoService } from &#x27;./service.mjs&#x27;;
+<pre data-file="src/eventos/buscar-evento/handler.mjs"><code>import { json, responderErrorHttp } from &#x27;../../http/respuesta.mjs&#x27;;
+import { buscarEventoService } from &#x27;./service.mjs&#x27;;
 
 /**
  * Lambda entrega el JSON de --data como objeto. El ejemplo usa el evento de npm run aula.
+ * API Gateway entrega el ID de GET /events/{eventId} en event.pathParameters.
  * @param {{ eventId: number }} event ID entero positivo del evento que quieres leer.
  * @example
  * npx --no-install serverless invoke \
  *   --function buscarEvento \
  *   --aws-profile &quot;$AWS_PROFILE&quot; \
  *   --data &#x27;{&quot;eventId&quot;: 1}&#x27;
+ *
+ * @example HTTP desde la terminal con la URL del despliegue en api_url.
+ * curl -i &quot;$api_url/events/1&quot;
  */
-export function buscarEventoHandler(event) {
-  const { eventId } = event ?? {};
-  if (!Number.isSafeInteger(eventId) || eventId &lt; 1) {
-    throw new Error(&#x27;Indica un ID de evento entero positivo&#x27;);
-  }
+export async function buscarEventoHandler(event) {
+  const esHttp = Boolean(event?.requestContext?.http);
+  try {
+    const eventId = esHttp ? Number(event.pathParameters.eventId) : event?.eventId;
+    if (!Number.isSafeInteger(eventId) || eventId &lt; 1) {
+      throw new Error(&#x27;Indica un ID de evento entero positivo&#x27;);
+    }
 
-  return buscarEventoService(eventId);
+    const evento = await buscarEventoService(eventId);
+    if (esHttp &amp;&amp; !evento) return json(404, { message: &#x27;Evento no encontrado&#x27; });
+    return esHttp ? json(200, evento) : evento;
+  } catch (error) {
+    if (esHttp) return responderErrorHttp(error);
+    throw error;
+  }
 }</code></pre>
 <p><code>event</code> es el objeto que Lambda construye con el JSON de <code>--data</code>. En <code>const { eventId } = event ?? {};</code>, las llaves sacan la propiedad <code>eventId</code>. Si falta el objeto, <code>?? {}</code> permite comprobar el ID ausente.</p>
+<h4>Prueba la ruta HTTP con curl</h4>
+<p>Usa los datos del ejemplo o sustitúyelos por los de tu recorrido. En las altas, elige un identificador disponible.</p>
+<pre><code>curl -i &quot;$api_url/events/1&quot;</code></pre>
 <p class="checkpoint"><strong>Antes de avanzar.</strong> Comprueba que la salida contiene <code>eventId: 1</code> y el título «Festival de otoño». Un ID válido que no existe devuelve <code>null</code>.</p>
 </div>
 <aside class="lesson-visual lesson-note">
@@ -2367,6 +2487,11 @@ export function buscarEventoHandler(event) {
   --function listarEventos \
   --aws-profile &quot;$AWS_PROFILE&quot; \
   --data &#x27;{}&#x27;</code></pre>
+<h4>Prueba la ruta HTTP con curl</h4>
+<p>Usa los datos del ejemplo o sustitúyelos por los de tu recorrido. En las altas, elige un identificador disponible.</p>
+<pre><code>curl -i &quot;$api_url/events&quot;
+# Para pedir la página siguiente, usa el siguienteCursor que recibiste.
+curl -i &quot;$api_url/events?cursor=3&quot;</code></pre>
 <p class="checkpoint"><strong>Antes de avanzar.</strong> Busca «Concierto de aula» en <code>eventos</code>. Si la primera página contiene otros eventos, sigue con el cursor hasta encontrarlo.</p>
 </div>
 <aside class="lesson-visual lesson-note">
@@ -2374,19 +2499,34 @@ export function buscarEventoHandler(event) {
 <p>En <code>serverless.yml</code>, lee <code>src/eventos/listar-eventos/handler.listarEventosHandler</code> en dos partes. <code>handler</code> es el archivo <code>handler.mjs</code>. Después del punto, <code>listarEventosHandler</code> es la función que se exporta y que Lambda ejecuta.</p>
 <p><a href="https://github.com/albertohdezakkari/festival-checkin-01/tree/main/src/eventos/listar-eventos">Abre handler, service y repository</a>. El repository usa <code>ScanCommand</code> de Toolbox para leer hasta 25 eventos por llamada. Si <code>siguienteCursor</code> contiene un valor, vuelve a pulsar Copiar comando y sustituye <code>'{}'</code> por <code>'{"cursor":"3"}'</code> usando el valor que acabas de recibir. <code>null</code> indica que has llegado al final. <a href="https://www.dynamodbtoolbox.com/docs/tables/actions/scan">Scan en DynamoDB Toolbox</a></p>
 <h4>Abre el handler y sigue el JSON</h4>
-<pre data-file="src/eventos/listar-eventos/handler.mjs"><code>import { listarEventosService } from &#x27;./service.mjs&#x27;;
+<pre data-file="src/eventos/listar-eventos/handler.mjs"><code>import { json, responderErrorHttp } from &#x27;../../http/respuesta.mjs&#x27;;
+import { listarEventosService } from &#x27;./service.mjs&#x27;;
 
 /**
  * Envía {} para pedir la primera página. Para avanzar, envía el valor de siguienteCursor como cursor.
+ * API Gateway entrega el cursor opcional en event.queryStringParameters.
  * @param {{ cursor?: string }} event El cursor se envía como texto, por ejemplo {&quot;cursor&quot;:&quot;3&quot;}.
  * @example
  * npx --no-install serverless invoke \
  *   --function listarEventos \
  *   --aws-profile &quot;$AWS_PROFILE&quot; \
  *   --data &#x27;{}&#x27;
+ *
+ * @example HTTP desde la terminal con la URL del despliegue en api_url.
+ * curl -i &quot;$api_url/events&quot;
+ * # Para pedir la página siguiente, usa el siguienteCursor que recibiste.
+ * curl -i &quot;$api_url/events?cursor=3&quot;
  */
-export function listarEventosHandler({ cursor } = {}) {
-  return listarEventosService(cursor);
+export async function listarEventosHandler(event) {
+  const esHttp = Boolean(event?.requestContext?.http);
+  try {
+    const cursor = esHttp ? event.queryStringParameters?.cursor : event?.cursor;
+    const resultado = await listarEventosService(cursor);
+    return esHttp ? json(200, resultado) : resultado;
+  } catch (error) {
+    if (esHttp) return responderErrorHttp(error);
+    throw error;
+  }
 }</code></pre>
 </aside>
 </div>
@@ -2404,16 +2544,23 @@ npx --no-install serverless invoke \
   --function crearUsuario \
   --aws-profile &quot;$AWS_PROFILE&quot; \
   --data &quot;{\&quot;userId\&quot;:\&quot;$usuario_id\&quot;,\&quot;firstName\&quot;:\&quot;Leo\&quot;,\&quot;lastName\&quot;:\&quot;Martin\&quot;,\&quot;email\&quot;:\&quot;leo.martin@example.com\&quot;,\&quot;city\&quot;:\&quot;Huesca\&quot;}&quot;</code></pre>
+<h4>Prueba la ruta HTTP con curl</h4>
+<p>Usa los datos del ejemplo o sustitúyelos por los de tu recorrido. En las altas, elige un identificador disponible.</p>
+<pre><code>curl -i -X POST &quot;$api_url/users&quot; \
+  -H &#x27;Content-Type: application/json&#x27; \
+  -d &#x27;{&quot;userId&quot;:&quot;usuario-aula-03&quot;,&quot;firstName&quot;:&quot;Leo&quot;,&quot;lastName&quot;:&quot;Martin&quot;,&quot;email&quot;:&quot;leo.martin@example.com&quot;,&quot;city&quot;:&quot;Huesca&quot;}&#x27;</code></pre>
 <p class="checkpoint"><strong>Antes de avanzar.</strong> El JSON contiene el <code>userId</code> que acabas de enviar.</p>
 </div>
 <aside class="lesson-visual lesson-note">
 <h4>Del comando al resultado</h4>
 <p><code>--data</code> lleva el perfil en JSON. El handler lo pasa al service y el repository escribe en <code>FCI_USUARIOS</code>.</p>
 <h4>Abre el handler y sigue el JSON</h4>
-<pre data-file="src/usuarios/crear-usuario/handler.mjs"><code>import { crearUsuarioService } from &#x27;./service.mjs&#x27;;
+<pre data-file="src/usuarios/crear-usuario/handler.mjs"><code>import { json, responderErrorHttp } from &#x27;../../http/respuesta.mjs&#x27;;
+import { crearUsuarioService } from &#x27;./service.mjs&#x27;;
 
 /**
  * Invoca desde la terminal con un código de usuario libre.
+ * API Gateway entrega el JSON de POST /users en event.body.
  * @param {{ userId: string, firstName: string, lastName: string, email: string, city?: string }} event
  * Perfil con código, nombre, apellidos, correo y ciudad opcional.
  * @example
@@ -2421,9 +2568,22 @@ npx --no-install serverless invoke \
  *   --function crearUsuario \
  *   --aws-profile &quot;$AWS_PROFILE&quot; \
  *   --data &#x27;{&quot;userId&quot;: &quot;usuario-aula-03&quot;, &quot;firstName&quot;: &quot;Leo&quot;, &quot;lastName&quot;: &quot;Martin&quot;, &quot;email&quot;: &quot;leo.martin@example.com&quot;, &quot;city&quot;: &quot;Huesca&quot;}&#x27;
+ *
+ * @example HTTP desde la terminal con la URL del despliegue en api_url.
+ * curl -i -X POST &quot;$api_url/users&quot; \
+ *   -H &#x27;Content-Type: application/json&#x27; \
+ *   -d &#x27;{&quot;userId&quot;:&quot;usuario-aula-03&quot;,&quot;firstName&quot;:&quot;Leo&quot;,&quot;lastName&quot;:&quot;Martin&quot;,&quot;email&quot;:&quot;leo.martin@example.com&quot;,&quot;city&quot;:&quot;Huesca&quot;}&#x27;
  */
-export function handler({ userId, firstName, lastName, email, city } = {}) {
-  return crearUsuarioService({ userId, firstName, lastName, email, city });
+export async function handler(event) {
+  const esHttp = Boolean(event?.requestContext?.http);
+  try {
+    const { userId, firstName, lastName, email, city } = esHttp ? JSON.parse(event.body) : (event ?? {});
+    const resultado = await crearUsuarioService({ userId, firstName, lastName, email, city });
+    return esHttp ? json(201, resultado) : resultado;
+  } catch (error) {
+    if (esHttp) return responderErrorHttp(error);
+    throw error;
+  }
 }</code></pre>
 </aside>
 </div>
@@ -2438,6 +2598,9 @@ export function handler({ userId, firstName, lastName, email, city } = {}) {
   --function consultarInscripcion \
   --aws-profile &quot;$AWS_PROFILE&quot; \
   --data &quot;{\&quot;pathParameters\&quot;:{\&quot;eventId\&quot;:\&quot;$evento_id\&quot;,\&quot;userId\&quot;:\&quot;$usuario_id\&quot;}}&quot;</code></pre>
+<h4>Prueba la ruta HTTP con curl</h4>
+<p>Usa los datos del ejemplo o sustitúyelos por los de tu recorrido. En las altas, elige un identificador disponible.</p>
+<pre><code>curl -i &quot;$api_url/events/3/registrations/usuario-aula-03&quot;</code></pre>
 <p class="checkpoint"><strong>Antes de avanzar.</strong> Busca <code>statusCode: 200</code> en la terminal. Antes de inscribir, el cuerpo contiene <code>registration: null</code>. Después, contiene la inscripción.</p>
 </div>
 <aside class="lesson-visual lesson-note">
@@ -2456,6 +2619,9 @@ import { consultarInscripcionService } from &#x27;./service.mjs&#x27;;
  *   --function consultarInscripcion \
  *   --aws-profile &quot;$AWS_PROFILE&quot; \
  *   --data &#x27;{&quot;pathParameters&quot;: {&quot;eventId&quot;: &quot;3&quot;, &quot;userId&quot;: &quot;usuario-aula-03&quot;}}&#x27;
+ *
+ * @example HTTP desde la terminal con la URL del despliegue en api_url.
+ * curl -i &quot;$api_url/events/3/registrations/usuario-aula-03&quot;
  */
 export async function handler(event) {
   try {
@@ -2479,6 +2645,11 @@ export async function handler(event) {
   --function inscribirUsuario \
   --aws-profile &quot;$AWS_PROFILE&quot; \
   --data &quot;{\&quot;pathParameters\&quot;:{\&quot;eventId\&quot;:\&quot;$evento_id\&quot;},\&quot;body\&quot;:\&quot;{\\\&quot;userId\\\&quot;:\\\&quot;$usuario_id\\\&quot;}\&quot;}&quot;</code></pre>
+<h4>Prueba la ruta HTTP con curl</h4>
+<p>Usa los datos del ejemplo o sustitúyelos por los de tu recorrido. En las altas, elige un identificador disponible.</p>
+<pre><code>curl -i -X POST &quot;$api_url/events/3/registrations&quot; \
+  -H &#x27;Content-Type: application/json&#x27; \
+  -d &#x27;{&quot;userId&quot;:&quot;usuario-aula-03&quot;}&#x27;</code></pre>
 <p class="checkpoint"><strong>Antes de avanzar.</strong> La respuesta muestra <code>statusCode: 201</code>. Repite el comando para ver <code>409</code> y vuelve a <a href="#invoke-consultar-inscripcion">Consultar inscripción</a> para leerla.</p>
 </div>
 <aside class="lesson-visual lesson-note">
@@ -2499,6 +2670,11 @@ import { inscribirUsuarioService } from &#x27;./service.mjs&#x27;;
  *   --function inscribirUsuario \
  *   --aws-profile &quot;$AWS_PROFILE&quot; \
  *   --data &#x27;{&quot;pathParameters&quot;:{&quot;eventId&quot;:&quot;3&quot;},&quot;body&quot;:&quot;{\&quot;userId\&quot;:\&quot;usuario-aula-03\&quot;}&quot;}&#x27;
+ *
+ * @example HTTP desde la terminal con la URL del despliegue en api_url.
+ * curl -i -X POST &quot;$api_url/events/3/registrations&quot; \
+ *   -H &#x27;Content-Type: application/json&#x27; \
+ *   -d &#x27;{&quot;userId&quot;:&quot;usuario-aula-03&quot;}&#x27;
  */
 export async function handler(event) {
   try {
