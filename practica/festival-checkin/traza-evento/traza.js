@@ -1,3 +1,5 @@
+import { explicaciones } from './lineas.js?v=lectura';
+
 const capas = [...document.querySelectorAll('.capas button')];
 const anterior = document.querySelector('#anterior');
 const siguiente = document.querySelector('#siguiente');
@@ -16,6 +18,7 @@ function mostrarPaso(indice) {
   anterior.disabled = actual === 0;
   siguiente.disabled = actual === capas.length - 1;
   copia.textContent = '';
+  activarLinea(lineasPorPaso[actual][0]);
 }
 
 capas.forEach((boton, indice) => {
@@ -70,14 +73,103 @@ document.querySelector('#escenario').addEventListener('change', ({ target }) => 
   mostrarPaso(escenario.parada < 0 ? 0 : escenario.parada);
 });
 
+const piezas = {
+  terminal: 'Terminal · La ficha entra en la función que indica el YAML.',
+  entrega: 'Entrada · Lambda entrega el ID y el título al service.',
+  control: 'Control · El service comprueba el ID y el título antes de guardar.',
+  desvio: 'Salida de rechazo · Si un dato falla, la ficha se queda en el service.',
+  prensa: 'Prensa · El repository prepara la escritura y el modelo adapta la ficha.',
+  sello: 'Sello · El modelo cambia la etiqueta del campo. Su valor viaja intacto.',
+  candado: 'Candado · DynamoDB protege el registro si la clave ya existe.',
+  archivo: 'Archivador · DynamoDB guarda o recupera el ítem por EVENT_ID.'
+};
+
+const focoInicial = ['terminal', 'entrega', 'control', 'prensa', 'sello', 'terminal', 'archivo'];
+const focosPorLinea = {
+  2: { 5: 'desvio', 8: 'desvio', 11: 'prensa', 12: 'entrega' },
+  3: { 12: 'candado', 13: 'candado', 16: 'archivo' },
+  4: { 8: 'archivo', 9: 'archivo', 10: 'archivo', 11: 'archivo' }
+};
+const taller = document.querySelector('#taller');
+const leyenda = document.querySelector('#taller-leyenda');
+const lineasPorPaso = capas.map(() => []);
+const textos = new WeakMap();
+let lineaActiva;
+
+function activarLinea(linea) {
+  if (!linea) return;
+  lineaActiva?.boton.setAttribute('aria-pressed', 'false');
+  lineaActiva = linea;
+  linea.boton.setAttribute('aria-pressed', 'true');
+  linea.nota.textContent = `Línea ${linea.numero} · ${linea.explicacion}`;
+  taller.dataset.pieza = linea.pieza;
+  leyenda.textContent = piezas[linea.pieza];
+}
+
+for (const [bloque, caja] of [...document.querySelectorAll('.code-box')].entries()) {
+  const pre = caja.querySelector('pre');
+  const codigo = pre.querySelector('code');
+  const original = codigo.textContent;
+  const paso = Number(caja.closest('.paso').id.split('-')[1]) - 1;
+  const notas = explicaciones[bloque];
+  const filas = original.split('\n');
+  if (filas.filter(fila => fila.trim()).length !== notas.length) continue;
+
+  const nota = document.createElement('p');
+  nota.id = `nota-linea-${bloque}`;
+  nota.className = 'nota-linea';
+  nota.setAttribute('aria-live', 'polite');
+  pre.before(nota);
+  textos.set(caja, original);
+  codigo.replaceChildren();
+
+  const lineas = [];
+  for (const [indice, texto] of filas.entries()) {
+    if (!texto.trim()) {
+      const blanco = document.createElement('span');
+      blanco.className = 'linea-blanca';
+      codigo.append(blanco);
+      continue;
+    }
+    const numero = indice + 1;
+    const boton = document.createElement('button');
+    boton.className = 'linea-codigo';
+    boton.type = 'button';
+    boton.dataset.numero = numero;
+    boton.setAttribute('aria-pressed', 'false');
+    boton.setAttribute('aria-controls', nota.id);
+    boton.textContent = texto;
+    const linea = {
+      boton, nota, numero,
+      explicacion: notas[lineas.length],
+      pieza: focosPorLinea[bloque]?.[numero] ?? focoInicial[bloque]
+    };
+    boton.addEventListener('focus', () => activarLinea(linea));
+    boton.addEventListener('click', () => activarLinea(linea));
+    const posicion = lineas.length;
+    boton.addEventListener('keydown', event => {
+      if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return;
+      event.preventDefault();
+      lineas[posicion + (event.key === 'ArrowUp' ? -1 : 1)]?.boton.focus();
+    });
+    codigo.append(boton);
+    lineas.push(linea);
+  }
+  lineasPorPaso[paso].push(...lineas);
+  nota.textContent = `Línea ${lineas[0].numero} · ${lineas[0].explicacion}`;
+}
+
+activarLinea(lineasPorPaso[0][0]);
+
 for (const boton of document.querySelectorAll('[data-copy]')) {
   boton.addEventListener('click', async () => {
-    const texto = boton.closest('.code-box').querySelector('pre code').textContent;
+    const caja = boton.closest('.code-box');
+    const texto = textos.get(caja) ?? caja.querySelector('pre code').textContent;
     try {
       await navigator.clipboard.writeText(texto);
       copia.textContent = 'Copiado.';
     } catch {
-      copia.textContent = 'Selecciona el código y cópialo con el teclado.';
+      copia.textContent = 'Abre el archivo en GitHub para copiar el texto.';
     }
   });
 }

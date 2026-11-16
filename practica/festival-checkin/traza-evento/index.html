@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Crear un evento · Festival Check-in</title>
-<link rel="stylesheet" href="traza.css">
-<script src="traza.js" defer></script>
+<link rel="stylesheet" href="traza.css?v=lectura">
+<script type="module" src="traza.js?v=lectura"></script>
 </head>
 <body>
 <main>
@@ -16,7 +16,7 @@
   <header class="cabecera">
     <p>FESTIVAL CHECK-IN / CASO 01</p>
     <h1>Crear un evento</h1>
-    <p>Sigue el ID y el título desde la terminal hasta DynamoDB. Selecciona cada pieza del dibujo para ver el código que interviene.</p>
+    <p>Sigue el ID y el título desde la terminal hasta DynamoDB. Elige una capa y pulsa una línea de código para ver su significado y la parte del dibujo que le corresponde. Con el teclado, usa Tab y las flechas ↑ y ↓.</p>
   </header>
   <div class="lienzo">
     <section class="lectura" aria-label="Código del paso seleccionado">
@@ -168,6 +168,13 @@ cat respuesta-evento.json</code></pre></div>
             <option value="duplicado">ID repetido</option>
           </select>
         </label>
+        <figure class="taller" id="taller" data-pieza="terminal">
+          <div class="taller-imagen">
+            <img src="taller-evento.jpg" width="1536" height="1024" alt="Una ficha de evento pasa de la terminal por un control y una prensa hasta un archivador.">
+            <span class="foco-taller" aria-hidden="true"></span>
+          </div>
+          <figcaption id="taller-leyenda">La terminal entrega la ficha al punto de entrada de Lambda.</figcaption>
+        </figure>
         <div class="datos"><span>ENTRADA · TERMINAL</span><code id="entrada">{ "eventId": 3, "title": "Concierto de aula" }</code></div>
         <ol class="capas" aria-label="Capas de la traza">
           <li><button type="button" aria-controls="paso-1" aria-pressed="true"><span class="numero">01</span><span class="icono icono-archivo" aria-hidden="true"></span><span><strong>Serverless</strong><small>Define el punto de entrada</small></span></button></li>
