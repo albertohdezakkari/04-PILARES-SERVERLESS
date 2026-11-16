@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Crear un evento · Festival Check-in</title>
+<link rel="stylesheet" href="traza.css">
+<script src="traza.js" defer></script>
+</head>
+<body>
+<main>
+  <nav class="enlaces" aria-label="Material de la práctica">
+    <a href="../#capas-eventos-orm">← Cuaderno de Festival Check-in</a>
+    <a href="https://github.com/albertohdezakkari/festival-checkin-01/blob/main/0-conf.md">Preparar el entorno</a>
+  </nav>
+  <header class="cabecera">
+    <p>FESTIVAL CHECK-IN / CASO 01</p>
+    <h1>Crear un evento</h1>
+    <p>Sigue el ID y el título desde la terminal hasta DynamoDB. Selecciona cada pieza del dibujo para ver el código que interviene.</p>
+  </header>
+  <div class="lienzo">
+    <section class="lectura" aria-label="Código del paso seleccionado">
+      <div class="avance"><span id="paso-actual" role="status">Paso 1 de 6</span><div><button type="button" id="anterior" disabled>← Anterior</button> <button type="button" id="siguiente">Siguiente →</button></div></div>
+      <section id="paso-1" class="paso">
+        <h2>Conecta la función</h2>
+        <p>Busca <code>functions → crearEvento</code>. En <code>handler.handler</code>, el primer nombre identifica el archivo y el segundo la función exportada. En este caso la terminal invoca Lambda directamente.</p>
+        <p class="pregunta">Con <code>FCI_EQUIPO=equipo01</code>, ¿cómo se llama la función en AWS?</p>
+
+        <div class="code-box">
+          <div class="code-header"><strong>serverless.yml · fragmento de functions</strong><button type="button" data-copy>Copiar fragmento</button></div>
+          <pre tabindex="0"><code>  crearEvento:
+    name: ${self:service}-${sls:stage}-crearEvento
+    handler: src/eventos/crear-evento/handler.handler</code></pre>
+        </div>
+        <a class="fuente" href="https://github.com/albertohdezakkari/festival-checkin-01/blob/main/serverless.yml">Abrir serverless.yml en GitHub</a>
+      </section>
+      <section id="paso-2" class="paso" hidden>
+        <h2>Recibe el evento</h2>
+        <p>El handler desestructura el objeto recibido. Pasa el número y el título al service mediante <code>crearEvento(eventId, title)</code>.</p>
+        <p class="pregunta">Localiza el import que conecta el handler con el service.</p>
+
+        <div class="code-box">
+          <div class="code-header"><strong>src/eventos/crear-evento/handler.mjs</strong><button type="button" data-copy>Copiar archivo</button></div>
+          <pre tabindex="0"><code>import { crearEvento } from &#x27;./service.mjs&#x27;;
+
+export function handler({ eventId, title } = {}) {
+  return crearEvento(eventId, title);
+}</code></pre>
+        </div>
+        <a class="fuente" href="https://github.com/albertohdezakkari/festival-checkin-01/blob/main/src/eventos/crear-evento/handler.mjs">Abrir src/eventos/crear-evento/handler.mjs en GitHub</a>
+      </section>
+      <section id="paso-3" class="paso" hidden>
+        <h2>Aplica las reglas</h2>
+        <p>El service exige un entero positivo y un título con texto. Si pasan las dos condiciones llama a <code>guardarEvento</code>. Cuando termina la escritura devuelve el ID y el título.</p>
+        <p class="pregunta">Prueba «Sin título» en el dibujo. ¿Hasta qué capa llega el evento?</p>
+
+        <div class="code-box">
+          <div class="code-header"><strong>src/eventos/crear-evento/service.mjs</strong><button type="button" data-copy>Copiar archivo</button></div>
+          <pre tabindex="0"><code>import { guardarEvento } from &#x27;./repository.mjs&#x27;;
+
+export async function crearEvento(eventId, title) {
+  if (!Number.isSafeInteger(eventId) || eventId &lt; 1) {
+    throw new Error(&#x27;Indica un ID de evento entero positivo&#x27;);
+  }
+  if (typeof title !== &#x27;string&#x27; || title.trim() === &#x27;&#x27;) {
+    throw new Error(&#x27;Escribe un título para el evento&#x27;);
+  }
+
+  await guardarEvento(eventId, title);
+  return { eventId, title };
+}</code></pre>
+        </div>
+        <a class="fuente" href="https://github.com/albertohdezakkari/festival-checkin-01/blob/main/src/eventos/crear-evento/service.mjs">Abrir src/eventos/crear-evento/service.mjs en GitHub</a>
+      </section>
+      <section id="paso-4" class="paso" hidden>
+        <h2>Prepara la escritura</h2>
+        <p>El repository prepara <code>PutItemCommand</code> con DynamoDB Toolbox. Solicita a DynamoDB que escriba solo si no existe un ítem con esa clave.</p>
+        <p class="pregunta">Localiza la condición que protege un evento existente.</p>
+
+        <div class="code-box">
+          <div class="code-header"><strong>src/eventos/crear-evento/repository.mjs</strong><button type="button" data-copy>Copiar archivo</button></div>
+          <pre tabindex="0"><code>import { PutItemCommand } from &#x27;dynamodb-toolbox/entity/actions/put&#x27;;
+import { MODELO_EVENTO } from &#x27;../evento.model.mjs&#x27;;
+
+export async function guardarEvento(eventId, title) {
+  const evento = {
+    eventId,
+    title
+  };
+
+  const comando = MODELO_EVENTO.build(PutItemCommand)
+    .item(evento)
+    .options({
+      condition: { attr: &#x27;eventId&#x27;, exists: false }
+    });
+
+  await comando.send();
+}</code></pre>
+        </div>
+        <a class="fuente" href="https://github.com/albertohdezakkari/festival-checkin-01/blob/main/src/eventos/crear-evento/repository.mjs">Abrir src/eventos/crear-evento/repository.mjs en GitHub</a>
+      </section>
+      <section id="paso-5" class="paso" hidden>
+        <h2>Traduce los atributos</h2>
+        <p>El repository usa el modelo <code>Evento</code>. <code>savedAs</code> enlaza los nombres de JavaScript con los nombres guardados. La tabla usa <code>EVENT_ID</code> como clave de partición de tipo número.</p>
+        <p class="pregunta">Busca en el archivo dónde se transforma cada uno de los dos nombres.</p>
+
+        <div class="code-box">
+          <div class="code-header"><strong>src/eventos/evento.model.mjs</strong><button type="button" data-copy>Copiar archivo</button></div>
+          <pre tabindex="0"><code>import { Entity } from &#x27;dynamodb-toolbox/entity&#x27;;
+import { Table } from &#x27;dynamodb-toolbox/table&#x27;;
+import { item } from &#x27;dynamodb-toolbox/schema/item&#x27;;
+import { string } from &#x27;dynamodb-toolbox/schema/string&#x27;;
+import { number } from &#x27;dynamodb-toolbox/schema/number&#x27;;
+import { db, TABLA_EVENTOS_FCI } from &#x27;../datos/dynamo.mjs&#x27;;
+
+const TABLA_MODELO_EVENTO = new Table({
+  name: TABLA_EVENTOS_FCI,
+  documentClient: db,
+  partitionKey: { name: &#x27;EVENT_ID&#x27;, type: &#x27;number&#x27; }
+});
+
+export const MODELO_EVENTO = new Entity({
+  name: &#x27;Evento&#x27;,
+  table: TABLA_MODELO_EVENTO,
+  entityAttribute: false,
+  timestamps: false,
+  schema: item({
+    eventId: number({ big: true }).key().savedAs(&#x27;EVENT_ID&#x27;),
+    title: string().savedAs(&#x27;TITLE&#x27;)
+  })
+});</code></pre>
+        </div>
+        <a class="fuente" href="https://github.com/albertohdezakkari/festival-checkin-01/blob/main/src/eventos/evento.model.mjs">Abrir src/eventos/evento.model.mjs en GitHub</a>
+      </section>
+      <section id="paso-6" class="paso" hidden>
+        <h2>Comprueba lo guardado</h2>
+        <p>Invoca el handler desde la terminal y luego lee por clave. Compara <code>eventId</code> en la respuesta de Lambda con <code>EVENT_ID</code> en el ítem. En el dibujo, <code>3</code> es el ID de ejemplo. Los comandos generan un ID para tu prueba.</p>
+        <p class="pregunta">Antes de terminar, verifica que el ítem contiene el ID de tu prueba y el título Concierto de aula.</p>
+        <h3>Invoca desde la raíz del clon</h3><div class="code-box"><button type="button" data-copy>Copiar invocación</button><pre tabindex="0"><code>evento_id=$(node -p &#x27;Date.now()&#x27;)
+printf &#x27;ID del evento de clase: %s\n&#x27; &quot;$evento_id&quot;
+
+aws lambda invoke \
+  --function-name &quot;festival-check-in-${FCI_EQUIPO}-crearEvento&quot; \
+  --profile &quot;$AWS_PROFILE&quot; --region &quot;$AWS_REGION&quot; \
+  --cli-binary-format raw-in-base64-out \
+  --payload &quot;{\&quot;eventId\&quot;:$evento_id,\&quot;title\&quot;:\&quot;Concierto de aula\&quot;}&quot; \
+  respuesta-evento.json &amp;&amp;
+cat respuesta-evento.json</code></pre></div>
+        <div class="code-box">
+          <div class="code-header"><strong>Leer en DynamoDB</strong><button type="button" data-copy>Copiar comando</button></div>
+          <pre tabindex="0"><code>aws dynamodb get-item \
+  --table-name &quot;FCI_EVENTOS_${FCI_EQUIPO}&quot; \
+  --profile &quot;$AWS_PROFILE&quot; --region &quot;$AWS_REGION&quot; \
+  --key &quot;{\&quot;EVENT_ID\&quot;:{\&quot;N\&quot;:\&quot;$evento_id\&quot;}}&quot; \
+  --consistent-read --query &#x27;Item&#x27; --output json</code></pre>
+        </div>
+        <a class="fuente" href="https://github.com/albertohdezakkari/festival-checkin-01/blob/main/1-crear-evento.md">Abrir la guía de comandos en GitHub</a>
+      </section>
+      <p class="estado-copia" role="status" id="estado-copia"></p>
+    </section>
+    <section class="dibujo" aria-labelledby="dibujo-titulo">
+      <div class="dibujo-interior">
+        <h2 id="dibujo-titulo">Traza del evento</h2>
+        <label class="escenario">Prueba en el dibujo
+          <select id="escenario">
+            <option value="correcto">Evento válido</option>
+            <option value="sin-titulo">Sin título</option>
+            <option value="duplicado">ID repetido</option>
+          </select>
+        </label>
+        <div class="datos"><span>ENTRADA · TERMINAL</span><code id="entrada">{ "eventId": 3, "title": "Concierto de aula" }</code></div>
+        <ol class="capas" aria-label="Capas de la traza">
+          <li><button type="button" aria-controls="paso-1" aria-pressed="true"><span class="numero">01</span><span class="icono icono-archivo" aria-hidden="true"></span><span><strong>Serverless</strong><small>Define el punto de entrada</small></span></button></li>
+          <li><button type="button" aria-controls="paso-2" aria-pressed="false"><span class="numero">02</span><span class="icono icono-entrada" aria-hidden="true"></span><span><strong>Handler</strong><small>Recibe y delega</small></span></button></li>
+          <li><button type="button" aria-controls="paso-3" aria-pressed="false"><span class="numero">03</span><span class="icono icono-regla" aria-hidden="true"></span><span><strong>Service</strong><small>Valida antes de guardar</small></span></button></li>
+          <li><button type="button" aria-controls="paso-4" aria-pressed="false"><span class="numero">04</span><span class="icono icono-escritura" aria-hidden="true"></span><span><strong>Repository</strong><small>Construye el PutItem</small></span></button></li>
+          <li><button type="button" aria-controls="paso-5" aria-pressed="false"><span class="numero">05</span><span class="icono icono-modelo" aria-hidden="true"></span><span><strong>Modelo ORM</strong><small>Traduce JavaScript a DynamoDB</small></span></button></li>
+          <li><button type="button" aria-controls="paso-6" aria-pressed="false"><span class="numero">06</span><span class="icono icono-tabla" aria-hidden="true"></span><span><strong>DynamoDB</strong><small>Lee el ítem por su clave</small></span></button></li>
+        </ol>
+        <div class="datos" id="salida"><span id="resultado-etiqueta">ÍTEM · DYNAMODB</span><code id="resultado">{ "EVENT_ID": 3, "TITLE": "Concierto de aula" }</code></div>
+        <p id="resultado-detalle" aria-live="polite">DynamoDB confirma la escritura. El service devuelve el ID y el título.</p>
+      </div>
+    </section>
+  </div>
+</main>
+</body>
+</html>
