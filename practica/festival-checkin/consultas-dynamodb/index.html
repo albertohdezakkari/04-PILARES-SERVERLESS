@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>12 consultas DynamoDB · Festival Check-in</title>
+  <link rel="stylesheet" href="style.css">
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+<main>
+<nav class="course-nav" aria-label="Material de la práctica">
+  <a href="../#diseno">← Festival Check-in</a>
+  <button type="button" id="print">Imprimir las 12 consultas</button>
+</nav>
+<header class="intro">
+  <h1>12 consultas de DynamoDB</h1>
+  <p>Elige por lo que conoces antes de buscar. Prueba cada comando y comprueba qué devuelve.</p>
+</header>
+<section class="setup" aria-labelledby="setup">
+  <div><h2 id="setup">Prepara una sola terminal</h2>
+  <p>Desde la raíz de <code>festival-checkin-01</code>, despliega y ejecuta <code>npm run aula</code>. Tendrás el evento <code>1</code>, el perfil <code>usuario-02</code> y su inscripción. Ajusta el perfil, la región y el código de equipo a tu despliegue. Tu sesión está lista si STS devuelve <code>Account</code> y <code>Arn</code>. <a href="https://github.com/albertohdezakkari/festival-checkin-01/blob/main/0-codespaces.md">Preparar AWS Academy en Codespaces</a></p>
+  <dl><div><dt><code>N</code></dt><dd>Número. La CLI transporta sus cifras como texto.</dd></div><div><dt><code>S</code></dt><dd>Texto, como un código de usuario.</dd></div></dl>
+  </div>
+  <div class="command"><button type="button" class="copy">Copiar</button><pre tabindex="0"><code>export AWS_PROFILE=default
+export AWS_REGION=us-east-1
+export FCI_EQUIPO=equipo01
+export AWS_PAGER=&quot;&quot;
+
+tabla_eventos=&quot;FCI_EVENTOS_${FCI_EQUIPO}&quot;
+tabla_usuarios=&quot;FCI_USUARIOS_${FCI_EQUIPO}&quot;
+tabla_inscripciones=&quot;FCI_INSCRIPCIONES_${FCI_EQUIPO}&quot;
+
+aws sts get-caller-identity</code></pre></div>
+</section>
+<div class="tabs" role="tablist" aria-label="Tipo de lectura">
+<button type="button" id="tab-get" role="tab" aria-selected="true" aria-controls="get" tabindex="0"><span>01–04</span><strong>GetItem</strong><small>La clave completa</small></button>
+<button type="button" id="tab-query" role="tab" aria-selected="false" aria-controls="query" tabindex="-1"><span>05–08</span><strong>Query</strong><small>La clave de partición</small></button>
+<button type="button" id="tab-scan" role="tab" aria-selected="false" aria-controls="scan" tabindex="-1"><span>09–12</span><strong>Scan</strong><small>La tabla, sin una clave</small></button>
+</div>
+<section class="panel" id="get" role="tabpanel" aria-labelledby="tab-get" tabindex="0">
+<header class="panel-heading">
+  <div><h2>GetItem <span>La clave completa</span></h2><p>Lee un ítem concreto. En una tabla con clave compuesta, envía la de partición y la de ordenación.</p></div>
+  <div class="register"><span>En Toolbox</span> <code>GetItemCommand</code><span>Devuelve</span> <code>Item</code></div>
+</header>
+<div class="examples">
+<article class="example">
+  <header><span class="number">01</span><h3>¿Cómo se llama el evento 1?</h3></header>
+  <p class="known">EVENT_ID = 1</p>
+  <div class="command"><button type="button" class="copy">Copiar</button><pre tabindex="0"><code>aws dynamodb get-item --table-name &quot;$tabla_eventos&quot; \
+  --key &#x27;{&quot;EVENT_ID&quot;:{&quot;N&quot;:&quot;1&quot;}}&#x27;</code></pre></div>
+  <p class="result">Busca un único ítem por su clave numérica. En <code>Item</code> verás <code>TITLE</code> con «Festival de otoño».</p>
+</article>
+<article class="example">
+  <header><span class="number">02</span><h3>¿Cuál es el perfil de usuario-02?</h3></header>
+  <p class="known">USER_ID = usuario-02</p>
+  <div class="command"><button type="button" class="copy">Copiar</button><pre tabindex="0"><code>aws dynamodb get-item --table-name &quot;$tabla_usuarios&quot; \
+  --key &#x27;{&quot;USER_ID&quot;:{&quot;S&quot;:&quot;usuario-02&quot;}}&#x27;</code></pre></div>
+  <p class="result">En Usuarios, la clave es de texto. En <code>Item</code> verás el nombre, los apellidos, el correo y la ciudad del perfil de ejemplo.</p>
+</article>
+<article class="example">
+  <header><span class="number">03</span><h3>¿Está usuario-02 inscrito en el evento 1?</h3></header>
+  <p class="known">EVENT_ID = 1 + USER_ID = usuario-02</p>
+  <div class="command"><button type="button" class="copy">Copiar</button><pre tabindex="0"><code>aws dynamodb get-item --table-name &quot;$tabla_inscripciones&quot; \
+  --key &#x27;{&quot;EVENT_ID&quot;:{&quot;N&quot;:&quot;1&quot;},&quot;USER_ID&quot;:{&quot;S&quot;:&quot;usuario-02&quot;}}&#x27;</code></pre></div>
+  <p class="result">La clave de Inscripciones tiene dos partes. Si el pase existe, <code>Item</code> contiene <code>REGISTERED_AT</code>.</p>
+</article>
+<article class="example">
+  <header><span class="number">04</span><h3>¿Cómo recupero solo el título?</h3></header>
+  <p class="known">EVENT_ID = 1</p>
+  <div class="command"><button type="button" class="copy">Copiar</button><pre tabindex="0"><code>aws dynamodb get-item --table-name &quot;$tabla_eventos&quot; \
+  --key &#x27;{&quot;EVENT_ID&quot;:{&quot;N&quot;:&quot;1&quot;}}&#x27; \
+  --projection-expression TITLE</code></pre></div>
+  <p class="result">La clave localiza el evento. <code>--projection-expression</code> elige qué atributo sale en <code>Item</code>.</p>
+</article>
+</div>
+<aside class="toolbox">
+  <h3>En el repository · ejemplo 03</h3>
+  <pre tabindex="0"><code>const { Item } = await MODELO_INSCRIPCION.build(GetItemCommand)
+  .key({ eventId: 1, userId: &#x27;usuario-02&#x27; })
+  .send();</code></pre>
+</aside>
+</section>
+<section class="panel" id="query" role="tabpanel" aria-labelledby="tab-query" tabindex="0" hidden>
+<header class="panel-heading">
+  <div><h2>Query <span>La clave de partición</span></h2><p>Lee los ítems del grupo que elijas en una tabla o índice. Puedes acotar el grupo con una condición en la clave de ordenación.</p></div>
+  <div class="register"><span>En Toolbox</span> <code>QueryCommand</code><span>Devuelve</span> <code>Items</code></div>
+</header>
+<div class="examples">
+<article class="example">
+  <header><span class="number">05</span><h3>¿Quién está inscrito en el evento 1?</h3></header>
+  <p class="known">EVENT_ID = 1</p>
+  <div class="command"><button type="button" class="copy">Copiar</button><pre tabindex="0"><code>aws dynamodb query --table-name &quot;$tabla_inscripciones&quot; \
+  --key-condition-expression &#x27;EVENT_ID = :evento&#x27; \
+  --expression-attribute-values &#x27;{&quot;:evento&quot;:{&quot;N&quot;:&quot;1&quot;}}&#x27;</code></pre></div>
+  <p class="result">La condición de clave elige el grupo del evento. En <code>Items</code> aparece una lista de inscripciones.</p>
+</article>
+<article class="example">
+  <header><span class="number">06</span><h3>¿Qué códigos de ese evento empiezan por usuario-0?</h3></header>
+  <p class="known">EVENT_ID = 1 · prefijo en USER_ID</p>
+  <div class="command"><button type="button" class="copy">Copiar</button><pre tabindex="0"><code>aws dynamodb query --table-name &quot;$tabla_inscripciones&quot; \
+  --key-condition-expression &#x27;EVENT_ID = :e AND begins_with(USER_ID, :p)&#x27; \
+  --expression-attribute-values &#x27;{&quot;:e&quot;:{&quot;N&quot;:&quot;1&quot;},&quot;:p&quot;:{&quot;S&quot;:&quot;usuario-0&quot;}}&#x27;</code></pre></div>
+  <p class="result">Primero eliges el evento. <code>begins_with</code> acota la lectura por la clave de ordenación. El ejemplo incluye <code>usuario-02</code>.</p>
+</article>
+<article class="example">
+  <header><span class="number">07</span><h3>¿En qué eventos está usuario-02?</h3></header>
+  <p class="known">PorUsuario · USER_ID = usuario-02</p>
+  <div class="command"><button type="button" class="copy">Copiar</button><pre tabindex="0"><code>aws dynamodb query --table-name &quot;$tabla_inscripciones&quot; \
+  --index-name PorUsuario \
+  --key-condition-expression &#x27;USER_ID = :usuario&#x27; \
+  --expression-attribute-values &#x27;{&quot;:usuario&quot;:{&quot;S&quot;:&quot;usuario-02&quot;}}&#x27;</code></pre></div>
+  <p class="result">El índice agrupa por usuario y devuelve las claves <code>USER_ID</code> y <code>EVENT_ID</code>. Consulta el evento por su ID si quieres el título. Si acabas de inscribir al usuario, la entrada puede tardar en aparecer en el índice.</p>
+</article>
+<article class="example">
+  <header><span class="number">08</span><h3>¿Cómo pido la primera página de inscritos?</h3></header>
+  <p class="known">EVENT_ID = 1 · hasta 1 ítem</p>
+  <div class="command"><button type="button" class="copy">Copiar</button><pre tabindex="0"><code>aws dynamodb query --table-name &quot;$tabla_inscripciones&quot; \
+  --key-condition-expression &#x27;EVENT_ID = :evento&#x27; \
+  --expression-attribute-values &#x27;{&quot;:evento&quot;:{&quot;N&quot;:&quot;1&quot;}}&#x27; \
+  --limit 1 --no-paginate</code></pre></div>
+  <p class="result"><code>--no-paginate</code> deja una sola petición. Si DynamoDB devuelve <code>LastEvaluatedKey</code>, ese objeto es el punto de partida de la página siguiente.</p>
+</article>
+</div>
+<aside class="toolbox">
+  <h3>En el repository · ejemplo 05</h3>
+  <pre tabindex="0"><code>const { Items } = await MODELO_INSCRIPCION.table.build(QueryCommand)
+  .entities(MODELO_INSCRIPCION)
+  .query({ partition: 1 })
+  .send();</code></pre>
+</aside>
+</section>
+<section class="panel" id="scan" role="tabpanel" aria-labelledby="tab-scan" tabindex="0" hidden>
+<header class="panel-heading">
+  <div><h2>Scan <span>La tabla, sin una clave</span></h2><p>Recorre la tabla por páginas. Con un filtro, DynamoDB primero lee y luego aplica la condición.</p></div>
+  <div class="register"><span>En Toolbox</span> <code>ScanCommand</code><span>Devuelve</span> <code>Items</code></div>
+</header>
+<div class="examples">
+<article class="example">
+  <header><span class="number">09</span><h3>¿Qué eventos hay en el catálogo?</h3></header>
+  <p class="known">Tabla de eventos · sin clave</p>
+  <div class="command"><button type="button" class="copy">Copiar</button><pre tabindex="0"><code>aws dynamodb scan --table-name &quot;$tabla_eventos&quot; \
+  --projection-expression &#x27;EVENT_ID, TITLE&#x27;</code></pre></div>
+  <p class="result">Recorre la tabla y muestra ID y título. AWS CLI puede pedir varias páginas para completar este comando.</p>
+</article>
+<article class="example">
+  <header><span class="number">10</span><h3>¿Qué usuarios son de Huesca?</h3></header>
+  <p class="known">Filtro CITY = Huesca</p>
+  <div class="command"><button type="button" class="copy">Copiar</button><pre tabindex="0"><code>aws dynamodb scan --table-name &quot;$tabla_usuarios&quot; \
+  --filter-expression &#x27;CITY = :ciudad&#x27; \
+  --expression-attribute-values &#x27;{&quot;:ciudad&quot;:{&quot;S&quot;:&quot;Huesca&quot;}}&#x27;</code></pre></div>
+  <p class="result">DynamoDB lee la tabla y después aplica el filtro. Compara <code>Count</code> (coincidencias) con <code>ScannedCount</code> (ítems evaluados).</p>
+</article>
+<article class="example">
+  <header><span class="number">11</span><h3>¿Cómo guardo la primera página del catálogo?</h3></header>
+  <p class="known">Tabla de eventos · hasta 1 ítem</p>
+  <div class="command"><button type="button" class="copy">Copiar</button><pre tabindex="0"><code>aws dynamodb scan --table-name &quot;$tabla_eventos&quot; \
+  --limit 1 --no-paginate --output json &gt; pagina-eventos.json
+cat pagina-eventos.json</code></pre></div>
+  <p class="result">Guarda la respuesta y busca <code>LastEvaluatedKey</code>. Este ejemplo usa una página pequeña. Si solo tienes el evento inicial, puedes <a href="../#invoke-crear-evento">crear otro evento</a> para practicar con dos páginas con datos.</p>
+</article>
+<article class="example">
+  <header><span class="number">12</span><h3>¿Cómo sigo desde el cursor?</h3></header>
+  <p class="known">LastEvaluatedKey → ExclusiveStartKey</p>
+  <div class="command"><button type="button" class="copy">Copiar</button><pre tabindex="0"><code>cursor=$(node -p &#x27;JSON.stringify(require(&quot;./pagina-eventos.json&quot;).LastEvaluatedKey ?? null)&#x27;)
+if [ &quot;$cursor&quot; != null ]; then
+  aws dynamodb scan --table-name &quot;$tabla_eventos&quot; \
+    --limit 1 --no-paginate --exclusive-start-key &quot;$cursor&quot;
+else
+  printf &#x27;%s\n&#x27; &#x27;No hay otra página.&#x27;
+fi</code></pre></div>
+  <p class="result">Ejecuta antes la consulta 11. Si hay cursor, lo envías completo a DynamoDB para continuar el mismo recorrido. Si se ha agotado la tabla, la respuesta puede venir vacía.</p>
+</article>
+</div>
+<aside class="toolbox">
+  <h3>En el repository · ejemplo 11</h3>
+  <pre tabindex="0"><code>const { Items, LastEvaluatedKey } = await MODELO_EVENTO.table.build(ScanCommand)
+  .entities(MODELO_EVENTO)
+  .options({ limit: 1 })
+  .send();</code></pre>
+</aside>
+</section>
+<p class="status" role="status" aria-live="polite"></p>
+<footer>
+  <a href="https://docs.aws.amazon.com/cli/latest/reference/dynamodb/get-item.html">AWS · GetItem</a>
+  <a href="https://docs.aws.amazon.com/cli/latest/reference/dynamodb/query.html">AWS · Query</a>
+  <a href="https://docs.aws.amazon.com/cli/latest/reference/dynamodb/scan.html">AWS · Scan</a>
+</footer>
+</main>
+</body>
+</html>
