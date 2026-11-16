@@ -2164,6 +2164,7 @@ cat respuesta-listar.json</code></pre>
 </div>
 <aside class="lesson-visual lesson-note">
 <h4>Del comando al resultado</h4>
+<p>En <code>serverless.yml</code>, lee <code>src/eventos/listar-eventos/handler.listarEventosHandler</code> en dos partes. <code>handler</code> es el archivo <code>handler.mjs</code>. Después del punto, <code>listarEventosHandler</code> es la función que se exporta y que Lambda ejecuta.</p>
 <p><a href="https://github.com/albertohdezakkari/festival-checkin-01/tree/main/src/eventos/listar-eventos">Abre handler, service y repository</a>. El repository usa <code>ScanCommand</code> de Toolbox para leer hasta 25 eventos por llamada. Si <code>siguienteCursor</code> contiene un valor, vuelve a pulsar Copiar comando y sustituye <code>'{}'</code> por <code>'{"cursor":"3"}'</code> usando el valor que acabas de recibir. <code>null</code> indica que has llegado al final. <a href="https://www.dynamodbtoolbox.com/docs/tables/actions/scan">Scan en DynamoDB Toolbox</a></p>
 </aside>
 </div>
