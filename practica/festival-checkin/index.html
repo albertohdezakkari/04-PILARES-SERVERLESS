@@ -449,7 +449,7 @@ LAMBDA_ROLE_ARN=$(aws iam get-role --role-name LabRole --profile "$perfil" --reg
 <h3>Lee serverless.yml línea a línea</h3>
 <div class="lesson-note">
   <h4>Si trabajas con el repositorio clonado</h4>
-  <p>Abre tu <code>serverless.yml</code> y busca <code>provider.stage</code>. En el proyecto de aula, <code>${env:FCI_EQUIPO}</code> toma el código que exportaste en la terminal. Por ejemplo, <code>equipo01</code> crea el stack <code>festival-check-in-equipo01</code> y la tabla <code>FCI_EVENTOS_equipo01</code>. Así cada equipo tiene sus propias tablas aunque comparta cuenta y región. El YAML guiado de abajo usa <code>dev</code> y nombres fijos para construir un despliegue compartido.</p>
+  <p>Abre tu <code>serverless.yml</code> y busca <code>provider.stage</code>. En el proyecto de aula, <code>${env:FCI_EQUIPO}</code> toma el código que exportaste en la terminal. Los nombres de las funciones y de las tablas leen ese valor con <code>${self:provider.stage}</code>. Por ejemplo, <code>equipo01</code> crea el stack <code>festival-check-in-equipo01</code> y la tabla <code>FCI_EVENTOS_equipo01</code>. Así cada equipo tiene sus propias tablas aunque comparta cuenta y región. El YAML guiado de abajo usa <code>dev</code> y nombres fijos para construir un despliegue compartido.</p>
   <p><code>package.patterns</code> excluye las pruebas y los scripts de aula del paquete de Lambda. Las rutas, las claves y el índice <code>PorUsuario</code> se leen del mismo modo en los dos archivos.</p>
   <p><a href="https://github.com/albertohdezakkari/festival-checkin-01/blob/main/serverless.yml">Abre el YAML del repositorio de aula</a>. Después sigue <a href="#capas-eventos-orm">Crear con ORM</a>, <a href="#consultar-orm">Consultar con ORM</a> e <a href="#inscribir-orm">Inscribir con ORM</a> para reconocer los modelos y repositorios que ya tienes.</p>
 </div>
@@ -511,10 +511,10 @@ build:
 
 functions:
   crearEvento:
-    name: ${self:service}-${sls:stage}-crearEvento
+    name: ${self:service}-${self:provider.stage}-crearEvento
     handler: src/eventos/crear-evento/handler.handler
   crearUsuario:
-    name: ${self:service}-${sls:stage}-crearUsuario
+    name: ${self:service}-${self:provider.stage}-crearUsuario
     handler: src/usuarios/crear-usuario/handler.handler
   consultarPase:
     handler: src/pases/consultar-pase/handler.handler
@@ -1117,13 +1117,13 @@ node --input-type=module -e '
 <div class="lesson-task">
 <p class="lesson-note"><strong>Si ya desplegaste una edición anterior.</strong> Si <code>FCI_EVENTOS</code> ya existe con una clave compuesta, DynamoDB requiere una tabla nueva para cambiar su clave. Para ensayar, usa un laboratorio con los nombres libres. Para conservar tus datos, migra primero los eventos a una tabla con la clave simple <code>EVENT_ID</code>. <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-dynamodb-table.html">Tablas DynamoDB en CloudFormation</a>.</p>
 <p>Si compartís cuenta, región y proyecto, una persona ejecuta los despliegues y comparte la URL y los IDs de los eventos. Cada pareja usa códigos de usuario distintos para que sus pruebas de inscripción partan de un pase libre.</p>
-<dl class="command-reasons"><div><dt><code>node --check</code></dt><dd>Comprueba la sintaxis del módulo que indicas.</dd></div><div><dt><code>&amp;&amp;</code></dt><dd>Ejecuta el segundo comando si el primero termina correctamente.</dd></div><div><dt><code>--stage dev</code></dt><dd>Selecciona el entorno de desarrollo de tu servicio.</dd></div></dl>
+<dl class="command-reasons"><div><dt><code>node --check</code></dt><dd>Comprueba la sintaxis del módulo que indicas.</dd></div><div><dt><code>&amp;&amp;</code></dt><dd>Ejecuta el segundo comando si el primero termina correctamente.</dd></div><div><dt><code>provider.stage</code></dt><dd>El YAML indica el entorno que usa Serverless al desplegar.</dd></div></dl>
 <p>Ejecuta el comando en la carpeta <code>festival-checkin</code>. Serverless Framework lee tu YAML y CloudFormation crea las tres tablas, las cuatro funciones y la HTTP API en el laboratorio.</p>
 <pre><code>(
   for archivo in src/pases/*.mjs src/pases/consultar-pase/*.mjs src/pases/inscribir-usuario/*.mjs src/datos/*.mjs src/eventos/crear-evento/*.mjs src/usuarios/crear-usuario/*.mjs; do
     node --check "$archivo" || exit 1
   done
-) &amp;&amp; npx serverless deploy --stage dev --aws-profile "$perfil"</code></pre>
+) &amp;&amp; npx serverless deploy --aws-profile "$perfil"</code></pre>
 <p>Si Framework pide iniciar sesión, usa el mismo acceso de la lección <a href="../../#primer-serverless">01 · Primer Serverless</a>. Si falla CloudFormation, lee el primer recurso y permiso que aparecen en el error. Si la sesión de AWS caducó, renueva los tres valores y repite la comprobación de Conexión.</p>
 <p class="checkpoint"><strong>Antes de avanzar</strong> La terminal muestra el despliegue terminado y las dos rutas de la API.</p>
 </div>
@@ -1411,7 +1411,7 @@ export function handler({ eventId, title } = {}) {
 node --check src/eventos/crear-evento/service.mjs &amp;&amp;
 node --check src/eventos/crear-evento/handler.mjs &amp;&amp;
 node --input-type=module -e 'await import("./src/eventos/crear-evento/handler.mjs"); console.log("Imports comprobados")' &amp;&amp;
-npx serverless deploy --stage dev --aws-profile "$perfil"</code></pre>
+npx serverless deploy --aws-profile "$perfil"</code></pre>
 <p>En la misma terminal donde ejecutaste <a href="#guardar-evento">Crear eventos</a>, reutiliza la función <code>crear_evento</code> para dar de alta un tercer evento con un ID libre. Después, usa el ID devuelto para comprobar el registro con PartiQL.</p>
 <pre><code>evento_capas_id=$(crear_evento '{"eventId":3,"title":"Noche de ciencia"}') &amp;&amp;
 printf 'ID creado: %s\n' "$evento_capas_id" &amp;&amp;
@@ -1607,7 +1607,7 @@ export async function guardarEvento(eventId, title) {
 <h4>Despliega y comprueba el resultado</h4>
 <p>Desde <code>festival-checkin</code>, usa la terminal del laboratorio. Si abriste una nueva, repite <a href="#probar-aws">Comprobación</a>, <a href="#rol-laboratorio">Rol</a> y <a href="#salidas-stack">Salidas</a> en ese orden. Recupera también la función <code>crear_evento</code> del paso <a href="#guardar-evento">Crear eventos</a>. Comprueba primero que Node puede cargar la Lambda y todos sus imports.</p>
 <pre><code>node --input-type=module -e 'await import("./src/eventos/crear-evento/handler.mjs"); console.log("Imports comprobados")' &amp;&amp;
-npx serverless deploy --stage dev --aws-profile "$perfil"</code></pre>
+npx serverless deploy --aws-profile "$perfil"</code></pre>
 <p>Invoca la Lambda con un ID libre y usa el ID que devuelve para leer el registro por su clave completa.</p>
 <pre><code>evento_orm_id=$(crear_evento '{"eventId":4,"title":"Feria de robótica"}') &amp;&amp;
 printf 'ID creado: %s\n' "$evento_orm_id" &amp;&amp;
@@ -1775,7 +1775,7 @@ export function handler(event) {
 <h4>Despliega y prueba</h4>
 <p>Usa la terminal del laboratorio. Si la cerraste, repite <a href="#probar-aws">Comprobación</a>, <a href="#rol-laboratorio">Rol</a> y <a href="#salidas-stack">Salidas</a> en ese orden. Usa el ID de <a href="#guardar-evento">Crear eventos</a>.</p>
 <pre><code>node --input-type=module -e 'await import("./src/pases/consultar-pase/handler.mjs")' &amp;&amp;
-npx serverless deploy --stage dev --aws-profile "$perfil"</code></pre>
+npx serverless deploy --aws-profile "$perfil"</code></pre>
 <pre><code>usuario=usuario-04
 curl -i &quot;$api_url/events/$evento_id/registrations/$usuario&quot;</code></pre>
 <p class="checkpoint"><strong>Antes de avanzar</strong> Con un código libre, GET devuelve <code>200</code>, el título y <code>registration: null</code>.</p>
@@ -1868,7 +1868,7 @@ export function handler(event) {
 <h4>Despliega y prueba</h4>
 <p>Usa la terminal del laboratorio. Si la cerraste, repite <a href="#probar-aws">Comprobación</a>, <a href="#rol-laboratorio">Rol</a> y <a href="#salidas-stack">Salidas</a> en ese orden. Usa el ID de <a href="#guardar-evento">Crear eventos</a>.</p>
 <pre><code>node --input-type=module -e 'await import("./src/pases/inscribir-usuario/handler.mjs")' &amp;&amp;
-npx serverless deploy --stage dev --aws-profile "$perfil"</code></pre>
+npx serverless deploy --aws-profile "$perfil"</code></pre>
 <p>Usa un perfil del paso <a href="#sembrar-usuarios">Usuarios</a> que todavía no esté inscrito en el evento.</p>
 <pre><code>usuario=usuario-05
 pase=&quot;$api_url/events/$evento_id/registrations/$usuario&quot;
@@ -1965,7 +1965,7 @@ export async function buscarInscripcion(eventId, userId) {
 <h4>Despliega y prueba</h4>
 <p>Usa la terminal del laboratorio. Si la cerraste, repite <a href="#probar-aws">Comprobación</a>, <a href="#rol-laboratorio">Rol</a> y <a href="#salidas-stack">Salidas</a> en ese orden. Usa el ID de <a href="#guardar-evento">Crear eventos</a>.</p>
 <pre><code>node --input-type=module -e 'await import("./src/pases/consultar-pase/handler.mjs")' &amp;&amp;
-npx serverless deploy --stage dev --aws-profile "$perfil"</code></pre>
+npx serverless deploy --aws-profile "$perfil"</code></pre>
 <pre><code>usuario=usuario-05
 curl -i &quot;$api_url/events/$evento_id/registrations/$usuario&quot;</code></pre>
 <p class="checkpoint"><strong>Antes de avanzar</strong> GET devuelve <code>200</code> con el mismo pase que guardaste en la versión por capas.</p>
@@ -2025,7 +2025,7 @@ export async function guardarInscripcion(eventId, userId, registeredAt) {
 <h4>Despliega y prueba</h4>
 <p>Usa la terminal del laboratorio. Si la cerraste, repite <a href="#probar-aws">Comprobación</a>, <a href="#rol-laboratorio">Rol</a> y <a href="#salidas-stack">Salidas</a> en ese orden. Usa el ID de <a href="#guardar-evento">Crear eventos</a>.</p>
 <pre><code>node --input-type=module -e 'await import("./src/pases/inscribir-usuario/handler.mjs")' &amp;&amp;
-npx serverless deploy --stage dev --aws-profile "$perfil"</code></pre>
+npx serverless deploy --aws-profile "$perfil"</code></pre>
 <pre><code>usuario=usuario-06
 pase=&quot;$api_url/events/$evento_id/registrations/$usuario&quot;
 curl -i -X POST &quot;$pase&quot;

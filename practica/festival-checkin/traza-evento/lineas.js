@@ -2,7 +2,7 @@
 export const explicaciones = [
   [
     'Registra la función crearEvento dentro de functions. Es el identificador que usa Serverless en este archivo.',
-    'Compone el nombre real. self:service lee service en este YAML. sls:stage pide a Serverless el entorno que está usando. En el ejemplo combina festival-check-in y equipo01 para formar festival-check-in-equipo01-crearEvento.',
+    'Compone el nombre real. self:service lee service en este YAML. self:provider.stage lee stage dentro de provider en el mismo YAML. En el ejemplo combina festival-check-in y equipo01 para formar festival-check-in-equipo01-crearEvento.',
     'Indica qué ejecutar. La ruta lleva a handler.mjs y el último .handler selecciona la función exportada dentro del archivo.'
   ],
   [

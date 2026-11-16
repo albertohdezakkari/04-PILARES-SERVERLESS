@@ -1,4 +1,4 @@
-import { explicaciones } from './lineas.js?v=secuencia';
+import { explicaciones } from './lineas.js?v=self-provider-stage';
 
 const capas = [...document.querySelectorAll('.capas button')];
 const anterior = document.querySelector('#anterior');

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Crear un evento · Festival Check-in</title>
 <link rel="stylesheet" href="traza.css?v=cuadros-por-capa">
-<script type="module" src="traza.js?v=cuadros-por-capa"></script>
+<script type="module" src="traza.js?v=self-provider-stage"></script>
 </head>
 <body>
 <main>
@@ -39,10 +39,10 @@ provider:
   stage: ${env:FCI_EQUIPO}
 
 # Dentro de functions → crearEvento
-name: ${self:service}-${sls:stage}-crearEvento</code></pre></div>
+name: ${self:service}-${self:provider.stage}-crearEvento</code></pre></div>
             <div class="secuencia-nota"><dl class="origenes">
 <div><dt><code>${self:service}</code></dt><dd><strong>Lee este YAML.</strong> Busca la clave <code>service</code> y obtiene <code>festival-check-in</code>.</dd></div>
-<div><dt><code>${sls:stage}</code></dt><dd><strong>Pregunta a Serverless.</strong> Obtiene el entorno usado al desplegar. Aquí viene de <code>provider.stage</code>, que lee <code>FCI_EQUIPO=equipo01</code>. Si pasas <code>--stage</code>, Serverless usa ese valor.</dd></div>
+<div><dt><code>${self:provider.stage}</code></dt><dd><strong>Lee este YAML.</strong> Entra en <code>provider</code> y lee <code>stage</code>. Esa línea toma el valor que exportaste en la terminal con <code>export FCI_EQUIPO=equipo01</code>.</dd></div>
 </dl>
               <a href="#lector" data-abrir-paso="1" data-abrir-linea="2">Ver la línea en su archivo ↓</a>
             </div>
@@ -55,7 +55,7 @@ name: ${self:service}-${sls:stage}-crearEvento</code></pre></div>
         <div class="code-box">
           <div class="code-header"><strong>serverless.yml · fragmento de functions</strong><button type="button" data-copy>Copiar fragmento</button></div>
           <pre tabindex="0"><code>  crearEvento:
-    name: ${self:service}-${sls:stage}-crearEvento
+    name: ${self:service}-${self:provider.stage}-crearEvento
     handler: src/eventos/crear-evento/handler.handler</code></pre>
         </div>
         <a class="fuente" href="https://github.com/albertohdezakkari/festival-checkin-01/blob/main/serverless.yml">Abrir serverless.yml en GitHub</a>
