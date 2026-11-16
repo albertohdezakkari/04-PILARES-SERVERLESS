@@ -2046,37 +2046,119 @@ curl -i &quot;$api_url/events/$evento_id/registrations/$usuario&quot;</code></pr
 <h3>Inscribe a un usuario con DynamoDB Toolbox</h3>
 <div class="lesson-split">
 <div class="lesson-task">
-<p>Completa <a href="#consultar-orm">Consultar inscripción · ORM</a> para tener el modelo de inscripción y <a href="#sembrar-usuarios">Usuarios</a> para disponer de los perfiles de prueba. Conserva el Handler y el Service. La lectura del perfil usa el SDK y la escritura de la inscripción usa el modelo. Actualiza el repository y prueba el mismo POST con un perfil que todavía no esté inscrito.</p>
-<p>Trabaja desde <code>festival-checkin</code>. Sigue las pestañas en orden y selecciona las líneas resaltadas para ver qué hacen.</p>
+<p>Completa <a href="#consultar-orm">Consultar inscripción · ORM</a> para tener los modelos de evento e inscripción y <a href="#sembrar-usuarios">Usuarios</a> para disponer de perfiles de prueba. Ahora conectarás también el perfil a DynamoDB Toolbox y usarás las entidades para comprobar sus claves y guardar la inscripción.</p>
+<p>Trabaja desde <code>festival-checkin</code> y sigue las pestañas en orden. Para sustituir un archivo existente en <code>vi</code>, escribe <code>:%d</code> y pulsa Intro. Para pegar, escribe <code>:set paste</code>, pulsa Intro y luego <kbd>i</kbd>. Guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro.</p>
 <template id="inscribir-orm-notas">
-<div data-prefix=".item("><strong>Entrega los datos al modelo.</strong><p>Toolbox guarda <code>EVENT_ID</code>, <code>USER_ID</code> y <code>REGISTERED_AT</code>. <code>CHECKED_IN_AT</code> es opcional y queda ausente al inscribir.</p></div>
-  <div data-prefix=".options("><strong>Conserva la escritura condicional.</strong><p>La misma pareja solo puede inscribirse una vez.</p></div>
+  <div data-prefix="export const MODELO_USUARIO"><strong>Define la entidad del perfil.</strong><p>La entidad conoce la tabla, su clave y la correspondencia entre el código y DynamoDB.</p></div>
+  <div data-prefix=".key("><strong>Busca por la clave del perfil.</strong><p><code>userId</code> se traduce a <code>USER_ID</code>.</p></div>
+  <div data-prefix=".options({ consistent:"><strong>Comprueba la existencia del usuario.</strong><p>La lectura fuerte consulta solo el identificador. La inscripción solo necesita saber si ese perfil existe.</p></div>
+  <div data-prefix=".item("><strong>Entrega los datos a la entidad.</strong><p>Toolbox aplica el modelo para construir el ítem de DynamoDB.</p></div>
+  <div data-prefix=".options({ condition:"><strong>Protege la escritura con una condición.</strong><p>DynamoDB comprueba la clave del ítem antes de escribir.</p></div>
 </template>
 <div class="guided-explainer" data-explainer>
-<div class="guided-options" role="group" aria-label="Archivos del paso"><button type="button" data-explain="inscribir-orm-archivo-0" aria-controls="inscribir-orm-archivo-0" aria-pressed="true">Repository</button></div>
+<div class="guided-options" role="group" aria-label="Archivos del paso">
+  <button type="button" data-explain="inscribir-orm-archivo-0" aria-controls="inscribir-orm-archivo-0" aria-pressed="true">Modelo de usuario</button>
+  <button type="button" data-explain="inscribir-orm-archivo-1" aria-controls="inscribir-orm-archivo-1" aria-pressed="false">Crear usuario</button>
+  <button type="button" data-explain="inscribir-orm-archivo-2" aria-controls="inscribir-orm-archivo-2" aria-pressed="false">Buscar usuario</button>
+  <button type="button" data-explain="inscribir-orm-archivo-3" aria-controls="inscribir-orm-archivo-3" aria-pressed="false">Guardar inscripción</button>
+  <button type="button" data-explain="inscribir-orm-archivo-4" aria-controls="inscribir-orm-archivo-4" aria-pressed="false">Service</button>
+</div>
 <section id="inscribir-orm-archivo-0" data-explanation>
-  <h4><code>src/inscripciones/inscribir-usuario/repository.mjs</code></h4>
-  <pre><code>vi src/inscripciones/inscribir-usuario/repository.mjs</code></pre>
-  <p>Ejecuta <code>:%d</code> e Intro para sustituir el archivo. En <code>vi</code>, escribe <code>:set paste</code> y pulsa Intro. Pulsa <kbd>i</kbd> y pega el archivo completo. Guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro.</p>
-  <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/inscripciones/inscribir-usuario/repository.mjs" data-explanations="inscribir-orm-notas"><code>import { PutItemCommand } from &#x27;dynamodb-toolbox/entity/actions/put&#x27;;
-import { GetCommand } from &#x27;@aws-sdk/lib-dynamodb&#x27;;
+  <h4><code>src/usuarios/models/usuario.model.mjs</code></h4>
+  <p>La entidad declara la clave y traduce los nombres del perfil a los de DynamoDB.</p>
+  <pre><code>mkdir -p src/usuarios/models &amp;&amp; ls -ld src/usuarios/models &amp;&amp;
+touch src/usuarios/models/usuario.model.mjs &amp;&amp; vi src/usuarios/models/usuario.model.mjs</code></pre>
+  <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/usuarios/models/usuario.model.mjs" data-explanations="inscribir-orm-notas"><code>import { Entity } from &#x27;dynamodb-toolbox/entity&#x27;;
+import { Table } from &#x27;dynamodb-toolbox/table&#x27;;
+import { item } from &#x27;dynamodb-toolbox/schema/item&#x27;;
+import { string } from &#x27;dynamodb-toolbox/schema/string&#x27;;
+import { any } from &#x27;dynamodb-toolbox/schema/any&#x27;;
 import { db, TABLA_USUARIOS_FCI } from &#x27;../../datos/dynamo.mjs&#x27;;
-import { MODELO_INSCRIPCION } from &#x27;../models/inscripcion.model.mjs&#x27;;
+
+const TABLA_MODELO_USUARIO = new Table({
+  name: TABLA_USUARIOS_FCI,
+  documentClient: db,
+  partitionKey: { name: &#x27;USER_ID&#x27;, type: &#x27;string&#x27; }
+});
+
+export const MODELO_USUARIO = new Entity({
+  name: &#x27;Usuario&#x27;,
+  table: TABLA_MODELO_USUARIO,
+  entityAttribute: false,
+  timestamps: false,
+  schema: item({
+    userId: string().key().savedAs(&#x27;USER_ID&#x27;),
+    firstName: string().savedAs(&#x27;FIRST_NAME&#x27;),
+    lastName: string().savedAs(&#x27;LAST_NAME&#x27;),
+    email: string().savedAs(&#x27;EMAIL&#x27;),
+    city: any().optional().savedAs(&#x27;CITY&#x27;)
+  })
+});</code></pre></div>
+</section>
+<section id="inscribir-orm-archivo-1" data-explanation hidden>
+  <h4><code>src/usuarios/crear-usuario/repository.mjs</code></h4>
+  <p>El alta escribe el perfil con el modelo. La condición protege un usuario que ya existe.</p>
+  <pre><code>vi src/usuarios/crear-usuario/repository.mjs</code></pre>
+  <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/usuarios/crear-usuario/repository.mjs" data-explanations="inscribir-orm-notas"><code>import { PutItemCommand } from &#x27;dynamodb-toolbox/entity/actions/put&#x27;;
+import { MODELO_USUARIO } from &#x27;../models/usuario.model.mjs&#x27;;
+
+export async function crearUsuarioRepository(perfil) {
+  await MODELO_USUARIO.build(PutItemCommand)
+    .item(perfil)
+    .options({ condition: { attr: &#x27;userId&#x27;, exists: false } })
+    .send();
+}</code></pre></div>
+</section>
+<section id="inscribir-orm-archivo-2" data-explanation hidden>
+  <h4><code>src/usuarios/buscar-usuario/repository.mjs</code></h4>
+  <p>La inscripción comprueba que el perfil existe. La lectura por clave pide solo el identificador.</p>
+  <pre><code>mkdir -p src/usuarios/buscar-usuario &amp;&amp; ls -ld src/usuarios/buscar-usuario &amp;&amp;
+touch src/usuarios/buscar-usuario/repository.mjs &amp;&amp; vi src/usuarios/buscar-usuario/repository.mjs</code></pre>
+  <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/usuarios/buscar-usuario/repository.mjs" data-explanations="inscribir-orm-notas"><code>import { GetItemCommand } from &#x27;dynamodb-toolbox/entity/actions/get&#x27;;
+import { MODELO_USUARIO } from &#x27;../models/usuario.model.mjs&#x27;;
 
 export async function buscarUsuarioRepository(userId) {
-  const { Item } = await db.send(new GetCommand({
-    TableName: TABLA_USUARIOS_FCI,
-    Key: { USER_ID: userId },
-    ConsistentRead: true
-  }));
-  return Item;
-}
+  const { Item } = await MODELO_USUARIO.build(GetItemCommand)
+    .key({ userId })
+    .options({ consistent: true, attributes: [&#x27;userId&#x27;] })
+    .send();
+
+  return Item ?? null;
+}</code></pre></div>
+</section>
+<section id="inscribir-orm-archivo-3" data-explanation hidden>
+  <h4><code>src/inscripciones/inscribir-usuario/repository.mjs</code></h4>
+  <p>La escritura usa el modelo de inscripción. La condición protege cada pareja de evento y usuario.</p>
+  <pre><code>vi src/inscripciones/inscribir-usuario/repository.mjs</code></pre>
+  <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/inscripciones/inscribir-usuario/repository.mjs" data-explanations="inscribir-orm-notas"><code>import { PutItemCommand } from &#x27;dynamodb-toolbox/entity/actions/put&#x27;;
+import { MODELO_INSCRIPCION } from &#x27;../models/inscripcion.model.mjs&#x27;;
 
 export async function inscribirUsuarioRepository(eventId, userId, registeredAt) {
   await MODELO_INSCRIPCION.build(PutItemCommand)
     .item({ eventId, userId, registeredAt })
     .options({ condition: { attr: &#x27;eventId&#x27;, exists: false } })
     .send();
+}</code></pre></div>
+</section>
+<section id="inscribir-orm-archivo-4" data-explanation hidden>
+  <h4><code>src/inscripciones/inscribir-usuario/service.mjs</code></h4>
+  <p>El service consulta el evento y el perfil antes de guardar la inscripción. El handler sigue enviándole los parámetros de la ruta.</p>
+  <pre><code>vi src/inscripciones/inscribir-usuario/service.mjs</code></pre>
+  <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/inscripciones/inscribir-usuario/service.mjs" data-explanations="inscribir-orm-notas"><code>import { json } from &#x27;../http/peticion.mjs&#x27;;
+import { buscarEventoService } from &#x27;../../eventos/buscar-evento/service.mjs&#x27;;
+import { buscarUsuarioRepository } from &#x27;../../usuarios/buscar-usuario/repository.mjs&#x27;;
+import { inscribirUsuarioRepository } from &#x27;./repository.mjs&#x27;;
+
+export async function inscribirUsuarioService({ eventId, userId }) {
+  const evento = await buscarEventoService(eventId);
+  if (!evento) return json(404, { message: &#x27;Evento no encontrado&#x27; });
+
+  const usuario = await buscarUsuarioRepository(userId);
+  if (!usuario) return json(404, { message: &#x27;Usuario no encontrado&#x27; });
+
+  const registeredAt = new Date().toISOString();
+  await inscribirUsuarioRepository(eventId, userId, registeredAt);
+  return json(201, { message: &#x27;Inscripción creada&#x27; });
 }</code></pre></div>
 </section>
 </div>
