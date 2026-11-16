@@ -21,6 +21,7 @@ button:focus-visible, a:focus-visible, pre:focus-visible, .panel:focus-visible {
 }
 h1, h2, h3, p, dl { margin: 0; }
 .course-nav { display: flex; align-items: center; justify-content: space-between; gap: .75rem; flex-wrap: wrap; }
+.course-tools { display: flex; align-items: center; gap: .75rem 1rem; flex-wrap: wrap; }
 #print, .copy { background: transparent; border: 1px solid var(--line); border-radius: .45rem; padding: .35rem .65rem; }
 #print:hover, .copy:hover { border-color: var(--accent); }
 .intro {
