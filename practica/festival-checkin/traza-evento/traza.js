@@ -1,4 +1,4 @@
-import { explicaciones } from './lineas.js?v=crear-evento-capas';
+import { explicaciones } from './lineas.js?v=metadatos-evento';
 
 const capas = [...document.querySelectorAll('.capas button')];
 const anterior = document.querySelector('#anterior');

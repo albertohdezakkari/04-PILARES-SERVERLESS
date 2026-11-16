@@ -4,15 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Crear un evento · Festival Check-in</title>
-<link rel="stylesheet" href="traza.css?v=cuadros-por-capa">
-<script type="module" src="traza.js?v=crear-evento-capas"></script>
+<link rel="stylesheet" href="traza.css?v=infografia-integrada">
+<script type="module" src="traza.js?v=metadatos-evento"></script>
 </head>
 <body>
 <main>
   <nav class="enlaces" aria-label="Material de la práctica">
     <a href="../#capas-eventos-orm">← Cuaderno de Festival Check-in</a>
     <a href="https://github.com/albertohdezakkari/festival-checkin-01/blob/main/0-conf.md">Preparar el entorno</a>
-    <a href="infografia-crear-evento.png">Abrir la infografía en PNG</a>
+    <a href="#infografia">Ver la infografía ↓</a>
     <a href="#lector">Abrir el lector de código ↓</a>
   </nav>
   <header class="cabecera">
@@ -189,6 +189,11 @@ title: string().savedAs(&#x27;TITLE&#x27;)</code></pre></div>
         </section>
         <p class="secuencia-enlace"><span aria-hidden="true">↓</span><span class="secuencia-dato">En la tabla, las dos etiquetas son <code>EVENT_ID</code> y <code>TITLE</code>.</span></p>
         </div>
+        <dl class="opciones-modelo">
+          <div><dt><code>entityAttribute: false</code></dt><dd>Toolbox omite <code>_et: "Evento"</code> al guardar. La etiqueta sirve para distinguir modelos cuando comparten tabla. Aquí <code>FCI_EVENTOS</code> contiene eventos.</dd></div>
+          <div><dt><code>timestamps: false</code></dt><dd>Toolbox omite <code>_ct</code> y <code>_md</code>, las fechas automáticas de creación y última modificación. Las fechas que declares expresamente en un modelo, como <code>REGISTERED_AT</code> en las inscripciones, siguen siendo datos de la aplicación.</dd></div>
+        </dl>
+        <p>Con ambas opciones en <code>false</code>, el evento 3 se guarda con <code>EVENT_ID</code> y <code>TITLE</code>. <a href="https://www.dynamodbtoolbox.com/docs/entities/internal-attributes">Atributos internos de DynamoDB Toolbox</a></p>
         <p class="pregunta">Busca en el archivo dónde se transforma cada uno de los dos nombres.</p>
 
         <div class="code-box">
@@ -294,6 +299,14 @@ cat respuesta-evento.json</code></pre></div>
       </div>
     </section>
   </div>
+  <figure id="infografia" class="infografia">
+    <figcaption>
+      <h2>Infografía · Crear un evento</h2>
+      <a href="infografia-crear-evento.png?v=capas" download="infografia-crear-evento.png">Descargar PNG</a>
+      <a href="#lector">Volver al lector ↑</a>
+    </figcaption>
+    <img src="infografia-crear-evento.png?v=capas" width="1024" height="1536" loading="lazy" alt="El evento 3 pasa por Serverless, el handler, crearEventoService, crearEventoRepository y el modelo antes de quedar guardado en DynamoDB. Los seis pasos se explican en el lector de código.">
+  </figure>
 </main>
 </body>
 </html>

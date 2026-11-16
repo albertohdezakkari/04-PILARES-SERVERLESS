@@ -226,3 +226,30 @@ pre code { color: var(--ink); }
 .punto-control { --punto-x: 26%; --punto-y: 26%; --punto-ancho: 23%; --punto-alto: 52%; }
 .punto-prensa { --punto-x: 50%; --punto-y: 15%; --punto-ancho: 25%; --punto-alto: 60%; }
 .punto-archivo { --punto-x: 77%; --punto-y: 23%; --punto-ancho: 22%; --punto-alto: 56%; }
+
+.opciones-modelo {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+  gap: .75rem;
+  margin: 1rem 0;
+}
+.opciones-modelo > div {
+  border-inline-start: 3px solid var(--mint);
+  padding: .35rem .75rem;
+}
+.opciones-modelo dt { font-weight: 700; }
+.opciones-modelo dd { margin: .3rem 0 0; }
+.infografia {
+  width: min(100%, 56rem);
+  margin: clamp(2rem, 6vw, 5rem) auto 0;
+  scroll-margin-top: 1rem;
+}
+.infografia figcaption { margin-bottom: 1rem; }
+.infografia h2 { margin: 0 0 .5rem; }
+.infografia figcaption a { display: inline-block; margin-inline-end: 1rem; }
+.infografia img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 1rem;
+}

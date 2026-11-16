@@ -104,7 +104,7 @@ async function run(method) {
   const path = passPath(eventId, userId);
   readFeedback.hidden = true;
   requestPath.textContent = method + ' ' + path;
-  requestModule.textContent = 'src/pases/' + routes[method].module + '/handler.mjs';
+  requestModule.textContent = 'src/inscripciones/' + routes[method].module + '/handler.mjs';
   requestLesson.href = routes[method].lesson;
   requestTrace.hidden = false;
   response.textContent = 'Esperando respuesta…';
