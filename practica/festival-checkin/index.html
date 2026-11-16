@@ -1531,7 +1531,7 @@ await db.send(comando);</code></pre>
 <p><a href="traza-evento/">Abrir la infografía interactiva del alta de un evento →</a></p>
 <div class="lesson-split">
 <div class="lesson-task">
-<p>Completa primero <a href="#capas-eventos">Crear por capas</a>. Si conservas eventos antiguos sin título, añade un título de texto antes de consultarlos con Toolbox. En <code>src/eventos/</code> vas a añadir el modelo compartido. Después cambiarás cómo el repository de <code>crear-evento/</code> guarda un evento en <code>FCI_EVENTOS</code>. DynamoDB Toolbox es un <strong>ODM</strong>, un modelador que traduce los datos de JavaScript a los atributos del ítem de DynamoDB.</p>
+<p>Completa primero <a href="#capas-eventos">Crear por capas</a>. Si conservas eventos antiguos sin título, añade un título de texto antes de consultarlos con Toolbox. En <code>src/eventos/persistencia/</code> vas a añadir el modelo que comparten la escritura y la lectura de eventos. Después cambiarás cómo el repository de <code>crear-evento/</code> guarda un evento en <code>FCI_EVENTOS</code>. DynamoDB Toolbox es un <strong>ODM</strong>, un modelador que traduce los datos de JavaScript a los atributos del ítem de DynamoDB.</p>
 <h4>Instala el modelador</h4>
 <p>Desde la raíz de <code>festival-checkin</code>, en Git Bash o en Terminal, instala la dependencia. Se añade a <code>package.json</code> para que viaje con Lambda al desplegar.</p>
 <pre><code>npm install --save-exact dynamodb-toolbox@2.11.1</code></pre>
@@ -1552,17 +1552,17 @@ await db.send(comando);</code></pre>
     <button type="button" data-explain="evento-orm-repository" aria-controls="evento-orm-repository" aria-pressed="false">Repository</button>
   </div>
   <section id="evento-orm-modelo" data-explanation>
-    <h4><code>src/eventos/evento.model.mjs</code></h4>
+    <h4><code>src/eventos/persistencia/evento.model.mjs</code></h4>
     <p>El modelo conecta los nombres de JavaScript con los de DynamoDB. Por ejemplo, el número <code>4</code> que pasas como <code>eventId</code> se guarda en <code>EVENT_ID</code> como número.</p>
-    <pre><code>mkdir -p src/eventos &amp;&amp; ls -ld src/eventos &amp;&amp;
-touch src/eventos/evento.model.mjs &amp;&amp; vi src/eventos/evento.model.mjs</code></pre>
+    <pre><code>mkdir -p src/eventos/persistencia &amp;&amp; ls -ld src/eventos/persistencia &amp;&amp;
+touch src/eventos/persistencia/evento.model.mjs &amp;&amp; vi src/eventos/persistencia/evento.model.mjs</code></pre>
     <p>En <code>vi</code>, escribe <code>:set paste</code> y pulsa Intro. Pulsa <kbd>i</kbd>, pega el archivo y guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro.</p>
-    <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/eventos/evento.model.mjs" data-explanations="capas-orm-notas"><code>import { Entity } from 'dynamodb-toolbox/entity';
+    <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/eventos/persistencia/evento.model.mjs" data-explanations="capas-orm-notas"><code>import { Entity } from 'dynamodb-toolbox/entity';
 import { Table } from 'dynamodb-toolbox/table';
 import { item } from 'dynamodb-toolbox/schema/item';
 import { string } from 'dynamodb-toolbox/schema/string';
 import { number } from 'dynamodb-toolbox/schema/number';
-import { db, TABLA_EVENTOS_FCI } from '../datos/dynamo.mjs';
+import { db, TABLA_EVENTOS_FCI } from '../../datos/dynamo.mjs';
 
 const TABLA_MODELO_EVENTO = new Table({
   name: TABLA_EVENTOS_FCI,
@@ -1586,7 +1586,7 @@ export const MODELO_EVENTO = new Entity({
     <p>Abre el repository que creaste. En <code>vi</code>, ejecuta <code>:%d</code> para borrar el contenido anterior. Después activa <code>:set paste</code>, pulsa <kbd>i</kbd> y pega el archivo completo. Guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro.</p>
     <pre><code>vi src/eventos/crear-evento/repository.mjs</code></pre>
     <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/eventos/crear-evento/repository.mjs" data-explanations="capas-orm-notas"><code>import { PutItemCommand } from 'dynamodb-toolbox/entity/actions/put';
-import { MODELO_EVENTO } from '../evento.model.mjs';
+import { MODELO_EVENTO } from '../persistencia/evento.model.mjs';
 
 export async function guardarEvento(eventId, title) {
   const evento = {
@@ -1698,12 +1698,12 @@ aws dynamodb execute-statement \
 <div class="guided-explainer" data-explainer>
 <div class="guided-options" role="group" aria-label="Archivos del paso"><button type="button" data-explain="leer-pase-archivo-0" aria-controls="leer-pase-archivo-0" aria-pressed="true">Lectura de evento</button><button type="button" data-explain="leer-pase-archivo-1" aria-controls="leer-pase-archivo-1" aria-pressed="false">Repository</button><button type="button" data-explain="leer-pase-archivo-2" aria-controls="leer-pase-archivo-2" aria-pressed="false">Service</button><button type="button" data-explain="leer-pase-archivo-3" aria-controls="leer-pase-archivo-3" aria-pressed="false">Handler</button></div>
 <section id="leer-pase-archivo-0" data-explanation>
-  <h4><code>src/eventos/eventos.repository.mjs</code></h4>
-  <pre><code>mkdir -p src/eventos &amp;&amp; ls -ld src/eventos &amp;&amp;
-touch src/eventos/eventos.repository.mjs &amp;&amp; vi src/eventos/eventos.repository.mjs</code></pre>
+  <h4><code>src/eventos/persistencia/eventos.repository.mjs</code></h4>
+  <pre><code>mkdir -p src/eventos/persistencia &amp;&amp; ls -ld src/eventos/persistencia &amp;&amp;
+touch src/eventos/persistencia/eventos.repository.mjs &amp;&amp; vi src/eventos/persistencia/eventos.repository.mjs</code></pre>
   <p>En <code>vi</code>, escribe <code>:set paste</code> y pulsa Intro. Pulsa <kbd>i</kbd> y pega el archivo completo. Guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro.</p>
-  <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/eventos/eventos.repository.mjs" data-explanations="leer-pase-notas"><code>import { GetCommand } from &#x27;@aws-sdk/lib-dynamodb&#x27;;
-import { db, TABLA_EVENTOS_FCI } from &#x27;../datos/dynamo.mjs&#x27;;
+  <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/eventos/persistencia/eventos.repository.mjs" data-explanations="leer-pase-notas"><code>import { GetCommand } from &#x27;@aws-sdk/lib-dynamodb&#x27;;
+import { db, TABLA_EVENTOS_FCI } from &#x27;../../datos/dynamo.mjs&#x27;;
 
 export async function buscarEvento(eventId) {
   const { Item } = await db.send(new GetCommand({
@@ -1745,7 +1745,7 @@ export async function buscarInscripcion(eventId, userId) {
 touch src/pases/consultar-pase/service.mjs &amp;&amp; vi src/pases/consultar-pase/service.mjs</code></pre>
   <p>En <code>vi</code>, escribe <code>:set paste</code> y pulsa Intro. Pulsa <kbd>i</kbd> y pega el archivo completo. Guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro.</p>
   <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/pases/consultar-pase/service.mjs" data-explanations="leer-pase-notas"><code>import { json } from &#x27;../peticion.mjs&#x27;;
-import { buscarEvento } from &#x27;../../eventos/eventos.repository.mjs&#x27;;
+import { buscarEvento } from &#x27;../../eventos/persistencia/eventos.repository.mjs&#x27;;
 import { buscarInscripcion } from &#x27;./repository.mjs&#x27;;
 
 export async function consultarPase({ eventId, userId }) {
@@ -1838,7 +1838,7 @@ export async function guardarInscripcion(eventId, userId, registeredAt) {
 touch src/pases/inscribir-usuario/service.mjs &amp;&amp; vi src/pases/inscribir-usuario/service.mjs</code></pre>
   <p>En <code>vi</code>, escribe <code>:set paste</code> y pulsa Intro. Pulsa <kbd>i</kbd> y pega el archivo completo. Guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro.</p>
   <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/pases/inscribir-usuario/service.mjs" data-explanations="construir-post-notas"><code>import { json } from &#x27;../peticion.mjs&#x27;;
-import { buscarEvento } from &#x27;../../eventos/eventos.repository.mjs&#x27;;
+import { buscarEvento } from &#x27;../../eventos/persistencia/eventos.repository.mjs&#x27;;
 import { buscarUsuario, guardarInscripcion } from &#x27;./repository.mjs&#x27;;
 
 export async function inscribirUsuario({ eventId, userId }) {
@@ -1930,10 +1930,10 @@ export const MODELO_INSCRIPCION = new Entity({
 });</code></pre></div>
 </section>
 <section id="consultar-orm-archivo-1" data-explanation hidden>
-  <h4><code>src/eventos/eventos.repository.mjs</code></h4>
-  <pre><code>vi src/eventos/eventos.repository.mjs</code></pre>
+  <h4><code>src/eventos/persistencia/eventos.repository.mjs</code></h4>
+  <pre><code>vi src/eventos/persistencia/eventos.repository.mjs</code></pre>
   <p>Ejecuta <code>:%d</code> e Intro para sustituir el archivo. En <code>vi</code>, escribe <code>:set paste</code> y pulsa Intro. Pulsa <kbd>i</kbd> y pega el archivo completo. Guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro.</p>
-  <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/eventos/eventos.repository.mjs" data-explanations="consultar-orm-notas"><code>import { GetItemCommand } from &#x27;dynamodb-toolbox/entity/actions/get&#x27;;
+  <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/eventos/persistencia/eventos.repository.mjs" data-explanations="consultar-orm-notas"><code>import { GetItemCommand } from &#x27;dynamodb-toolbox/entity/actions/get&#x27;;
 import { MODELO_EVENTO } from &#x27;./evento.model.mjs&#x27;;
 
 export async function buscarEvento(eventId) {

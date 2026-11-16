@@ -26,7 +26,7 @@ export const explicaciones = [
   ],
   [
     'Importa la acción de DynamoDB Toolbox que construye una escritura PutItem.',
-    'Importa el modelo Evento. ../ sube una carpeta para localizar el archivo que define los atributos y la tabla.',
+    'Importa el modelo Evento. ../ sube desde crear-evento a eventos. Luego persistencia/ lleva al modelo que comparten la escritura y la lectura.',
     'Declara la función que llama el service. Recibe los dos datos validados y usa async para esperar el resultado de DynamoDB.',
     'Empieza a construir el objeto JavaScript que se entregará al modelo.',
     'La propiedad eventId toma el valor del parámetro eventId. En el ejemplo vale 3.',
