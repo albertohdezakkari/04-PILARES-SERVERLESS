@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Crear un evento · Festival Check-in</title>
 <link rel="stylesheet" href="traza.css?v=infografia-integrada">
-<script type="module" src="traza.js?v=metadatos-evento"></script>
+<script type="module" src="traza.js?v=modelos-por-dominio"></script>
 </head>
 <body>
 <main>
@@ -154,7 +154,7 @@ await comando.send();</code></pre></div>
         <div class="code-box">
           <div class="code-header"><strong>src/eventos/crear-evento/repository.mjs</strong><button type="button" data-copy>Copiar archivo</button></div>
           <pre tabindex="0"><code>import { PutItemCommand } from &#x27;dynamodb-toolbox/entity/actions/put&#x27;;
-import { MODELO_EVENTO } from &#x27;../persistencia/evento.model.mjs&#x27;;
+import { MODELO_EVENTO } from &#x27;../models/evento.model.mjs&#x27;;
 
 export async function crearEventoRepository(eventId, title) {
   const evento = {
@@ -197,7 +197,7 @@ title: string().savedAs(&#x27;TITLE&#x27;)</code></pre></div>
         <p class="pregunta">Busca en el archivo dónde se transforma cada uno de los dos nombres.</p>
 
         <div class="code-box">
-          <div class="code-header"><strong>src/eventos/persistencia/evento.model.mjs</strong><button type="button" data-copy>Copiar archivo</button></div>
+          <div class="code-header"><strong>src/eventos/models/evento.model.mjs</strong><button type="button" data-copy>Copiar archivo</button></div>
           <pre tabindex="0"><code>import { Entity } from &#x27;dynamodb-toolbox/entity&#x27;;
 import { Table } from &#x27;dynamodb-toolbox/table&#x27;;
 import { item } from &#x27;dynamodb-toolbox/schema/item&#x27;;
@@ -222,7 +222,7 @@ export const MODELO_EVENTO = new Entity({
   })
 });</code></pre>
         </div>
-        <a class="fuente" href="https://github.com/albertohdezakkari/festival-checkin-01/blob/main/src/eventos/persistencia/evento.model.mjs">Abrir src/eventos/persistencia/evento.model.mjs en GitHub</a>
+        <a class="fuente" href="https://github.com/albertohdezakkari/festival-checkin-01/blob/main/src/eventos/models/evento.model.mjs">Abrir src/eventos/models/evento.model.mjs en GitHub</a>
       </section>
       <section id="paso-6" class="paso" hidden>
         <h2>Comprueba lo guardado</h2>

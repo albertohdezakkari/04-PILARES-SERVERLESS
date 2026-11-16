@@ -1,4 +1,4 @@
-import { explicaciones } from './lineas.js?v=metadatos-evento';
+import { explicaciones } from './lineas.js?v=modelos-por-dominio';
 
 const capas = [...document.querySelectorAll('.capas button')];
 const anterior = document.querySelector('#anterior');

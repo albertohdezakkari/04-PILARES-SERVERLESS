@@ -1040,29 +1040,41 @@ export async function crearUsuarioRepository({ userId, firstName, lastName, emai
 }</code></pre>
   </section>
   <section id="modulo-lambda-5" data-explanation hidden>
-    <h5><code>src/inscripciones/peticion.mjs</code></h5>
-    <p>Comparte el formato de respuesta y el tratamiento de errores de las dos rutas. Para este paso, prueba con un ID de evento que hayas creado, como <code>1</code>, y con un código como <code>usuario-02</code>.</p>
-    <pre><code>mkdir -p src/inscripciones &amp;&amp; touch src/inscripciones/peticion.mjs &amp;&amp; vi src/inscripciones/peticion.mjs</code></pre>
-    <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/inscripciones/peticion.mjs"><code>export function json(statusCode, body) {
+    <h5><code>src/inscripciones/http/peticion.mjs</code></h5>
+    <p>GET y POST reciben la misma ruta. Cada handler elige su service y los dos reutilizan <code>http/peticion.mjs</code> para preparar la llamada y responder en el formato de API Gateway.</p>
+    <div class="lesson-note">
+      <p><strong>Sigue el GET de ejemplo.</strong> <code>GET /events/1/registrations/usuario-02</code></p>
+      <ol>
+        <li><strong>El handler elige la operación.</strong> En <code>handleRequest(event, consultarPaseService)</code>, <code>event</code> trae la petición. <code>consultarPaseService</code> se pasa como función, sin llamarla todavía. El handler de POST pasa <code>inscribirUsuarioService</code>.</li>
+        <li><strong><code>handleRequest</code> prepara los datos.</strong> En <code>event.pathParameters</code>, el ID llega como texto <code>"1"</code>. Lo convierte a <code>1n</code> con <code>BigInt</code> y ejecuta <code>operation({ eventId, userId })</code> con <code>{ eventId: 1n, userId: 'usuario-02' }</code>. Si la ruta trae datos incorrectos, devuelve <code>400</code>.</li>
+        <li><strong><code>json</code> empaqueta la respuesta.</strong> Si el service llama a <code>json(200, datos)</code>, la función prepara <code>statusCode</code>, la cabecera <code>content-type</code> y el cuerpo en JSON. Si DynamoDB rechaza una inscripción duplicada, <code>handleRequest</code> traduce el error a <code>409</code>.</li>
+      </ol>
+    </div>
+    <pre><code>mkdir -p src/inscripciones/http &amp;&amp; ls -ld src/inscripciones/http &amp;&amp;
+touch src/inscripciones/http/peticion.mjs &amp;&amp; vi src/inscripciones/http/peticion.mjs</code></pre>
+    <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/inscripciones/http/peticion.mjs" data-explanations="index-explanations"><code>export function json(statusCode, body) {
   return {
     statusCode,
-    headers: { 'content-type': 'application/json' },
+    headers: { &#x27;content-type&#x27;: &#x27;application/json&#x27; },
     body: JSON.stringify(body, (_name, value) =&gt;
-      typeof value === 'bigint' ? value.toString() : value)
+      typeof value === &#x27;bigint&#x27; ? value.toString() : value)
   };
 }
 
 export async function handleRequest(event, operation) {
+  const { eventId: routeId, userId } = event?.pathParameters ?? {};
+  if (!/^[1-9]\d{0,18}$/.test(routeId ?? &#x27;&#x27;) || !userId?.trim()) {
+    return json(400, { message: &#x27;Indica un ID numérico positivo y un código de usuario&#x27; });
+  }
   try {
-    const { eventId: routeId, userId } = event.pathParameters;
     const eventId = BigInt(routeId);
     return await operation({ eventId, userId });
   } catch (error) {
-    if (error.name === 'ConditionalCheckFailedException') {
-      return json(409, { message: 'La operación no se puede aplicar a este estado' });
+    if (error.name === &#x27;ConditionalCheckFailedException&#x27;) {
+      return json(409, { message: &#x27;La operación no se puede aplicar a este estado&#x27; });
     }
     console.error(error.name, error.message);
-    return json(500, { message: 'Revisa los logs de la función' });
+    return json(500, { message: &#x27;Revisa los logs de la función&#x27; });
   }
 }</code></pre></div>
   </section>
@@ -1070,7 +1082,7 @@ export async function handleRequest(event, operation) {
     <h5><code>src/inscripciones/consultar-pase/handler.mjs</code></h5>
     <p>Prepara el archivo base de GET. Por ahora responde <code>501</code>. Lo completarás en <a href="#leer-pase">Lambdas → Consultar · Capas</a>.</p>
     <pre><code>mkdir -p src/inscripciones/consultar-pase &amp;&amp; ls -ld src/inscripciones/consultar-pase &amp;&amp; touch src/inscripciones/consultar-pase/handler.mjs &amp;&amp; vi src/inscripciones/consultar-pase/handler.mjs</code></pre>
-    <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/inscripciones/consultar-pase/handler.mjs"><code>import { handleRequest, json } from '../peticion.mjs';
+    <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/inscripciones/consultar-pase/handler.mjs"><code>import { handleRequest, json } from '../http/peticion.mjs';
 
 export function handler(event) {
   return handleRequest(event, consultarPaseService);
@@ -1085,7 +1097,7 @@ async function consultarPaseService(key) {
     <h5><code>src/inscripciones/inscribir-usuario/handler.mjs</code></h5>
     <p>Prepara el archivo base de POST. Por ahora responde <code>501</code>. Lo completarás en <a href="#construir-post">Lambdas → Inscribir · Capas</a>.</p>
     <pre><code>mkdir -p src/inscripciones/inscribir-usuario &amp;&amp; ls -ld src/inscripciones/inscribir-usuario &amp;&amp; touch src/inscripciones/inscribir-usuario/handler.mjs &amp;&amp; vi src/inscripciones/inscribir-usuario/handler.mjs</code></pre>
-    <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/inscripciones/inscribir-usuario/handler.mjs"><code>import { handleRequest, json } from '../peticion.mjs';
+    <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/inscripciones/inscribir-usuario/handler.mjs"><code>import { handleRequest, json } from '../http/peticion.mjs';
 
 export function handler(event) {
   return handleRequest(event, inscribirUsuarioService);
@@ -1101,9 +1113,9 @@ async function inscribirUsuarioService(key) {
 <section class="lambda-stage" aria-labelledby="lambda-stage-check">
   <h4 id="lambda-stage-check"><span>03</span> Comprueba antes de desplegar</h4>
   <p><code>ls -l</code> muestra el manifiesto, el YAML y los módulos. <code>node --check</code> comprueba la sintaxis. El último comando importa los cuatro puntos de entrada para verificar que cada dependencia existe y exporta lo que pide el código.</p>
-  <pre><code>ls -l serverless.yml package.json src/inscripciones/*.mjs src/inscripciones/consultar-pase/*.mjs src/inscripciones/inscribir-usuario/*.mjs src/datos/*.mjs src/eventos/crear-evento/*.mjs src/usuarios/crear-usuario/*.mjs &amp;&amp;
+  <pre><code>ls -l serverless.yml package.json src/inscripciones/http/*.mjs src/inscripciones/consultar-pase/*.mjs src/inscripciones/inscribir-usuario/*.mjs src/datos/*.mjs src/eventos/crear-evento/*.mjs src/usuarios/crear-usuario/*.mjs &amp;&amp;
 (
-  for archivo in src/inscripciones/*.mjs src/inscripciones/consultar-pase/*.mjs src/inscripciones/inscribir-usuario/*.mjs src/datos/*.mjs src/eventos/crear-evento/*.mjs src/usuarios/crear-usuario/*.mjs; do
+  for archivo in src/inscripciones/http/*.mjs src/inscripciones/consultar-pase/*.mjs src/inscripciones/inscribir-usuario/*.mjs src/datos/*.mjs src/eventos/crear-evento/*.mjs src/usuarios/crear-usuario/*.mjs; do
     node --check "$archivo" || exit 1
   done
 ) &amp;&amp;
@@ -1151,7 +1163,7 @@ node --input-type=module -e '
 <dl class="command-reasons"><div><dt><code>node --check</code></dt><dd>Comprueba la sintaxis del módulo que indicas.</dd></div><div><dt><code>&amp;&amp;</code></dt><dd>Ejecuta el segundo comando si el primero termina correctamente.</dd></div><div><dt><code>provider.stage</code></dt><dd>El YAML indica el entorno que usa Serverless al desplegar.</dd></div></dl>
 <p>Ejecuta el comando en la carpeta <code>festival-checkin</code>. Serverless Framework lee tu YAML y CloudFormation crea las tres tablas, las cuatro funciones y la HTTP API en el laboratorio.</p>
 <pre><code>(
-  for archivo in src/inscripciones/*.mjs src/inscripciones/consultar-pase/*.mjs src/inscripciones/inscribir-usuario/*.mjs src/datos/*.mjs src/eventos/crear-evento/*.mjs src/usuarios/crear-usuario/*.mjs; do
+  for archivo in src/inscripciones/http/*.mjs src/inscripciones/consultar-pase/*.mjs src/inscripciones/inscribir-usuario/*.mjs src/datos/*.mjs src/eventos/crear-evento/*.mjs src/usuarios/crear-usuario/*.mjs; do
     node --check "$archivo" || exit 1
   done
 ) &amp;&amp; npx serverless deploy --aws-profile "$perfil"</code></pre>
@@ -1562,7 +1574,7 @@ await db.send(comando);</code></pre>
 <p><a href="traza-evento/#lector">Seguir el código del alta de un evento →</a> · <a href="traza-evento/#infografia">Ver la infografía de las capas</a></p>
 <div class="lesson-split">
 <div class="lesson-task">
-<p>Completa primero <a href="#capas-eventos">Crear por capas</a>. Si conservas eventos antiguos sin título, añade un título de texto antes de consultarlos con Toolbox. En <code>src/eventos/persistencia/</code> vas a añadir el modelo que comparten la escritura y la lectura de eventos. Después cambiarás cómo el repository de <code>crear-evento/</code> guarda un evento en <code>FCI_EVENTOS</code>. DynamoDB Toolbox es un <strong>ODM</strong>, un modelador que traduce los datos de JavaScript a los atributos del ítem de DynamoDB.</p>
+<p>Completa primero <a href="#capas-eventos">Crear por capas</a>. Si conservas eventos antiguos sin título, añade un título de texto antes de consultarlos con Toolbox. En <code>src/eventos/models/</code> vas a añadir el modelo que comparten la escritura y la lectura de eventos. Después cambiarás cómo el repository de <code>crear-evento/</code> guarda un evento en <code>FCI_EVENTOS</code>. DynamoDB Toolbox es un <strong>ODM</strong>, un modelador que traduce los datos de JavaScript a los atributos del ítem de DynamoDB.</p>
 <h4>Instala el modelador</h4>
 <p>Desde la raíz de <code>festival-checkin</code>, en Git Bash o en Terminal, instala la dependencia. Se añade a <code>package.json</code> para que viaje con Lambda al desplegar.</p>
 <pre><code>npm install --save-exact dynamodb-toolbox@2.11.1</code></pre>
@@ -1584,12 +1596,12 @@ await db.send(comando);</code></pre>
     <button type="button" data-explain="evento-orm-repository" aria-controls="evento-orm-repository" aria-pressed="false">Repository</button>
   </div>
   <section id="evento-orm-modelo" data-explanation>
-    <h4><code>src/eventos/persistencia/evento.model.mjs</code></h4>
+    <h4><code>src/eventos/models/evento.model.mjs</code></h4>
     <p>El modelo conecta los nombres de JavaScript con los de DynamoDB. Por ejemplo, el número <code>4</code> que pasas como <code>eventId</code> se guarda en <code>EVENT_ID</code> como número.</p>
-    <pre><code>mkdir -p src/eventos/persistencia &amp;&amp; ls -ld src/eventos/persistencia &amp;&amp;
-touch src/eventos/persistencia/evento.model.mjs &amp;&amp; vi src/eventos/persistencia/evento.model.mjs</code></pre>
+    <pre><code>mkdir -p src/eventos/models &amp;&amp; ls -ld src/eventos/models &amp;&amp;
+touch src/eventos/models/evento.model.mjs &amp;&amp; vi src/eventos/models/evento.model.mjs</code></pre>
     <p>En <code>vi</code>, escribe <code>:set paste</code> y pulsa Intro. Pulsa <kbd>i</kbd>, pega el archivo y guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro.</p>
-    <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/eventos/persistencia/evento.model.mjs" data-explanations="capas-orm-notas"><code>import { Entity } from 'dynamodb-toolbox/entity';
+    <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/eventos/models/evento.model.mjs" data-explanations="capas-orm-notas"><code>import { Entity } from 'dynamodb-toolbox/entity';
 import { Table } from 'dynamodb-toolbox/table';
 import { item } from 'dynamodb-toolbox/schema/item';
 import { string } from 'dynamodb-toolbox/schema/string';
@@ -1618,7 +1630,7 @@ export const MODELO_EVENTO = new Entity({
     <p>Abre el repository que creaste. En <code>vi</code>, ejecuta <code>:%d</code> para borrar el contenido anterior. Después activa <code>:set paste</code>, pulsa <kbd>i</kbd> y pega el archivo completo. Guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro.</p>
     <pre><code>vi src/eventos/crear-evento/repository.mjs</code></pre>
     <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/eventos/crear-evento/repository.mjs" data-explanations="capas-orm-notas"><code>import { PutItemCommand } from 'dynamodb-toolbox/entity/actions/put';
-import { MODELO_EVENTO } from '../persistencia/evento.model.mjs';
+import { MODELO_EVENTO } from '../models/evento.model.mjs';
 
 export async function crearEventoRepository(eventId, title) {
   const evento = {
@@ -1788,7 +1800,7 @@ export async function consultarPaseRepository(eventId, userId) {
   <pre><code>mkdir -p src/inscripciones/consultar-pase &amp;&amp; ls -ld src/inscripciones/consultar-pase &amp;&amp;
 touch src/inscripciones/consultar-pase/service.mjs &amp;&amp; vi src/inscripciones/consultar-pase/service.mjs</code></pre>
   <p>En <code>vi</code>, escribe <code>:set paste</code> y pulsa Intro. Pulsa <kbd>i</kbd> y pega el archivo completo. Guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro.</p>
-  <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/inscripciones/consultar-pase/service.mjs" data-explanations="leer-pase-notas"><code>import { json } from &#x27;../peticion.mjs&#x27;;
+  <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/inscripciones/consultar-pase/service.mjs" data-explanations="leer-pase-notas"><code>import { json } from &#x27;../http/peticion.mjs&#x27;;
 import { buscarEventoService } from &#x27;../../eventos/buscar-evento/service.mjs&#x27;;
 import { consultarPaseRepository } from &#x27;./repository.mjs&#x27;;
 
@@ -1808,7 +1820,7 @@ export async function consultarPaseService({ eventId, userId }) {
   <h4><code>src/inscripciones/consultar-pase/handler.mjs</code></h4>
   <pre><code>vi src/inscripciones/consultar-pase/handler.mjs</code></pre>
   <p>Ejecuta <code>:%d</code> e Intro para sustituir el archivo. En <code>vi</code>, escribe <code>:set paste</code> y pulsa Intro. Pulsa <kbd>i</kbd> y pega el archivo completo. Guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro.</p>
-  <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/inscripciones/consultar-pase/handler.mjs" data-explanations="leer-pase-notas"><code>import { handleRequest } from &#x27;../peticion.mjs&#x27;;
+  <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/inscripciones/consultar-pase/handler.mjs" data-explanations="leer-pase-notas"><code>import { handleRequest } from &#x27;../http/peticion.mjs&#x27;;
 import { consultarPaseService } from &#x27;./service.mjs&#x27;;
 
 export function handler(event) {
@@ -1881,7 +1893,7 @@ export async function inscribirUsuarioRepository(eventId, userId, registeredAt) 
   <pre><code>mkdir -p src/inscripciones/inscribir-usuario &amp;&amp; ls -ld src/inscripciones/inscribir-usuario &amp;&amp;
 touch src/inscripciones/inscribir-usuario/service.mjs &amp;&amp; vi src/inscripciones/inscribir-usuario/service.mjs</code></pre>
   <p>En <code>vi</code>, escribe <code>:set paste</code> y pulsa Intro. Pulsa <kbd>i</kbd> y pega el archivo completo. Guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro.</p>
-  <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/inscripciones/inscribir-usuario/service.mjs" data-explanations="construir-post-notas"><code>import { json } from &#x27;../peticion.mjs&#x27;;
+  <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/inscripciones/inscribir-usuario/service.mjs" data-explanations="construir-post-notas"><code>import { json } from &#x27;../http/peticion.mjs&#x27;;
 import { buscarEventoService } from &#x27;../../eventos/buscar-evento/service.mjs&#x27;;
 import { buscarUsuarioRepository, inscribirUsuarioRepository } from &#x27;./repository.mjs&#x27;;
 
@@ -1901,7 +1913,7 @@ export async function inscribirUsuarioService({ eventId, userId }) {
   <h4><code>src/inscripciones/inscribir-usuario/handler.mjs</code></h4>
   <pre><code>vi src/inscripciones/inscribir-usuario/handler.mjs</code></pre>
   <p>Ejecuta <code>:%d</code> e Intro para sustituir el archivo. En <code>vi</code>, escribe <code>:set paste</code> y pulsa Intro. Pulsa <kbd>i</kbd> y pega el archivo completo. Guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro.</p>
-  <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/inscripciones/inscribir-usuario/handler.mjs" data-explanations="construir-post-notas"><code>import { handleRequest } from &#x27;../peticion.mjs&#x27;;
+  <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/inscripciones/inscribir-usuario/handler.mjs" data-explanations="construir-post-notas"><code>import { handleRequest } from &#x27;../http/peticion.mjs&#x27;;
 import { inscribirUsuarioService } from &#x27;./service.mjs&#x27;;
 
 export function handler(event) {
@@ -1942,16 +1954,16 @@ curl -i &quot;$pase&quot;</code></pre>
 <div class="guided-explainer" data-explainer>
 <div class="guided-options" role="group" aria-label="Archivos del paso"><button type="button" data-explain="consultar-orm-archivo-0" aria-controls="consultar-orm-archivo-0" aria-pressed="true">Modelo</button><button type="button" data-explain="consultar-orm-archivo-1" aria-controls="consultar-orm-archivo-1" aria-pressed="false">Lectura de evento</button><button type="button" data-explain="consultar-orm-archivo-2" aria-controls="consultar-orm-archivo-2" aria-pressed="false">Repository</button></div>
 <section id="consultar-orm-archivo-0" data-explanation>
-  <h4><code>src/inscripciones/inscripcion.model.mjs</code></h4>
-  <pre><code>mkdir -p src/inscripciones &amp;&amp; ls -ld src/inscripciones &amp;&amp;
-touch src/inscripciones/inscripcion.model.mjs &amp;&amp; vi src/inscripciones/inscripcion.model.mjs</code></pre>
+  <h4><code>src/inscripciones/models/inscripcion.model.mjs</code></h4>
+  <pre><code>mkdir -p src/inscripciones/models &amp;&amp; ls -ld src/inscripciones/models &amp;&amp;
+touch src/inscripciones/models/inscripcion.model.mjs &amp;&amp; vi src/inscripciones/models/inscripcion.model.mjs</code></pre>
   <p>En <code>vi</code>, escribe <code>:set paste</code> y pulsa Intro. Pulsa <kbd>i</kbd> y pega el archivo completo. Guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro.</p>
-  <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/inscripciones/inscripcion.model.mjs" data-explanations="consultar-orm-notas"><code>import { Entity } from &#x27;dynamodb-toolbox/entity&#x27;;
+  <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/inscripciones/models/inscripcion.model.mjs" data-explanations="consultar-orm-notas"><code>import { Entity } from &#x27;dynamodb-toolbox/entity&#x27;;
 import { Table } from &#x27;dynamodb-toolbox/table&#x27;;
 import { item } from &#x27;dynamodb-toolbox/schema/item&#x27;;
 import { number } from &#x27;dynamodb-toolbox/schema/number&#x27;;
 import { string } from &#x27;dynamodb-toolbox/schema/string&#x27;;
-import { db, TABLA_INSCRIPCIONES_FCI } from &#x27;../datos/dynamo.mjs&#x27;;
+import { db, TABLA_INSCRIPCIONES_FCI } from &#x27;../../datos/dynamo.mjs&#x27;;
 
 const tablaInscripciones = new Table({
   name: TABLA_INSCRIPCIONES_FCI,
@@ -1978,7 +1990,7 @@ export const MODELO_INSCRIPCION = new Entity({
   <pre><code>vi src/eventos/buscar-evento/repository.mjs</code></pre>
   <p>Ejecuta <code>:%d</code> e Intro para sustituir el archivo. En <code>vi</code>, escribe <code>:set paste</code> y pulsa Intro. Pulsa <kbd>i</kbd> y pega el archivo completo. Guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro.</p>
   <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/eventos/buscar-evento/repository.mjs" data-explanations="consultar-orm-notas"><code>import { GetItemCommand } from &#x27;dynamodb-toolbox/entity/actions/get&#x27;;
-import { MODELO_EVENTO } from &#x27;../persistencia/evento.model.mjs&#x27;;
+import { MODELO_EVENTO } from &#x27;../models/evento.model.mjs&#x27;;
 
 export async function buscarEventoRepository(eventId) {
   const { Item } = await MODELO_EVENTO.build(GetItemCommand)
@@ -1994,7 +2006,7 @@ export async function buscarEventoRepository(eventId) {
   <pre><code>vi src/inscripciones/consultar-pase/repository.mjs</code></pre>
   <p>Ejecuta <code>:%d</code> e Intro para sustituir el archivo. En <code>vi</code>, escribe <code>:set paste</code> y pulsa Intro. Pulsa <kbd>i</kbd> y pega el archivo completo. Guarda con <kbd>Esc</kbd>, <code>:wq</code> e Intro.</p>
   <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/inscripciones/consultar-pase/repository.mjs" data-explanations="consultar-orm-notas"><code>import { GetItemCommand } from &#x27;dynamodb-toolbox/entity/actions/get&#x27;;
-import { MODELO_INSCRIPCION } from &#x27;../inscripcion.model.mjs&#x27;;
+import { MODELO_INSCRIPCION } from &#x27;../models/inscripcion.model.mjs&#x27;;
 
 export async function consultarPaseRepository(eventId, userId) {
   const { Item } = await MODELO_INSCRIPCION.build(GetItemCommand)
@@ -2047,7 +2059,7 @@ curl -i &quot;$api_url/events/$evento_id/registrations/$usuario&quot;</code></pr
   <div class="index-reader"><aside class="index-note" aria-live="polite"></aside><pre data-file="src/inscripciones/inscribir-usuario/repository.mjs" data-explanations="inscribir-orm-notas"><code>import { PutItemCommand } from &#x27;dynamodb-toolbox/entity/actions/put&#x27;;
 import { GetCommand } from &#x27;@aws-sdk/lib-dynamodb&#x27;;
 import { db, TABLA_USUARIOS_FCI } from &#x27;../../datos/dynamo.mjs&#x27;;
-import { MODELO_INSCRIPCION } from &#x27;../inscripcion.model.mjs&#x27;;
+import { MODELO_INSCRIPCION } from &#x27;../models/inscripcion.model.mjs&#x27;;
 
 export async function buscarUsuarioRepository(userId) {
   const { Item } = await db.send(new GetCommand({
